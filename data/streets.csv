@@ -1,0 +1,38 @@
+ID,name_cz,connected_ID
+0,U opilého poníka,20
+1,U kotvy a ráhna,4;5;2
+2,Slaná,1;5;6;8;3
+3,Perlová,2;8;10
+4,Provaznická,33;1
+5,Nasátá,1;2;11;36
+6,Svobodnická,2;15
+7,Spojovací,15;8;9;12
+8,Padlá,2;3;9;12;7
+9,Šerošedá,10;8;7;12
+10,Poslední naděje,3;9;13;19
+11,Třída vykoupení,33;5;14;15
+12,Ostrá,13;17;9;8;7;35
+13,Ezoterická,10;19;12;17
+14,Cedrová,11;20
+15,Náměstí Páně,11;6;7;16;25
+16,Bílý trh,15;22;23;27
+17,Obludná,12;13;18;22
+18,Zakopaná,17;19
+19,Smečky,34;18;13;10
+20,Rajská,33;14;25
+21,Bulvár spásy,20;25;26;27;16
+22,Vznešená třída,34;17;16
+23,Kořenová,29;16
+24,Měsíční,30;25;33
+25,Jílová,30;24;20;21;15
+26,Bahno,21;30
+27,Jízda,32;21;28;16
+28,Strmá,29;27
+29,Nekonečná,34;23;28;31
+30,Vyčichlá,24;25;26
+31,Hluchá,29
+32,Hrad ,27
+33,Poslední Brána,4;11;20;24
+34,Temná Brána,19;22;29
+35,Stanice hlídky,12
+36,Výrobna šňupce,5

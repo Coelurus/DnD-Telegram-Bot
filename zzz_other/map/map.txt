@@ -1,0 +1,1 @@
+https://watabou.github.io/city-generator/?size=11&seed=2069381962&name=Kritraven&greens=0&farms=1&citadel=1&urban_castle=0&plaza=1&temple=1&walls=1&shantytown=0&coast=1&river=0&gates=-1&sea=0.8
