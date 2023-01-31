@@ -1,10 +1,39 @@
 import csv
 
 
-class NPC:
-    def __init__(self, ID: str, name_cz: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str) -> None:
+class Fraction:
+    def __init__(self, ID: str, name_cz: str, residence_ID: str, relations: str) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
+        self.residence_ID = int(residence_ID)
+        self.relations = [int(x) for x in relations.split(";")]
+
+    def __str__(self):
+        residence = "doesnt exist"
+        if self.residence_ID != -1:
+            residence = self.residence_ID
+        return f"[{self.ID}] - {self.name_cz}: residence: {residence}. Relationships are: {self.relations}"
+
+    def __repr__(self):
+        return str(self)
+
+
+class PoliticalMap:
+    def __init__(self) -> None:
+        self.fractions = []
+
+    def add_fraction(self, fraction: Fraction) -> None:
+        self.fractions.append(fraction)
+
+    def __repr__(self):
+        return "\n".join([str(x) for x in self.fractions])
+
+
+class NPC:
+    def __init__(self, ID: str, name_cz: str, fraction_ID: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str) -> None:
+        self.ID = int(ID)
+        self.name_cz = name_cz
+        self.fraction_ID = int(fraction_ID)
         self.quest_line_ID = int(quest_line_ID)
         self.spawn_street_ID = int(spawn_street_ID)
         self.end_street_ID = int(end_street_ID)
@@ -16,7 +45,7 @@ class NPC:
         end = "not defined"
         if self.end_street_ID != -1:
             end = self.end_street_ID
-        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, does: {self.quest_line_ID}"
+        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, does: {self.quest_line_ID}, is in fraction: {self.fraction_ID}"
 
 
 class Society:
@@ -53,10 +82,26 @@ def read_people_from_file(path):
         society.add_person(NPC(
             *[row[x] for x in ["ID", "name_cz", "fraction_ID", "quest_line_ID", "spawn_street_ID", "end_street_ID"]]))
 
+    csv_file.close()
     return society
 
 
-if __name__ == "__main__":
-    society = read_people_from_file("DnD\data\characters.csv")
+def read_fractions_from_file(path):
+    csv_file = open(path, newline="", encoding="utf-8")
+    reader = csv.DictReader(csv_file, delimiter=",")
 
+    political_map = PoliticalMap()
+    for row in reader:
+        political_map.add_fraction(
+            Fraction(row["ID"], row["name_cz"], row["residence_ID"], row["relations"]))
+
+    csv_file.close()
+    return political_map
+
+
+if __name__ == "__main__":
+    society = read_people_from_file(r"data\characters.csv")
     print(society)
+
+    fractions = read_fractions_from_file(r"data\fractions.csv")
+    print(fractions)

@@ -99,7 +99,7 @@ def read_map_from_file(path: str) -> Map:
 
 
 if __name__ == "__main__":
-    map = read_map_from_file("DnD\data\streets.csv")
+    map = read_map_from_file("data\streets.csv")
 
     # map.print_streets_and_connections()
     streetList, depth = map.BFS(map.streets[3])
