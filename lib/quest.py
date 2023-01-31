@@ -28,7 +28,7 @@ class QuestPhaseList:
 
 
 class ModifiedQuestPhase:
-    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, characters: Society, fractions: PoliticalMap) -> None:
+    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, characters: Society) -> None:
         self.quest_phase_ID = int(qp_ID)
         if mod_who[0:4] == "char":
             character_list = mod_who.lstrip("char").split(";")
@@ -92,10 +92,8 @@ def read_quest_phases_from_file(path):
 if __name__ == "__main__":
     phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
     # print(phases_list)
-
     characters = read_people_from_file(r"data\characters.csv")
-    fractions = read_fractions_from_file(r"data\fractions.csv")
 
     test = ModifiedQuestPhase("0", "char1;3", "15",
-                              "0", "17", "x", characters, fractions)
-    print(test)
+                              "0", "17", "x", characters)
+    # print(test)

@@ -1,0 +1,10 @@
+ID,name_cz,legal,speed_mod,strength_mod,price
+0,Zásilka šňupce,no,-2,0,50
+1,Balíček šňupce,no,-1,0,10
+2,Dávka šňupce,no,0,0,3
+3,Sirky,yes,0,0,2
+4,Obřadní dýka,yes,0,2,40
+5,Soška očistce,yes,-1,-1,60
+6,Potřísněné roucho,yes,-1,0,69
+7,Obušek hlídky,no,-1,2,35
+8,Mečoun,yes,-1,1,15
