@@ -72,6 +72,16 @@ class Society:
         """
         return [self.get_char_by_ID(ID) for ID in ID_list if self.get_char_by_ID(ID) is not False]
 
+    def get_characters_by_fraction(self, fraction_ID: int) -> list[int]:
+        """
+        The method takes ID of fraction and returns list of IDs of characters that belong in the fraction.
+        """
+        character_IDs_by_fraction = []
+        for character in self.people_list:
+            if character.fraction_ID == fraction_ID:
+                character_IDs_by_fraction.append(character.ID)
+        return character_IDs_by_fraction
+
 
 def read_people_from_file(path):
     csv_file = open(path, newline="", encoding="utf-8")
@@ -102,6 +112,7 @@ def read_fractions_from_file(path):
 if __name__ == "__main__":
     society = read_people_from_file(r"data\characters.csv")
     print(society)
+    print(society.get_characters_by_fraction(2))
 
     fractions = read_fractions_from_file(r"data\fractions.csv")
     print(fractions)

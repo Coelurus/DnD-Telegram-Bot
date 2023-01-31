@@ -1,4 +1,6 @@
 import csv
+import random
+from character import Society, PoliticalMap, read_people_from_file, read_fractions_from_file
 
 
 class QuestPhase:
@@ -25,6 +27,55 @@ class QuestPhaseList:
         self.list.append(phase)
 
 
+class ModifiedQuestPhase:
+    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, characters: Society, fractions: PoliticalMap) -> None:
+        self.quest_phase_ID = int(qp_ID)
+        if mod_who[0:4] == "char":
+            character_list = mod_who.lstrip("char").split(";")
+            # TODO odstranit random a přidat podmínku, jestli žije
+        else:
+            fraction_ID = int(mod_who.lstrip("frac"))
+            character_list = characters.get_characters_by_fraction(fraction_ID)
+        characterID = random.choice(character_list)
+
+        self.characterID = characterID
+
+        if mod_from == "*":
+            # TODO zjistit aktuální pozici charactedID a nastavit začátek questu tam
+            from_ID = random.randint(0, 36)
+        else:
+            from_ID = int(mod_from)
+
+        self.from_place_ID = int(from_ID)
+
+        self.item_ID = int(mod_item)
+
+        if mod_where != "?":
+            self.to_place_ID = int(mod_where)
+            self.action = "none"
+
+        elif mod_go_to != "x":
+            go_to_char_ID, action = mod_go_to.split(";")
+
+            # TODO musí se najít aktuální pozice postavy - tzn. až se přidají saves
+            self.to_place_ID = characters.get_char_by_ID(
+                int(go_to_char_ID)).spawn_street_ID
+            self.action = action
+
+    def __repr__(self):
+        return f"phase[{self.quest_phase_ID}] - is being done by char[{self.characterID}]. Starts at street[{self.from_place_ID}] with item[{self.item_ID}]. Goes to street[{self.to_place_ID}] where he {self.action}(action)"
+
+
+class QuestLine:
+    def __init__(self) -> None:
+        pass
+
+
+class QuestLineList:
+    def __init__(self) -> None:
+        self.list = []
+
+
 def read_quest_phases_from_file(path):
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
@@ -40,5 +91,11 @@ def read_quest_phases_from_file(path):
 
 if __name__ == "__main__":
     phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
+    # print(phases_list)
 
-    print(phases_list)
+    characters = read_people_from_file(r"data\characters.csv")
+    fractions = read_fractions_from_file(r"data\fractions.csv")
+
+    test = ModifiedQuestPhase("0", "char1;3", "15",
+                              "0", "17", "x", characters, fractions)
+    print(test)
