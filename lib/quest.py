@@ -1,6 +1,8 @@
 import csv
 import random
 from character import Society, PoliticalMap, read_people_from_file, read_fractions_from_file
+from map import Map, read_map_from_file
+from items import Item, read_items_from_file
 
 
 class QuestPhase:
@@ -26,9 +28,12 @@ class QuestPhaseList:
     def add_phase(self, phase: QuestPhase):
         self.list.append(phase)
 
+    def get_phase_by_ID(self, ID: int) -> QuestPhase:
+        return self.list[ID]
+
 
 class ModifiedQuestPhase:
-    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, characters: Society) -> None:
+    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str) -> None:
         self.quest_phase_ID = int(qp_ID)
         if mod_who[0:4] == "char":
             character_list = mod_who.lstrip("char").split(";")
@@ -38,7 +43,7 @@ class ModifiedQuestPhase:
             character_list = characters.get_characters_by_fraction(fraction_ID)
         characterID = random.choice(character_list)
 
-        self.characterID = characterID
+        self.characterID = int(characterID)
 
         if mod_from == "*":
             # TODO zjistit aktuální pozici charactedID a nastavit začátek questu tam
@@ -54,7 +59,7 @@ class ModifiedQuestPhase:
             self.to_place_ID = int(mod_where)
             self.action = "none"
 
-        elif mod_go_to != "x":
+        else:
             go_to_char_ID, action = mod_go_to.split(";")
 
             # TODO musí se najít aktuální pozice postavy - tzn. až se přidají saves
@@ -63,17 +68,31 @@ class ModifiedQuestPhase:
             self.action = action
 
     def __repr__(self):
-        return f"phase[{self.quest_phase_ID}] - is being done by char[{self.characterID}]. Starts at street[{self.from_place_ID}] with item[{self.item_ID}]. Goes to street[{self.to_place_ID}] where he {self.action}(action)"
+        return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item_by_ID(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
+
+    def __str__(self):
+        return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}={self.to_place_ID}={self.action}"
 
 
-class QuestLine:
-    def __init__(self) -> None:
-        pass
+def str_to_mqp(code_str: str) -> ModifiedQuestPhase:
+    modifiers_list = code_str.split("=")
+    return ModifiedQuestPhase(*modifiers_list)
 
 
-class QuestLineList:
-    def __init__(self) -> None:
-        self.list = []
+def mqp_to_str(mqp_object: ModifiedQuestPhase) -> str:
+    return str(mqp_object)
+
+
+class QuestTree:
+    def __init__(self, root: ModifiedQuestPhase) -> None:
+        self.root = root
+
+
+class Node:
+    def __init__(self, value: str, succes=None, failure=None):
+        self.value = value
+        self.succes = succes
+        self.failure = failure
 
 
 def read_quest_phases_from_file(path):
@@ -93,7 +112,15 @@ if __name__ == "__main__":
     phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
     # print(phases_list)
     characters = read_people_from_file(r"data\characters.csv")
+    map = read_map_from_file(r"data\streets.csv")
+    items = read_items_from_file(r"data\items.csv")
 
-    test = ModifiedQuestPhase("0", "char1;3", "15",
-                              "0", "17", "x", characters)
-    # print(test)
+    """testMQP = str_to_mqp("2=frac1=*=9=?=12;bring")
+    testSTR = mqp_to_str(testMQP)
+    print(repr(testMQP))
+    print(testMQP)"""
+
+    selling_snuff = Node(["0=char12;11=36=0=37=none"], Node(
+        ["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"]))
+
+    print(selling_snuff)

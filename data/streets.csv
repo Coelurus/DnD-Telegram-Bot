@@ -2,7 +2,7 @@ ID,name_cz,connected_ID
 0,U opilého poníka,20
 1,U kotvy a ráhna,4;5;2
 2,Slaná,1;5;6;8;3
-3,Perlová,2;8;10
+3,Perlová,2;8;10;37
 4,Provaznická,33;1
 5,Nasátá,1;2;11;36
 6,Svobodnická,2;15
@@ -14,7 +14,7 @@ ID,name_cz,connected_ID
 12,Ostrá,13;17;9;8;7;35
 13,Ezoterická,10;19;12;17
 14,Cedrová,11;20
-15,Náměstí Páně,11;6;7;16;25
+15,Náměstí Páně,11;6;7;16;25;39
 16,Bílý trh,15;22;23;27
 17,Obludná,12;13;18;22
 18,Zakopaná,17;19
@@ -27,7 +27,7 @@ ID,name_cz,connected_ID
 25,Jílová,30;24;20;21;15
 26,Bahno,21;30
 27,Jízda,32;21;28;16
-28,Strmá,29;27
+28,Strmá,29;27;38
 29,Nekonečná,34;23;28;31
 30,Vyčichlá,24;25;26
 31,Hluchá,29
@@ -36,3 +36,6 @@ ID,name_cz,connected_ID
 34,Temná Brána,19;22;29
 35,Stanice hlídky,12
 36,Výrobna šňupce,5
+37,Centrála Smradlavých hlav,3
+38,Centrála Rudého klanu,28
+39,Kostel Prvího očištění,15

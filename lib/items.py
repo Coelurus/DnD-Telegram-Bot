@@ -24,7 +24,7 @@ class ItemsCollection:
     def add_item(self, item: Item):
         self.list.append(item)
 
-    def get_item_by_ID(self, ID: int):
+    def get_item_by_ID(self, ID: int) -> Item:
         return self.list[ID]
 
 
