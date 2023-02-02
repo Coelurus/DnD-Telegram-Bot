@@ -30,13 +30,19 @@ class PoliticalMap:
 
 
 class NPC:
-    def __init__(self, ID: str, name_cz: str, fraction_ID: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str) -> None:
+    def __init__(self, ID: str, name_cz: str, fraction_ID: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.fraction_ID = int(fraction_ID)
         self.quest_line_ID = int(quest_line_ID)
         self.spawn_street_ID = int(spawn_street_ID)
         self.end_street_ID = int(end_street_ID)
+        # TODO dodatečně přidané items, takže dopsat i do ostatních metod? Asi?
+        self.items = [int(x) for x in items]
+        # TODO dodatečné přidání coins, dopsat do metod a předělat characters.csv
+        self.coins = int(coins)
+        self.speed = speed
+        self.strength = strentgh
 
     def __repr__(self) -> str:
         return str(self)
@@ -90,7 +96,7 @@ def read_people_from_file(path):
     society = Society()
     for row in reader:
         society.add_person(NPC(
-            *[row[x] for x in ["ID", "name_cz", "fraction_ID", "quest_line_ID", "spawn_street_ID", "end_street_ID"]]))
+            *[row[x] for x in ["ID", "name_cz", "fraction_ID", "quest_line_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
 
     csv_file.close()
     return society
