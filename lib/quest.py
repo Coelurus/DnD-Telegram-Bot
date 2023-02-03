@@ -90,9 +90,33 @@ class Node:
         self.failure = failure
 
 
-class QuestTree:
-    def __init__(self, root: Node) -> None:
-        self.root = root
+class QuestLineTrees:
+    def __init__(self) -> None:
+        self.ID_to_name = dict()
+        self.ID_to_tree = dict()
+
+    def add_tree(self, ID: int, name: str, tree: Node) -> None:
+        self.ID_to_name[ID] = name
+        self.ID_to_tree[ID] = tree
+
+
+def read_quest_lines_from_file(path: str) -> QuestLineTrees:
+    file = open(path, "r", encoding="utf-8")
+    lines = file.readlines()
+    number_of_line_quests = int(lines[0])
+
+    quest_lines = QuestLineTrees()
+
+    for line_idx in range(1, number_of_line_quests*2, 2):
+        quest_line_ID, quest_line_name = lines[line_idx].split("=")
+        quest_line_ID = int(quest_line_ID)
+        quest_line_name = quest_line_name.rstrip("\n")
+        quest_line_code_str = lines[line_idx+1].rstrip("\n")
+        quest_line_tree = create_tree_from_str(quest_line_code_str)
+
+        quest_lines.add_tree(quest_line_ID, quest_line_name, quest_line_tree)
+
+    return quest_lines
 
 
 def print_tree(node: Node) -> None:
@@ -124,13 +148,40 @@ def read_quest_phases_from_file(path):
 
 
 def create_tree_from_str(quest_line_str: str):
-
+    # separating modified quest part from sons
     root_quest = quest_line_str[0:quest_line_str.index("(")]
-    quest_line_str = quest_line_str.lstrip(root_quest + "(")
+    strip_len = len(root_quest + "(")
+    quest_line_str = quest_line_str[strip_len:]
 
+    # Looking for left son string size by identifying closing bracket
+    brackets = 1
     for idx in range(len(quest_line_str)):
         if quest_line_str[idx] == "(":
-            son_value = quest_line_str[0:idx]
+            brackets += 1
+        elif quest_line_str[idx] == ")":
+            brackets -= 1
+
+        if brackets == 0:
+            break
+
+    left_son = quest_line_str[0:idx]
+    strip_len = len(left_son + ")(")
+    quest_line_str = quest_line_str[strip_len:]
+
+    # right son is what remains
+    right_son = quest_line_str[0:-1]
+
+    if left_son == "":
+        left_son = None
+    else:
+        left_son = create_tree_from_str(left_son)
+
+    if right_son == "":
+        right_son = None
+    else:
+        right_son = create_tree_from_str(right_son)
+
+    return Node(root_quest, left_son, right_son)
 
 
 if __name__ == "__main__":
@@ -145,10 +196,14 @@ if __name__ == "__main__":
     print(repr(testMQP))
     print(testMQP)"""
 
-    selling_snuff = QuestTree(Node(["0=char12;11=36=0=37=none"], Node(
-        ["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"])))
+    #selling_snuff = Node(["0=char12;11=36=0=37=none"], Node(["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"]))
 
-    print(selling_snuff.root)
-    print_tree(selling_snuff.root)
-    create_tree_from_str(
-        "0=char12;11=36=0=37=none(0=frac1=37=1=0=none,0=frac1=37=1=32=none,0=frac1=37=1=33=none()())(2=frac1=*=9=?=12;bring()())")
+    # print(selling_snuff)
+    # print_tree(selling_snuff)
+    # create_tree_from_str("0=char12;11=36=0=37=none(0=frac1=37=1=0=none,0=frac1=37=1=32=none,0=frac1=37=1=33=none()())(2=frac1=*=9=?=12;bring()())")
+
+    forest = read_quest_lines_from_file("data\quest-lines.txt")
+    for treeID in forest.ID_to_name:
+        print(treeID)
+        print(forest.ID_to_name[treeID])
+        print_tree(forest.ID_to_tree[treeID])

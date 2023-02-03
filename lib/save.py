@@ -1,5 +1,7 @@
 from player import Player
 from character import read_people_from_file
+from quest import read_quest_lines_from_file
+import csv
 
 
 def get_chat_ID() -> int:  # TODO
@@ -41,6 +43,15 @@ def player_save_generator(player: Player) -> str:  # TODO
     items_str = ";".join([str(x) for x in player.items])
     relations_str = ";".join([str(x) for x in player.relations])
     return f"place:{player.place_ID},coins:{player.coins},items:{items_str},str:{player.strength},speed:{player.speed},relations:{relations_str}"
+
+
+def first_quests_save() -> str:
+    quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
+    quest_states = []
+    for quest_line_idx in quest_lines.ID_to_name:
+        quest_states.append("")
+    quest_save_line = ",".join(quest_states)
+    return quest_save_line
 
 
 def quests_save_generator(previous_save: str) -> str:  # TODO
@@ -86,7 +97,13 @@ if __name__ == "__main__":
         print(new_player_save)
 
         # Start quest lines
+        new_quest_lines_save = first_quests_save()
+        print("Qust_lines_save:'" + new_quest_lines_save + "'")
 
         # Rewrite characters to save
         new_characters_save = first_characters_save()
         print(new_characters_save)
+
+        with open("data\game_saves.csv", "a", newline='') as save_file:
+            writer = csv.DictWriter(save_file, ["ID", "save"])
+            writer.writerow({"ID": 666, "save": "femboy"})
