@@ -83,16 +83,31 @@ def mqp_to_str(mqp_object: ModifiedQuestPhase) -> str:
     return str(mqp_object)
 
 
-class QuestTree:
-    def __init__(self, root: ModifiedQuestPhase) -> None:
-        self.root = root
-
-
 class Node:
-    def __init__(self, value: str, succes=None, failure=None):
+    def __init__(self, value: list[str], succes=None, failure=None):
         self.value = value
         self.succes = succes
         self.failure = failure
+
+
+class QuestTree:
+    def __init__(self, root: Node) -> None:
+        self.root = root
+
+
+def print_tree(node: Node) -> None:
+    if node != None:
+        print(node.value, end="")
+
+    print("(", end="")
+    if node.succes != None:
+        print_tree(node.succes)
+    print(")", end="")
+
+    print("(", end="")
+    if node.failure != None:
+        print_tree(node.failure)
+    print(")", end="")
 
 
 def read_quest_phases_from_file(path):
@@ -108,6 +123,16 @@ def read_quest_phases_from_file(path):
     return quest_phase_list
 
 
+def create_tree_from_str(quest_line_str: str):
+
+    root_quest = quest_line_str[0:quest_line_str.index("(")]
+    quest_line_str = quest_line_str.lstrip(root_quest + "(")
+
+    for idx in range(len(quest_line_str)):
+        if quest_line_str[idx] == "(":
+            son_value = quest_line_str[0:idx]
+
+
 if __name__ == "__main__":
     phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
     # print(phases_list)
@@ -120,7 +145,10 @@ if __name__ == "__main__":
     print(repr(testMQP))
     print(testMQP)"""
 
-    selling_snuff = Node(["0=char12;11=36=0=37=none"], Node(
-        ["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"]))
+    selling_snuff = QuestTree(Node(["0=char12;11=36=0=37=none"], Node(
+        ["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"])))
 
-    print(selling_snuff)
+    print(selling_snuff.root)
+    print_tree(selling_snuff.root)
+    create_tree_from_str(
+        "0=char12;11=36=0=37=none(0=frac1=37=1=0=none,0=frac1=37=1=32=none,0=frac1=37=1=33=none()())(2=frac1=*=9=?=12;bring()())")
