@@ -34,6 +34,7 @@ class QuestPhaseList:
 
 class ModifiedQuestPhase:
     def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str) -> None:
+        characters = read_people_from_file(r"data\characters.csv")
         self.quest_phase_ID = int(qp_ID)
         if mod_who[0:4] == "char":
             character_list = mod_who.lstrip("char").split(";")
@@ -68,6 +69,10 @@ class ModifiedQuestPhase:
             self.action = action
 
     def __repr__(self):
+        phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
+        characters = read_people_from_file(r"data\characters.csv")
+        map = read_map_from_file(r"data\streets.csv")
+        items = read_items_from_file(r"data\items.csv")
         return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item_by_ID(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
 
     def __str__(self):
@@ -185,12 +190,6 @@ def create_tree_from_str(quest_line_str: str):
 
 
 if __name__ == "__main__":
-    phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
-    # print(phases_list)
-    characters = read_people_from_file(r"data\characters.csv")
-    map = read_map_from_file(r"data\streets.csv")
-    items = read_items_from_file(r"data\items.csv")
-
     """testMQP = str_to_mqp("2=frac1=*=9=?=12;bring")
     testSTR = mqp_to_str(testMQP)
     print(repr(testMQP))

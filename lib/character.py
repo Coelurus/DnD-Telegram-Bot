@@ -56,7 +56,7 @@ class NPC:
 
 class Society:
     def __init__(self) -> None:
-        self.people_list = []
+        self.people_list: list[NPC] = []
 
     def add_person(self, person: NPC) -> None:
         self.people_list.append(person)
