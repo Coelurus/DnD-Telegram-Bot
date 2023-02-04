@@ -104,6 +104,22 @@ if __name__ == "__main__":
         new_characters_save = first_characters_save()
         print(new_characters_save)
 
-        with open("data\game_saves.csv", "a", newline='') as save_file:
+        first_save_line = new_player_save + "=" + \
+            new_quest_lines_save + "=" + new_characters_save
+
+        """with open("data\game_saves.csv", "a", newline='') as save_file:
             writer = csv.DictWriter(save_file, ["ID", "save"])
-            writer.writerow({"ID": 666, "save": "femboy"})
+            writer.writerow({"ID": 666, "save": "femboy"})"""
+
+        with open("data\game_saves.csv", "r", newline='') as save_file:
+            reader = csv.DictReader(save_file)
+            temp_dict = {}
+            for row in reader:
+                temp_dict[int(row["ID"])] = row["save"]
+            temp_dict[chat_ID] = first_save_line
+
+        with open("data\game_saves.csv", "w", newline='') as save_file:
+            writer = csv.DictWriter(save_file, ["ID", "save"])
+            writer.writeheader()
+            for ID in temp_dict:
+                writer.writerow({"ID": ID, "save": temp_dict[ID]})
