@@ -13,17 +13,21 @@ def read_current_save(chat_ID: int) -> str:
     Method takes int parameter to identify save string of defined chat and returns this save string.
     If game has not started yet it returns "NEW_GAME" so program knows to start a new game
     """
-    save_file = open("data\game_saves.txt")
-    lines = save_file.readlines()
 
-    for chat_idx in range(0, len(lines), 2):
-        if int(lines[chat_idx].rstrip("\n")) == chat_ID:
-            return lines[chat_idx+1].rstrip("\n")
-
-    return "NEW_GAME"
+    with open("data\game_saves.csv", "r", newline='') as save_file:
+        reader = csv.DictReader(save_file)
+        temp_dict = {}
+        for row in reader:
+            temp_dict[int(row["ID"])] = row["save"]
+        if chat_ID in temp_dict:
+            return temp_dict[chat_ID]
+        return "NEW_GAME"
 
 
 def get_current_player(previous_save: str) -> Player:
+    """
+    Takes string where player is saved and returns Player object
+    """
     player_parts = previous_save.split(",")
     for part in player_parts:
         key, val = part.split(":")
@@ -33,7 +37,7 @@ def get_current_player(previous_save: str) -> Player:
             coins = val
         elif key == "items":
             items = val
-        elif key == "strength":
+        elif key == "str":
             strength = val
         elif key == "speed":
             speed = val
@@ -70,7 +74,7 @@ def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
 
 
 def quests_save_generator(previous_save: str) -> str:  # TODO
-    return "Le quest"
+    return previous_save
 
 
 def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str:
@@ -103,7 +107,7 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
 
 
 def characters_save_generator(previous_save: str) -> str:  # TODO
-    return "peple"
+    return previous_save
 
 
 def rewrite_save_file(change_line_ID: int, new_save_str: str) -> None:
@@ -134,8 +138,8 @@ def generate_new_save(chat_ID) -> None:
     # Rewrite characters to save
     new_characters_save = first_characters_save(root_quests_dict)
 
-    first_save_line = new_player_save + "=" + \
-        new_quest_lines_save + "=" + new_characters_save
+    first_save_line = new_player_save + "_" + \
+        new_quest_lines_save + "_" + new_characters_save
 
     rewrite_save_file(chat_ID, first_save_line)
 
@@ -144,13 +148,22 @@ if __name__ == "__main__":
     chat_ID = get_chat_ID()
     current_save = read_current_save(chat_ID)
     if current_save != "NEW_GAME":
-        current_player, current_quests, current_characters = current_save.split(
-            "=")
+        current_player_str, current_quests_str, current_characters_str = current_save.split(
+            "_")
+
+        current_player = get_current_player(current_player_str)
+        current_player.move()
         new_player_save = player_save_generator(current_player)
 
-        new_quests_save = quests_save_generator(current_quests)
+        new_quests_save = quests_save_generator(current_quests_str)
+        # check all characters if finished
 
-        new_characters_save = characters_save_generator(current_characters)
+        new_characters_save = characters_save_generator(current_characters_str)
+        # move all characters
+
+        combined_save = f"{new_player_save}_{new_quests_save}_{new_characters_save}"
+        rewrite_save_file(chat_ID, combined_save)
+
     else:
         """Generate new starting save"""
         generate_new_save(chat_ID)
