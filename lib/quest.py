@@ -46,11 +46,11 @@ class ModifiedQuestPhase:
 
         self.characterID = int(characterID)
 
-        if mod_from == "*":
+        """if mod_from == "-1":
             # TODO zjistit aktuální pozici charactedID a nastavit začátek questu tam
-            from_ID = random.randint(0, 36)
-        else:
-            from_ID = int(mod_from)
+            from_ID = -1
+        else:"""
+        from_ID = int(mod_from)
 
         self.from_place_ID = int(from_ID)
 

@@ -8,7 +8,11 @@ def get_chat_ID() -> int:  # TODO
     return 69
 
 
-def read_current_save(chat_ID: int) -> str:  # TODO
+def read_current_save(chat_ID: int) -> str:
+    """
+    Method takes int parameter to identify save string of defined chat and returns this save string.
+    If game has not started yet it returns "NEW_GAME" so program knows to start a new game
+    """
     save_file = open("data\game_saves.txt")
     lines = save_file.readlines()
 
@@ -40,12 +44,19 @@ def get_current_player(previous_save: str) -> Player:
 
 
 def player_save_generator(player: Player) -> str:  # TODO
+    """
+    Takes current state of player as Player object and returns his representation as string.
+    """
     items_str = ";".join([str(x) for x in player.items])
     relations_str = ";".join([str(x) for x in player.relations])
     return f"place:{player.place_ID},coins:{player.coins},items:{items_str},str:{player.strength},speed:{player.speed},relations:{relations_str}"
 
 
 def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
+    """
+    Firstly generates default saves for all quest lines which is empty strings
+    Secondly creates dictionary that based on quest line ID returns root modified quest phase of this quest line
+    """
     quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
     quest_states = []
     ID_to_root_quest = dict()
@@ -62,21 +73,27 @@ def quests_save_generator(previous_save: str) -> str:  # TODO
     return "Le quest"
 
 
-def first_characters_save(root_quests_dict: dict[int, ModifiedQuestPhase]) -> str:
-    character_ID_to_line_ID = dict()
-    for quest_line_ID in root_quests_dict:
-        character_ID_to_do_quest = root_quests_dict[quest_line_ID].characterID
+def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str:
+    """
+    Method takes dictionary where key is quest line ID and value is ModifiedQuestPhase to write quests to character saves
+    Based on that and characters.csv method creates string with saves for all characters
+    """
+    character_ID_to_line_ID: dict[int, int] = dict()
+    # looking for characters that will have assigned quests
+    for quest_line_ID in quest_ID_to_MQP:
+        character_ID_to_do_quest = quest_ID_to_MQP[quest_line_ID].characterID
         character_ID_to_line_ID[character_ID_to_do_quest] = quest_line_ID
-
-    print(character_ID_to_line_ID)
 
     characters = read_people_from_file(r"data\characters.csv")
     characters_str_save = ""
     for character in characters.people_list:
         if character.ID in character_ID_to_line_ID:
             line = character_ID_to_line_ID[character.ID]
-            phase = str(root_quests_dict[line])
-            stage = "tostart"
+            phase = str(quest_ID_to_MQP[line])
+            if quest_ID_to_MQP[line].from_place_ID == -1 or quest_ID_to_MQP[line].from_place_ID == character.spawn_street_ID:
+                stage = "inprogress"
+            else:
+                stage = "tostart"
         else:
             line = phase = stage = ""
 
@@ -90,18 +107,37 @@ def characters_save_generator(previous_save: str) -> str:  # TODO
 
 
 def rewrite_save_file(change_line_ID: int, new_save_str: str) -> None:
+    """Reads all rows and saves current saves. That rewrites string specified by ID and save new file"""
     with open("data\game_saves.csv", "r", newline='') as save_file:
         reader = csv.DictReader(save_file)
         temp_dict = {}
         for row in reader:
             temp_dict[int(row["ID"])] = row["save"]
-        temp_dict[chat_ID] = first_save_line
+        temp_dict[change_line_ID] = new_save_str
 
     with open("data\game_saves.csv", "w", newline='') as save_file:
         writer = csv.DictWriter(save_file, ["ID", "save"])
         writer.writeheader()
         for ID in temp_dict:
             writer.writerow({"ID": ID, "save": temp_dict[ID]})
+
+
+def generate_new_save(chat_ID) -> None:
+    """Generating whole new save"""
+    # Player introduce - set his starting position and other stuff
+    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2])
+    new_player_save = player_save_generator(spawn_player)
+
+    # Start quest lines
+    new_quest_lines_save, root_quests_dict = first_quests_save()
+
+    # Rewrite characters to save
+    new_characters_save = first_characters_save(root_quests_dict)
+
+    first_save_line = new_player_save + "=" + \
+        new_quest_lines_save + "=" + new_characters_save
+
+    rewrite_save_file(chat_ID, first_save_line)
 
 
 if __name__ == "__main__":
@@ -116,19 +152,5 @@ if __name__ == "__main__":
 
         new_characters_save = characters_save_generator(current_characters)
     else:
-        # Player introduce
-        spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2])
-        new_player_save = player_save_generator(spawn_player)
-
-        # Start quest lines
-        new_quest_lines_save, root_quests_dict = first_quests_save()
-
-        print(root_quests_dict)
-
-        # Rewrite characters to save
-        new_characters_save = first_characters_save(root_quests_dict)
-
-        first_save_line = new_player_save + "=" + \
-            new_quest_lines_save + "=" + new_characters_save
-
-        rewrite_save_file(chat_ID, first_save_line)
+        """Generate new starting save"""
+        generate_new_save(chat_ID)
