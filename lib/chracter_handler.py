@@ -1,5 +1,7 @@
 from character import NPC, read_people_from_file
 from quest import str_to_mqp
+from map import read_map_from_file
+from random import choice
 
 # could be improved by implemented by implemnting inheritance somehow, I guess
 
@@ -54,10 +56,6 @@ def basic_stuff(old_character_save: str):
     return current_characters
 
 
-def move_character(character: ModifiedNPC) -> ModifiedNPC:
-    pass
-
-
 def update_phases(modified_characters: ModifiedPeople) -> ModifiedPeople:
     for character in modified_characters.list:
         if character.phase != "-1":
@@ -70,18 +68,39 @@ def update_phases(modified_characters: ModifiedPeople) -> ModifiedPeople:
                 character.stage = "ended"
 
             elif character.stage == "ended":
-                pass  # TODO add the actions that NPCs can do
+                # TODO add the actions that NPCs can do. Modify quest save.
+                pass
 
     return modified_characters
+
+
+def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
+    characters_definition = read_people_from_file("data\characters.csv")
+    map = read_map_from_file("data\streets.csv")
+    for character in modified_characters.list:
+        if character.phase != "-1":
+            current_phase = str_to_mqp(character.phase)
+            final_point = current_phase.to_place_ID
+        elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
+            final_point = characters_definition.get_char_by_ID(
+                character.ID).end_street_ID
+        else:
+            final_point = choice(map.get_street_by_ID(
+                character.place).connections + [character.place])
+
+        # TODO add places and characters to avoid
+        path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place)),
+                                      map.get_street_by_ID(final_point))
+        next_place = path[0]
+        character.place = next_place
 
 
 if __name__ == "__main__":
     character_save = "place:32,coins:11,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,coins:10,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:35,coins:2,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,coins:14,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:33,coins:0,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:34,coins:18,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:17,coins:20,items:,str:1,speed:1,line:-1,phase:-1,stage:-1+place:1,coins:16,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:13,coins:13,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:23,coins:15,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:23,coins:12,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:37,coins:6,items:,str:1,speed:4,line:0,phase:0=char11=-1=0=37=none,stage:inprogress+place:37,coins:0,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:37,coins:17,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:37,coins:12,items:,str:2,speed:2,line:-1,phase:-1,stage:-1+place:37,coins:19,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:5,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:38,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:17,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:18,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:38,coins:5,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,coins:14,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:39,coins:11,items:,str:4,speed:1,line:-1,phase:-1,stage:-1+place:39,coins:9,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:39,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,coins:18,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:39,coins:16,items:,str:2,speed:3,line:-1,phase:-1,stage:-1"
     modified_people = basic_stuff(character_save)
-    print(modified_people)
 
     # checking if someone finished quest or is final location
     modified_people = update_phases(modified_people)
-    print(modified_people)
 
     # move characters to quest
+    modified_people = move_characters(modified_people)

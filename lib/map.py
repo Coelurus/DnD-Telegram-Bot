@@ -35,7 +35,8 @@ class Map:
                 reversed_path.append(BFS_combined[street_idx][STREET])
                 distance_to_start -= 1
 
-        return reversed(reversed_path)
+        path = list(reversed(reversed_path))
+        return path
 
     def BFS(self, from_street: Street) -> tuple[list[Street], list[int]]:
         """
@@ -80,6 +81,9 @@ class Street:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.connections = [int(x) for x in connections.split(";")]
+
+    def __repr__(self):
+        return f"ID[{self.ID}] - {self.name_cz} is connected to: {self.connections}"
 
     def get_connected_streets(self) -> list[int]:
         return self.connections
