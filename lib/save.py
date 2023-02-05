@@ -99,7 +99,7 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
             else:
                 stage = "tostart"
         else:
-            line = phase = stage = ""
+            line = phase = stage = "-1"
 
         items_str = ";".join([str(x) for x in character.items])
         characters_str_save += f"place:{character.spawn_street_ID},coins:{character.coins},items:{items_str},str:{character.strength},speed:{character.speed},line:{line},phase:{phase},stage:{stage}+"
