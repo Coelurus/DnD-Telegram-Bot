@@ -1,6 +1,7 @@
 from player import Player
 from character import read_people_from_file
 from quest import read_quest_lines_from_file, str_to_mqp, ModifiedQuestPhase
+from chracter_handler import update_phases, get_current_characters, move_characters
 import csv
 
 
@@ -29,22 +30,12 @@ def get_current_player(previous_save: str) -> Player:
     Takes string where player is saved and returns Player object
     """
     player_parts = previous_save.split(",")
+    parts_dict: dict[str, str] = dict()
     for part in player_parts:
         key, val = part.split(":")
-        if key == "place":
-            place = val
-        elif key == "coins":
-            coins = val
-        elif key == "items":
-            items = val
-        elif key == "str":
-            strength = val
-        elif key == "speed":
-            speed = val
-        elif key == "relations":
-            relations = val
+        parts_dict[key] = val
 
-    return Player(place, coins, items.split(";"), strength, speed, relations.split(";"))
+    return Player(parts_dict["place"], parts_dict["coins"], parts_dict["items"].split(";"), parts_dict["str"], parts_dict["speed"], parts_dict["relations"].split(";"))
 
 
 def player_save_generator(player: Player) -> str:  # TODO
@@ -73,8 +64,42 @@ def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
     return quest_save_line, ID_to_root_quest
 
 
-def quests_save_generator(previous_save: str) -> str:  # TODO
-    return previous_save
+def get_current_quests(previous_save: str) -> list[ModifiedQuestPhase]:  # TODO
+    """
+    Takes quest line save and compares with trees to generate concrete phases for each line.
+    """
+    # TODO read in some main function and then just pass as argument
+    quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
+    lines_states = previous_save.split(",")
+    current_phase_for_line: list[ModifiedQuestPhase] = []
+
+    for quest_line_ID in quest_lines.ID_to_tree:
+        node = quest_lines.ID_to_tree[quest_line_ID]
+        for line_progres in lines_states[quest_line_ID]:
+            if node != None:
+                if line_progres == "S":
+                    node = node.succes
+                    print("s", node)
+                elif line_progres == "F":
+                    node = node.failure
+                    print("f", node)
+            if node == None:  # the quest line ends here
+                current_phase_for_line.append(None)
+                break
+        else:
+            current_phase_for_line.append(
+                [str(str_to_mqp(x)) for x in node.value])
+
+    return current_phase_for_line
+
+
+def update_quests(current_quests_str: str, lines_to_update: dict[int, str]):
+    quest_lines = current_quests_str.split(",")
+    for quest_line_idx in range(len(quest_lines)):
+        if quest_line_idx in lines_to_update:
+            quest_lines[quest_line_idx] += lines_to_update[quest_line_idx]
+
+    return ",".join(quest_lines)
 
 
 def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str:
@@ -104,10 +129,6 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
         items_str = ";".join([str(x) for x in character.items])
         characters_str_save += f"place:{character.spawn_street_ID},coins:{character.coins},items:{items_str},str:{character.strength},speed:{character.speed},line:{line},phase:{phase},stage:{stage}+"
     return characters_str_save.rstrip("+")
-
-
-def characters_save_generator(previous_save: str) -> str:  # TODO
-    return previous_save
 
 
 def rewrite_save_file(change_line_ID: int, new_save_str: str) -> None:
@@ -145,23 +166,38 @@ def generate_new_save(chat_ID) -> None:
 
 
 if __name__ == "__main__":
+    # 1
     chat_ID = get_chat_ID()
     current_save = read_current_save(chat_ID)
     if current_save != "NEW_GAME":
         current_player_str, current_quests_str, current_characters_str = current_save.split(
             "_")
 
+        # 2
         current_player = get_current_player(current_player_str)
+        # 3 TODO player action
         current_player.move()
+        # 4 TODO reaction on action
+
+        # 5
+        current_characters = get_current_characters(current_characters_str)
+        # 6
+        current_characters, lines_to_update = update_phases(current_characters)
+        # 7 TODO updating quest line saves
+        print(current_quests_str)
+        new_quests_str = update_quests(current_quests_str, lines_to_update)
+        print(new_quests_str)
+        # 8
+        current_quests_save = get_current_quests(current_quests_str)
+        # 9 TODO adding phases to characters
+
+        # 10
+        current_characters = move_characters(current_characters).to_str()
+        # 11 TODO
+
+        # 12
         new_player_save = player_save_generator(current_player)
-
-        new_quests_save = quests_save_generator(current_quests_str)
-        # check all characters if finished
-
-        new_characters_save = characters_save_generator(current_characters_str)
-        # move all characters
-
-        combined_save = f"{new_player_save}_{new_quests_save}_{new_characters_save}"
+        combined_save = f"{new_player_save}_{new_quests_str}_{current_characters}"
         rewrite_save_file(chat_ID, combined_save)
 
     else:

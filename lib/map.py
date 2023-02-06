@@ -82,7 +82,7 @@ class Street:
         self.name_cz = name_cz
         self.connections = [int(x) for x in connections.split(";")]
 
-    def __repr__(self):
+    def to_str(self):
         return f"ID[{self.ID}] - {self.name_cz} is connected to: {self.connections}"
 
     def get_connected_streets(self) -> list[int]:

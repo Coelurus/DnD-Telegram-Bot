@@ -94,11 +94,14 @@ class Node:
         self.succes = succes
         self.failure = failure
 
+    def __repr__(self):
+        return f" My {self.value}: (on succes = {self.succes}), (on fail = {self.failure})"
+
 
 class QuestLineTrees:
     def __init__(self) -> None:
-        self.ID_to_name = dict()
-        self.ID_to_tree = dict()
+        self.ID_to_name: dict[int, str] = dict()
+        self.ID_to_tree: dict[int, Node] = dict()
 
     def add_tree(self, ID: int, name: str, tree: Node) -> None:
         self.ID_to_name[ID] = name
@@ -186,7 +189,7 @@ def create_tree_from_str(quest_line_str: str):
     else:
         right_son = create_tree_from_str(right_son)
 
-    return Node(root_quest, left_son, right_son)
+    return Node(root_quest.split(","), left_son, right_son)
 
 
 if __name__ == "__main__":
