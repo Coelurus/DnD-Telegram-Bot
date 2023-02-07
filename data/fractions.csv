@@ -1,8 +1,8 @@
 ID,name_cz,residence_ID,relations
-0,Hlídka,35,-1;1;1;0;2;3;-1
-1,Smradlavé hlavy,37,1;-1;2;3;2;2;-1
-2,Rudý klan,38,0;2;-1;1;2;2;-1
-3,Kult bílé ruky,39,3;1;0;-1;2;3;-1
-4,Na volné noze,-1,2;2;2;2;-1;2;-1
-5,Počestní,-1,2;1;1;1;1;-1;-1
+0,Hlídka,35,3;1;1;0;2;3;-1
+1,Smradlavé hlavy,37,1;3;2;3;2;2;-1
+2,Rudý klan,38,0;2;3;1;2;2;-1
+3,Kult bílé ruky,39,3;1;0;3;2;3;-1
+4,Na volné noze,-1,2;2;2;2;3;2;-1
+5,Počestní,-1,2;1;1;1;1;2;-1
 6,Nevnímající,-1,-1;-1;-1;-1;-1;-1;-1

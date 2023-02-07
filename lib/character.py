@@ -28,6 +28,9 @@ class PoliticalMap:
     def __repr__(self):
         return "\n".join([str(x) for x in self.fractions])
 
+    def get_fraction(self, ID: int) -> Fraction:
+        return self.fractions[ID]
+
 
 class NPC:
     def __init__(self, ID: str, name_cz: str, fraction_ID: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:

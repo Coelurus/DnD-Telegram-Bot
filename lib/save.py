@@ -1,7 +1,7 @@
 from player import Player
 from character import read_people_from_file
 from quest import read_quest_lines_from_file, str_to_mqp, mqp_to_str, ModifiedQuestPhase
-from chracter_handler import update_phases, get_current_characters, move_characters, ModifiedPeople
+from character_handler import update_phases, get_current_characters, move_characters, ModifiedPeople
 import csv
 
 
