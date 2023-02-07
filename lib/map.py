@@ -106,9 +106,9 @@ if __name__ == "__main__":
     map = read_map_from_file("data\streets.csv")
 
     # map.print_streets_and_connections()
-    streetList, depth = map.BFS(map.streets[3])
-    for routeIdx in range(len(streetList)):
-        print(depth[routeIdx], streetList[routeIdx].get_name_cz())
+    streetList, depth = map.BFS(map.streets[37])
+    # for routeIdx in range(len(streetList)):
+    #    print(depth[routeIdx], streetList[routeIdx].get_name_cz())
 
-    for i in map.find_shortest_path(streetList, depth, map.streets[20]):
+    for i in map.find_shortest_path(streetList, depth, map.streets[36]):
         print(i.get_name_cz())

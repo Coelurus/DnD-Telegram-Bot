@@ -7,7 +7,7 @@ from random import choice
 
 
 class ModifiedNPC:
-    def __init__(self, ID: str, place: str, coins: str, items: str, str: str, speed: str, line: str, phase: str, stage: str) -> None:
+    def __init__(self, ID: str, place: str, coins: str, items: str, str: str, speed: str, line: str, phase: str, stage: str, state: str) -> None:
         self.ID = int(ID)
         self.place = int(place)
         self.coins = int(coins)
@@ -17,6 +17,7 @@ class ModifiedNPC:
         self.phase = phase
         self.stage = stage
         self.items = [int(x) for x in items.split(";") if x != ""]
+        self.state = state
 
     def __repr__(self):  # changed it from str might break smth else
         characters_definition = read_people_from_file("data\characters.csv")
@@ -41,7 +42,7 @@ class ModifiedPeople:
         for NPC in self.list:
             items = ",".join([str(x) for x in NPC.items])
             list_to_link.append(
-                f"place:{NPC.place.ID},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage}")
+                f"place:{NPC.place.ID},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
         return "+".join(list_to_link)
 
 
@@ -61,7 +62,7 @@ def get_current_characters(old_character_save: str) -> ModifiedPeople:
             parts_dict[key] = val
 
         current_characters.add_NPC(ModifiedNPC(char_save_str_idx, parts_dict["place"], parts_dict["coins"], parts_dict["items"], parts_dict["str"],
-                                               parts_dict["speed"], parts_dict["line"], parts_dict["phase"], parts_dict["stage"]))
+                                               parts_dict["speed"], parts_dict["line"], parts_dict["phase"], parts_dict["stage"], parts_dict["state"]))
 
     return current_characters
 
@@ -87,11 +88,15 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                 stage_failed = choice([True, False])
 
                 if stage_failed == True:
-                    character.stage = "fail"
                     lines_to_update[character.line] = "F"
+                    character.stage = "-1"
+                    character.line = -1
+                    character.phase = "-1"
                 else:
-                    character.stage = "succes"
                     lines_to_update[character.line] = "S"
+                    character.stage = "-1"
+                    character.line = -1
+                    character.phase = "-1"
 
     return modified_characters, lines_to_update
 
@@ -105,7 +110,10 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     for character in modified_characters.list:
         if character.phase != "-1":
             current_phase = str_to_mqp(character.phase)
-            final_point = current_phase.to_place_ID
+            if character.stage == "tostart":
+                final_point = current_phase.from_place_ID
+            else:
+                final_point = current_phase.to_place_ID
         elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
             final_point = characters_definition.get_char_by_ID(
                 character.ID).end_street_ID
@@ -116,7 +124,12 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
         # TODO add places and characters to avoid
         path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place)),
                                       map.get_street_by_ID(final_point))
-        next_place = path[0]
+
+        if len(path) == 1:
+            next_place = path[0]
+        else:
+            # Idx is 1 because first street in path is starting street
+            next_place = path[1]
         character.place = next_place
 
     return modified_characters

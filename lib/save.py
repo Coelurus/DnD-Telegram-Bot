@@ -1,7 +1,7 @@
 from player import Player
 from character import read_people_from_file
-from quest import read_quest_lines_from_file, str_to_mqp, ModifiedQuestPhase
-from chracter_handler import update_phases, get_current_characters, move_characters
+from quest import read_quest_lines_from_file, str_to_mqp, mqp_to_str, ModifiedQuestPhase
+from chracter_handler import update_phases, get_current_characters, move_characters, ModifiedPeople
 import csv
 
 
@@ -38,7 +38,7 @@ def get_current_player(previous_save: str) -> Player:
     return Player(parts_dict["place"], parts_dict["coins"], parts_dict["items"].split(";"), parts_dict["str"], parts_dict["speed"], parts_dict["relations"].split(";"))
 
 
-def player_save_generator(player: Player) -> str:  # TODO
+def player_save_generator(player: Player) -> str:
     """
     Takes current state of player as Player object and returns his representation as string.
     """
@@ -58,20 +58,20 @@ def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
     for quest_ID in quest_lines.ID_to_tree:
         quest_states.append("")
         ID_to_root_quest[quest_ID] = str_to_mqp(
-            quest_lines.ID_to_tree[quest_ID].value)
+            quest_lines.ID_to_tree[quest_ID].value[0])  # TODO only taking the first possible phase...
     quest_save_line = ",".join(quest_states)
 
     return quest_save_line, ID_to_root_quest
 
 
-def get_current_quests(previous_save: str) -> list[ModifiedQuestPhase]:  # TODO
+def get_current_quests(previous_save: str) -> list[str]:
     """
     Takes quest line save and compares with trees to generate concrete phases for each line.
     """
     # TODO read in some main function and then just pass as argument
     quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
     lines_states = previous_save.split(",")
-    current_phase_for_line: list[ModifiedQuestPhase] = []
+    current_phase_for_line: list[str] = []
 
     for quest_line_ID in quest_lines.ID_to_tree:
         node = quest_lines.ID_to_tree[quest_line_ID]
@@ -79,10 +79,8 @@ def get_current_quests(previous_save: str) -> list[ModifiedQuestPhase]:  # TODO
             if node != None:
                 if line_progres == "S":
                     node = node.succes
-                    print("s", node)
                 elif line_progres == "F":
                     node = node.failure
-                    print("f", node)
             if node == None:  # the quest line ends here
                 current_phase_for_line.append(None)
                 break
@@ -100,6 +98,33 @@ def update_quests(current_quests_str: str, lines_to_update: dict[int, str]):
             quest_lines[quest_line_idx] += lines_to_update[quest_line_idx]
 
     return ",".join(quest_lines)
+
+
+def assign_quests(current_characters: ModifiedPeople, current_quests_save: list[list[str]]):
+    char_ID_to_quest: dict[int, list[list[ModifiedQuestPhase], int]] = dict()
+    for quest_save_idx in range(len(current_quests_save)):
+        # TODO unfinished feature. Quest phases are in fact saves as a list of strings,
+        # thus can be trigerred multiple phases at once, however I have not figured
+        # simple enough way to track them and how to manage their overall failure vs succes.
+
+        if current_quests_save[quest_save_idx] is not None:
+            quest_save = str_to_mqp(current_quests_save[quest_save_idx][0])
+            if quest_save is not None:
+                char_ID_to_quest[quest_save.characterID] = [
+                    quest_save, quest_save_idx]
+
+    for char_ID in char_ID_to_quest:
+        if current_characters.list[char_ID].line == -1:
+            current_characters.list[char_ID].line = char_ID_to_quest[char_ID][1]
+            current_characters.list[char_ID].phase = mqp_to_str(
+                char_ID_to_quest[char_ID][0])
+
+            if char_ID_to_quest[char_ID][0].from_place_ID == -1:
+                current_characters.list[char_ID].stage = "inprogress"
+            else:
+                current_characters.list[char_ID].stage = "tostart"
+
+    return current_characters
 
 
 def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str:
@@ -127,7 +152,7 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
             line = phase = stage = "-1"
 
         items_str = ";".join([str(x) for x in character.items])
-        characters_str_save += f"place:{character.spawn_street_ID},coins:{character.coins},items:{items_str},str:{character.strength},speed:{character.speed},line:{line},phase:{phase},stage:{stage}+"
+        characters_str_save += f"place:{character.spawn_street_ID},coins:{character.coins},items:{items_str},str:{character.strength},speed:{character.speed},line:{line},phase:{phase},stage:{stage},state:alive+"
     return characters_str_save.rstrip("+")
 
 
@@ -184,13 +209,12 @@ if __name__ == "__main__":
         # 6
         current_characters, lines_to_update = update_phases(current_characters)
         # 7 TODO updating quest line saves
-        print(current_quests_str)
         new_quests_str = update_quests(current_quests_str, lines_to_update)
-        print(new_quests_str)
         # 8
-        current_quests_save = get_current_quests(current_quests_str)
+        current_quests_save = get_current_quests(new_quests_str)
         # 9 TODO adding phases to characters
-
+        current_characters = assign_quests(
+            current_characters, current_quests_save)
         # 10
         current_characters = move_characters(current_characters).to_str()
         # 11 TODO
