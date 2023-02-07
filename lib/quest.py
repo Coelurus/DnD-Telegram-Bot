@@ -46,10 +46,6 @@ class ModifiedQuestPhase:
 
         self.characterID = int(characterID)
 
-        """if mod_from == "-1":
-            # TODO zjistit aktuální pozici charactedID a nastavit začátek questu tam
-            from_ID = -1
-        else:"""
         from_ID = int(mod_from)
 
         self.from_place_ID = int(from_ID)

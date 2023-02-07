@@ -87,29 +87,30 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                 character.stage = "ended"
 
             if character.stage == "ended":
-                # TODO add the actions that NPCs can do. Returns Fail if failed
+                stage_failed = None
+
                 if current_phase.action == "kill" or current_phase.action == "stun":
                     defender = modified_characters.get_NPC(current_phase.go_to)
-                    modified_characters = fight(
+                    modified_characters, stage_failed = fight(
                         character, defender, current_phase.action, modified_characters)
 
-                elif current_phase.action == "rob":
-                    defender = modified_characters.get_NPC(current_phase.go_to)
-                    modified_characters = steal(
+                elif current_phase.action == "rob" or current_phase.action == "plant":
+                    defender = modified_characters.get_NPC(
+                        current_phase.go_to)
+                    modified_characters, stage_failed = steal(
                         character, defender, current_phase.action, modified_characters)
 
-                stage_failed = choice([True, False])
-
-                if stage_failed == True:
-                    lines_to_update[character.line] = "F"
-                    character.stage = "-1"
-                    character.line = -1
-                    character.phase = "-1"
-                else:
-                    lines_to_update[character.line] = "S"
-                    character.stage = "-1"
-                    character.line = -1
-                    character.phase = "-1"
+                if stage_failed is not None:
+                    if stage_failed == True:
+                        lines_to_update[character.line] = "F"
+                        character.stage = "-1"
+                        character.line = -1
+                        character.phase = "-1"
+                    else:
+                        lines_to_update[character.line] = "S"
+                        character.stage = "-1"
+                        character.line = -1
+                        character.phase = "-1"
 
     return modified_characters, lines_to_update
 
@@ -155,13 +156,14 @@ def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_
     return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
 
 
-def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> ModifiedPeople:
+def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
     attacker_NPC = people.get_char_by_ID(attacker.ID)
     defender_NPC = people.get_char_by_ID(defender.ID)
 
     attacker_bonus = 0
+    phase_failed = False
 
     # attackers speed or moment of surprise inflicts advantage for him
     if attacker.speed > defender.speed + 1 or attacker_NPC.fraction_ID == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_NPC.fraction_ID] >= 2:
@@ -188,9 +190,6 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
     total_attack_power = sum([x.str for x in attacker_side]) + attacker_bonus
     total_defend_power = sum([x.str for x in defender_side])
-
-    print("attack power:", total_attack_power,
-          "defend power:", total_defend_power)
 
     if total_attack_power > total_defend_power+1:
         if action == "kill":
@@ -222,15 +221,16 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
                 char.state = "stun"
                 print(char.ID, char.state)
 
-    return current_characters
+    return current_characters, phase_failed
 
 
-def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> ModifiedPeople:
+def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
     attacker_NPC = people.get_char_by_ID(attacker.ID)
     defender_NPC = people.get_char_by_ID(defender.ID)
 
+    phase_failed = False
     attacker_bonus = 0
 
     if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
@@ -244,22 +244,31 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
             stolen_items = defender.items
             defender.items = []
             attacker.items += stolen_items
+
+            print(attacker_NPC.name_cz, "stole:",
+                  stolen_items, "from", defender_NPC.name_cz)
+
         elif action == "plant":
             # TODO plant only the quest item and not all
             planted_items = attacker.items
             attacker.items = []
             defender.items += planted_items
 
+            print(attacker_NPC.name_cz, "planted:",
+                  planted_items, "into pockets of", defender_NPC.name_cz)
+
     elif attacker_speed == defender_speed:
-        current_characters = fight(
+        print(attacker_NPC.name_cz, "failed", action)
+        current_characters, _ = fight(
             attacker, defender, "stun", current_characters)
 
     else:
+        print(attacker_NPC.name_cz, "failed", action)
         defender.str += 1
-        current_characters = fight(
+        current_characters, _ = fight(
             attacker, defender, "stun", current_characters)
 
-    return current_characters
+    return current_characters, phase_failed
 
 
 if __name__ == "__main__":

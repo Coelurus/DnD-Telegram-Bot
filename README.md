@@ -76,6 +76,7 @@ Zde můžou nastat 2 varianty:
     + Zab – parametr akce := “kill“ (o porovnávání schopností více později)
     + Omrač – parametr akce := “stun“
     + Okraď – parametr akce := “rob“
+    + Podstrč – parametr akce := "plant" 
     + Nic – parametr akce := “none“
     + Přiveď – parametr akce := “bring“
 + Momentálně nedotažená mechanika. Jak postava ví, kde se nachází někdo jiný? Pokud hledaná postava někam půjde, tak pro ostatní bude velmi těžké ji zastihnout.
