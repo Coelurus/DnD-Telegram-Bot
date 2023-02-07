@@ -190,8 +190,8 @@ def generate_new_save(chat_ID) -> None:
     rewrite_save_file(chat_ID, first_save_line)
 
 
-if __name__ == "__main__":
-    # 1
+def rotation():
+ # 1
     chat_ID = get_chat_ID()
     current_save = read_current_save(chat_ID)
     if current_save != "NEW_GAME":
@@ -227,3 +227,7 @@ if __name__ == "__main__":
     else:
         """Generate new starting save"""
         generate_new_save(chat_ID)
+
+
+if __name__ == "__main__":
+    rotation()

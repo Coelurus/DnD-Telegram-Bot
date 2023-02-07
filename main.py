@@ -1,9 +1,7 @@
-from lib.map import read_map_from_file
-from lib.character import read_people_from_file
+from lib.save import rotation
 
 if __name__ == "__main__":
-    map = read_map_from_file("data\streets.csv")
-    map.print_streets_and_connections()
-
-    society = read_people_from_file("data\characters.csv")
-    print(society)
+    # rotation() TODO functional relative paths
+    # for now start from save.py file
+    pass
+    # oh lol just found not even that works. you have to run the save.py file but from DnD folder...
