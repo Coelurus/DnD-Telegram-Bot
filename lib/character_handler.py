@@ -1,4 +1,4 @@
-from character import NPC, read_people_from_file
+from character import read_people_from_file, read_fractions_from_file, NPC
 from quest import str_to_mqp
 from map import read_map_from_file
 from random import choice
@@ -45,6 +45,9 @@ class ModifiedPeople:
                 f"place:{NPC.place.ID},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
         return "+".join(list_to_link)
 
+    def get_NPC(self, ID: int) -> ModifiedNPC:
+        return self.list[ID]
+
 
 def get_current_characters(old_character_save: str) -> ModifiedPeople:
     """
@@ -83,8 +86,13 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
             elif character.stage == "inprogress" and current_phase.to_place_ID == character.place:
                 character.stage = "ended"
 
-            elif character.stage == "ended":
+            if character.stage == "ended":
                 # TODO add the actions that NPCs can do. Returns Fail if failed
+                if current_phase.action == "kill" or current_phase.action == "stun":
+                    defender = modified_characters.get_NPC(current_phase.go_to)
+                    modified_characters = fight(
+                        character, defender, current_phase.action, modified_characters)
+
                 stage_failed = choice([True, False])
 
                 if stage_failed == True:
@@ -135,8 +143,85 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     return modified_characters
 
 
+"""originaly in character_interactions but circular import :("""
+
+
+def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_file(r"data\fractions.csv")) -> int:
+    return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
+
+
+def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> ModifiedPeople:
+    people = read_people_from_file(r"data\characters.csv")
+    fractions = read_fractions_from_file(r"data\fractions.csv")
+    attacker_NPC = people.get_char_by_ID(attacker.ID)
+    defender_NPC = people.get_char_by_ID(defender.ID)
+
+    attacker_bonus = 0
+
+    # attackers speed or moment of surprise inflicts advantage for him
+    if attacker.speed > defender.speed + 1 or attacker_NPC.fraction_ID == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_NPC.fraction_ID] >= 2:
+        attacker_bonus = 1
+
+    attacker_side: list[ModifiedNPC] = []
+    defender_side: list[ModifiedNPC] = []
+
+    for character in current_characters.list:
+        if character.place == attacker.place:
+            character_NPC = people.get_char_by_ID(character.ID)
+            likes_attacker = how_char1_loves_char2(character_NPC, attacker_NPC)
+            likes_defender = how_char1_loves_char2(character_NPC, defender_NPC)
+            if likes_attacker >= 3 and likes_defender >= 3:
+                likes_defender = likes_attacker = 2
+
+            if character_NPC.fraction_ID == attacker_NPC.fraction_ID or likes_attacker >= 3:
+                attacker_side.append(character)
+
+            if character_NPC.fraction_ID == defender_NPC.fraction_ID or likes_defender >= 3:
+                defender_side.append(character)
+
+    attacker_bonus += (len(attacker_side) - len(defender_side)) * 2
+
+    total_attack_power = sum([x.str for x in attacker_side]) + attacker_bonus
+    total_defend_power = sum([x.str for x in defender_side])
+
+    print("attack power:", total_attack_power,
+          "defend power:", total_defend_power)
+
+    if total_attack_power > total_defend_power+1:
+        if action == "kill":
+            for char in defender_side:
+                char.state = "dead"
+                print(char.ID, char.state)
+        else:
+            for char in defender_side:
+                char.state = "stun"
+                print(char.ID, char.state)
+
+    elif total_attack_power > total_defend_power:
+        for char in defender_side:
+            char.state = "stun"
+            print(char.ID, char.state)
+
+    elif total_attack_power == total_defend_power:
+        for char in defender_side + attacker_side:
+            char.state = "stun"
+            print(char.ID, char.state)
+
+    elif total_attack_power < total_defend_power:
+        if action == "kill":
+            for char in attacker_side:
+                char.state = "dead"
+                print(char.ID, char.state)
+        else:
+            for char in attacker_side:
+                char.state = "stun"
+                print(char.ID, char.state)
+
+    return current_characters
+
+
 if __name__ == "__main__":
-    character_save = "place:32,coins:11,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,coins:10,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:35,coins:2,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,coins:14,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:33,coins:0,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:34,coins:18,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:17,coins:20,items:,str:1,speed:1,line:-1,phase:-1,stage:-1+place:1,coins:16,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:13,coins:13,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:23,coins:15,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:23,coins:12,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:37,coins:6,items:,str:1,speed:4,line:0,phase:0=char11=-1=0=37=none,stage:inprogress+place:37,coins:0,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:37,coins:17,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:37,coins:12,items:,str:2,speed:2,line:-1,phase:-1,stage:-1+place:37,coins:19,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:5,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:38,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:17,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,coins:18,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:38,coins:5,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,coins:14,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:39,coins:11,items:,str:4,speed:1,line:-1,phase:-1,stage:-1+place:39,coins:9,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:39,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,coins:18,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:39,coins:16,items:,str:2,speed:3,line:-1,phase:-1,stage:-1"
+    character_save = "place:32,state:alive,coins:11,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:10,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:2,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:14,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:33,state:alive,coins:0,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:34,state:alive,coins:18,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:17,state:alive,coins:20,items:,str:1,speed:1,line:-1,phase:-1,stage:-1+place:1,state:alive,coins:16,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:13,state:alive,coins:13,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:23,state:alive,coins:15,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:23,state:alive,coins:12,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:6,items:,str:1,speed:4,line:0,phase:0=char11=-1=0=37=none,stage:inprogress+place:37,state:alive,coins:0,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:17,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:12,items:,str:2,speed:2,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:19,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:5,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:17,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:18,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:5,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:14,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:11,items:,str:4,speed:1,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:9,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:18,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:16,items:,str:2,speed:3,line:-1,phase:-1,stage:-1"
     modified_people = get_current_characters(character_save)
 
     # checking if someone finished quest or is final location

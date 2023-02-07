@@ -1,3 +1,9 @@
-1
+4
 0=Prodávání šňupce
 0=char12=36=0=37=none(0=char11=37=1=0=none,0=char12=37=1=32=none,0=char13=37=1=33=none()())(2=char14=-1=9=?=12;bring()())
+1=Kill
+7=char27=-1=9=?=30;kill()()
+2=Them
+7=char28=-1=8=?=31;kill()()
+3=All
+7=char29=-1=-1=?=31;kill()()

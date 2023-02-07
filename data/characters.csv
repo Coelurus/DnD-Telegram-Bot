@@ -1,28 +1,33 @@
 ID,name_cz,fraction_ID,quest_line_ID,spawn_street_ID,end_street_ID,speed,strength,coins
-0,kočka,6,-1,32,-1,2,3,11
-1,Strážník Poleno,0,-1,35,14,4,1,10
-2,Desátník Krabička,0,-1,35,35,2,3,2
-3,Desátník Výrosť,0,-1,35,35,1,3,14
-4,Strážný Cílek,0,-1,33,33,2,3,0
-5,Strážný Přívaz,0,-1,34,34,2,3,18
-6,Poslíček Míša,5,-1,17,-1,1,1,20
-7,Rybář Prla,5,-1,1,2,3,1,16
-8,Doktor Krut,5,-1,13,-1,4,1,13
-9,Učedník Tarz,4,-1,23,23,2,3,15
-10,Učednice Potichá,4,-1,23,23,2,1,12
-11,Hrubián Mára,1,-1,37,37,4,1,6
-12,Hrubiánka Elza,1,-1,37,37,4,1,0
-13,Vypočítavej Eda,1,-1,37,37,3,2,17
-14,Děravej Káral,1,-1,37,37,2,2,12
-15,Všivej Sardinka,1,-1,37,37,4,1,19
-16,Tichý Víťa,2,-1,38,38,2,1,5
-17,Pečlivý Alumin,2,-1,38,38,4,1,18
-18,Prostřelený Ucho,2,-1,38,38,4,1,17
-19,Levák Gabriel,2,-1,38,38,1,3,18
-20,Pronikavý Lobek,2,-1,38,38,4,1,5
-21,Pravdou Zaslepený,3,-1,39,39,2,3,14
-22,Lžizřícise,3,-1,39,39,1,4,11
-23,Kněz Jeho Levého malíčku,3,-1,39,39,3,2,9
-24,Zpěvem Vedený,3,-1,39,39,4,1,18
-25,Nejvýše hledící,3,-1,39,39,3,1,18
-26,Biskup Třetího Úsvitu,3,-1,39,39,3,2,16
+0,kočka,6,-1,32,-1,4,1,6
+1,Strážník Poleno,0,-1,35,14,1,1,13
+2,Desátník Krabička,0,-1,35,35,4,1,19
+3,Desátník Výrosť,0,-1,35,35,3,2,15
+4,Strážný Cílek,0,-1,33,33,1,2,1
+5,Strážný Přívaz,0,-1,34,34,1,1,16
+6,Poslíček Míša,5,-1,17,-1,4,1,4
+7,Rybář Prla,5,-1,1,2,3,1,7
+8,Doktor Krut,5,-1,13,-1,2,2,18
+9,Učedník Tarz,4,-1,23,23,3,1,12
+10,Učednice Potichá,4,-1,23,23,3,2,16
+11,Hrubián Mára,1,-1,37,37,4,1,9
+12,Hrubiánka Elza,1,-1,37,37,3,2,4
+13,Vypočítavej Eda,1,-1,37,37,2,2,15
+14,Děravej Káral,1,-1,37,37,1,2,4
+15,Všivej Sardinka,1,-1,37,37,3,1,0
+16,Tichý Víťa,2,-1,38,38,4,1,13
+17,Pečlivý Alumin,2,-1,38,38,3,2,12
+18,Prostřelený Ucho,2,-1,38,38,1,3,19
+19,Levák Gabriel,2,-1,38,38,3,2,8
+20,Pronikavý Lobek,2,-1,38,38,2,3,8
+21,Pravdou Zaslepený,3,-1,39,39,2,3,4
+22,Lžizřícise,3,-1,39,39,2,2,0
+23,Kněz Jeho Levého malíčku,3,-1,39,39,1,1,0
+24,Zpěvem Vedený,3,-1,39,39,1,1,4
+25,Nejvýše hledící,3,-1,39,39,4,1,18
+26,Biskup Třetího Úsvitu,3,-1,39,39,3,1,9
+27,Jimmy Děravý Koleno,2,-1,7,7,3,2,5
+28,Pedro Wellington,2,-1,7,7,1,2,5
+29,Zesty Bergamot,2,-1,7,7,1,2,9
+30,Tewkesbury,1,-1,1,1,4,1,5
+31,Malý Rhompson,1,-1,1,1,4,1,19

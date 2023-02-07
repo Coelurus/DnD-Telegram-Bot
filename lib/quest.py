@@ -59,6 +59,7 @@ class ModifiedQuestPhase:
         if mod_where != "?":
             self.to_place_ID = int(mod_where)
             self.action = "none"
+            self.go_to = -1
 
         else:
             go_to_char_ID, action = mod_go_to.split(";")
@@ -67,6 +68,7 @@ class ModifiedQuestPhase:
             self.to_place_ID = characters.get_char_by_ID(
                 int(go_to_char_ID)).spawn_street_ID
             self.action = action
+            self.go_to = int(go_to_char_ID)
 
     def __repr__(self):
         phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
@@ -76,7 +78,10 @@ class ModifiedQuestPhase:
         return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item_by_ID(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
 
     def __str__(self):
-        return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}={self.to_place_ID}={self.action}"
+        if self.go_to == -1:
+            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}={self.to_place_ID}={self.action}"
+        else:
+            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}=?={self.go_to};{self.action}"
 
 
 def str_to_mqp(code_str: str) -> ModifiedQuestPhase:
