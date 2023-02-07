@@ -79,3 +79,66 @@ Zde můžou nastat 2 varianty:
     + Nic – parametr akce := “none“
     + Přiveď – parametr akce := “bring“
 + Momentálně nedotažená mechanika. Jak postava ví, kde se nachází někdo jiný? Pokud hledaná postava někam půjde, tak pro ostatní bude velmi těžké ji zastihnout.
+
+
+## Dynamicky generovaná data
+Jelikož se jedná o hru, tak chceme, abychom se jak my, tak ostatní postavy, mohli nějakým způsobem pohybovat po mapě a interagovat s ostatními. Abychom toho ale docílili, tak musíme vědět, kdo v každou chvíli je, proto je potřeba soubor (game_saves.txt), do kterého se bude průběžně ukládat, co se ve světě hry děje.
+
+Jelikož hru zprostředkovává bot na telegramu, tak by mohla nastat situace, kdy by hru chtělo hrát více uživatelů najednou. Pro každého z nich musí tedy existovat právě jedno uložení postupu. Který postup patří jakému uživateli se určí dle konkrétního ID chatu, které lze získat přes bota.
+Data k jedné hře tedy budou vždy uloženy ve dvou řádcích. Na prvním bude ID chatu a na druhém řetězec znaků obsahující veškeré potřebné informace, viz dále, jehož segmenty od sebe budou odděleny znakem _ (podtržítko).
+
+### Stav hráče
+Stav hráče je definován řetězcem znaků složených z více částí, jež jsou odděleny “,“ (čárkou).
++ Místo, kde se hráč nachází := “place:“ + ID místa
++ Počet peněz, jenž má := “coins:“ + počet peněz
++ Předměty := “items:“ + ID předmětů oddělené středníky (např.: “items:1;3“)
++ Síla := “str:“ + číselná hodnota síly hráče
++ Rychlost := “speed:“ + hodnota rychlosti
++ Vztah ke frakcím := “relations:“ + hodnoty(definovány stejně jako ve Frakcích) pro každou frakci oddělené ; (středníky). Hodnoty jsou ve stejném pořadí jako indexy frakcí.
++ Při spuštění nové hry se nastaví výchozí pozice na index 0 (U opilého poníka), počet peněz na 25, hráč je bez předmětů, jeho síla i rychlost je 2 a vztah se všemi frakcemi je 2.
+
+
+### Stavy úkolových linií
+Stavy jednotlivých linií v řetězci jsou opět rozděleny “,“ (čárkami). Stavy linií jsou uloženy postupně dle rostoucích indexů. 
+
+Jelikož je každý linie úkolů implementována jako binární strom, kdy jeden syn značí úspěch a druhý neúspěch, tak můžeme cestu do konkrétního uzlu stromu definovat jako posloupnost písmen F a S, kdy F znamená, že v daném bodě nastal neúspěch a máme se posunout na takového syna. Naopak S pak znamená úspěšné splnění mise. 
+
+Pokud je řetězec prázdný, znamená to, že je aktivní stále první fáze, tedy kořen stromu. 
+Naopak pokud linie dospěje svého konce, tak se řetězec přepíše na znak “E“, aby se již příště nemusel zbytečně procházet.
+
+
+### Stavy postav
+Stav každé z postav je v řetězci oddělen “+“ (plus) a jednotlivé části každého stavu “,“ (čárkou). Postavy jsou též řazeny dle indexu.
+
+Podobně jako u stavu hráče bude pro každou postavu definováno místo, počet peněz, předměty, které má momentálně u sebe, síla a rychlost. Vztahy pro postavy určeny nejsou, neboť se definují dle jejich příslušnosti k frakcím.
+
+Další důležitá vlastnost každé postavy je, jaký úkol zrovna plní, jež bude uloženo následovně:
++ Linie := “line:“ + ID úkolové linie, kterou plní
++ Fáze := “phase:“ + určená modifikovaná fáze, kterou právě plní, uložená ve stejném formátu, jako bylo definováno v Liniích úkolů pro fáze definované modifikátory.
+K tomu se váži možné stavy, ve kterých se tyto fáze nachází. 
++ Stav fáze := “stage:“ + konkrétní stav (viz níže)
++ Rozlišujeme 3 různé stavy:
+    + Fáze ještě nezačala = postava teprve musí dojít do výchozího místa (“tostart“)
+    + Fáze právě probíhá = postava se musí dostavit na určené místo (“inprogress“)
+    + Fáze právě skončila = postava se dostavila na určené místo a provede zadanou akci (“ended“)
+        + Ta by prakticky neměla nikdy nastat, neboť se rovnou vyhodnotí konec fáze a pokračuje se s druhou
++ Pokud postava žádný úkol neplní, tak bude za všemi klíčovými slovy a dvojtečkou -1 (úkolová část postavy pak bude vypadat následovně: “line:-1,phase:-1,stage:-1“)
+
+Další podstatnou vlastní každé postavy je, jaký je jeho zdravotní stav: “state:“ + konkrétní stav
++ Postava je plně při vědomí = “alive“
++ Postava je omráčená, ale žije = “stun“
++ Postava je mrtvá = “dead“
+
+### Rotace
+1.	Načtení z game save souboru
+2.	Zjištění hráčova stavu + výpis na GUI
+3.	Zadání akcí uživatelem
+4.	Reakce na dané akce
+5.	Zjištění dat o postavách
+6.	Kontrola, zda někdo z nich splnil úkol
+7.	Aktualizace stavu průběhu úkolů na základě dat od postav
+8.	Průchod nových dat úkolů 
+9.	Přiřazení fází postavám
+10.	Pohyb postav
+11.	Akce postav
+12.	Uložení stavu hráče a postav
