@@ -38,9 +38,44 @@ Mějme tedy strom, jehož každý vrchol sestává z fáze úkolu, ke které je 
 
 ##### Modifikátory
 Všechny modifikátory jsou reprezentovány řetězcem znaků. 
-+ Zde můžou nastat 2 varianty:
-    + Fáze je určena pro určitou postavu
-        + Modifikátor := “char“ + ID všech postav oddělené středníky
-    + Fáze je pro kohokoliv z určité frakce
-    	+ Modifikátor := “frac“ + ID určené frakce
-    + Momentálně nedotažená funkce. Tento způsob sice funguje, ale když mise probíhá a má ji zadaná určitá náhodná postava, tak může být v dalším kole přidělena jiné postavě, musí se tedy implementovat jakési sledování, že někdo danou fázi plní. Podobně se zadáním více určitých postav.
+
+###### Kdo
+Zde můžou nastat 2 varianty:
++ Fáze je určena pro určitou postavu
+    + Modifikátor := “char“ + ID všech postav oddělené středníky
++ Fáze je pro kohokoliv z určité frakce
+    + Modifikátor := “frac“ + ID určené frakce
++ Momentálně nedotažená funkce. Tento způsob sice funguje, ale když mise probíhá a má ji zadaná určitá náhodná postava, tak může být v dalším kole přidělena jiné postavě, musí se tedy implementovat jakési sledování, že někdo danou fázi plní. Podobně se zadáním více určitých postav.
+
+###### Odkud
++ Pokud je určené místo, kde musí fáze započít: 
+    + Modifikátor := ID místa
++ Pokud místo určeno není: 
+    + Modifikátor := “-1“
+
+###### Předmět
++ Pro určité fáze může být potřeba, aby u sebe postava, která jej vykonává, měla nějaký předmět. Ten jí bude do inventáře přidělen až se dostane na místo, kde jeho fáze začíná a když fázi splní, tak bude zase odebrán.
++ Pokud by mělo nastat, že stejný předmět bude potřeba pro více fází za sebou, tak stejně bude po každé fázi odebrán a poté přidán zpět.
++ Pokud by měla postava o přidělený předmět během mise přijít, tak je to bráno jako neúspěch.
++ Modifikátor := ID předmětu
++ Modifikátor := “-1“ (pokud není určen předmět)
+
+###### Kam
++ Pokud je přesně definováno místo, pak: 
+    + Modifikátor := ID cílového místa. 
++ Může však nastat situace, že výsledné místo není přesně známo anebo se průběžně mění. V tom případě bude:
+    + Modifikátor := “?“ a výsledné místo se určí dle typu fáze jiným modifikátorem.
+
+###### Jdi za
++ Pokud není pevně určeno výsledné ID místa, je možné, že je zapotřebí, aby postava došla za nějakou jinou. V tom případě: 
+    + Modifikátor := ID hledané postavy + “;“ + parametr akce. 
++ Pokud bude výsledné místo určeno jinak: 
+    + Modifikátor := “none“
++ Když postava zastihne jinou, tak existuje několik možností, co bude dělat dál.
+    + Mluv – parametr akce := „talk“, často používané jako spouštěč další fáze
+    + Zab – parametr akce := “kill“ (o porovnávání schopností více později)
+    + Omrač – parametr akce := “stun“
+    + Okraď – parametr akce := “rob“
+    + Nic – parametr akce := “none“
+    + Přiveď – parametr akce := “bring“
++ Momentálně nedotažená mechanika. Jak postava ví, kde se nachází někdo jiný? Pokud hledaná postava někam půjde, tak pro ostatní bude velmi těžké ji zastihnout.
