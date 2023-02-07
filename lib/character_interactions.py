@@ -15,7 +15,7 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
     attacker_bonus = 0
 
     # attackers speed or moment of surprise inflicts advantage for him
-    if attacker.speed > defender.speed + 1 or attacker_NPC.fraction_ID == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_NPC.fraction_ID] >= 2:
+    if attacker.speed > defender.speed + 1 or attacker_NPC.fraction_ID == defender_NPC.fraction_ID or how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 2:
         attacker_bonus = 1
 
     attacker_side: list[ModifiedNPC] = []
@@ -63,5 +63,36 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
         else:
             for char in attacker_side:
                 char.state = "stun"
+
+    return current_characters
+
+
+def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> ModifiedPeople:
+    people = read_people_from_file(r"data\characters.csv")
+    fractions = read_fractions_from_file(r"data\fractions.csv")
+    attacker_NPC = people.get_char_by_ID(attacker.ID)
+    defender_NPC = people.get_char_by_ID(defender.ID)
+
+    attacker_bonus = 0
+
+    if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
+        attacker_bonus += 1
+
+    attacker_speed = attacker.speed + attacker_bonus
+    defender_speed = 0 if defender.state != "alive" else defender.speed
+
+    if attacker_speed > defender_speed:
+        stolen_items = defender.items
+        defender.items = []
+        attacker.items += stolen_items
+
+    elif attacker_speed == defender_speed:
+        current_characters = fight(
+            attacker, defender, "stun", current_characters)
+
+    else:
+        defender.str += 1
+        current_characters = fight(
+            attacker, defender, "stun", current_characters)
 
     return current_characters

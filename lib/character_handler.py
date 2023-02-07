@@ -93,6 +93,11 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                     modified_characters = fight(
                         character, defender, current_phase.action, modified_characters)
 
+                elif current_phase.action == "rob":
+                    defender = modified_characters.get_NPC(current_phase.go_to)
+                    modified_characters = steal(
+                        character, defender, current_phase.action, modified_characters)
+
                 stage_failed = choice([True, False])
 
                 if stage_failed == True:
@@ -216,6 +221,43 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
             for char in attacker_side:
                 char.state = "stun"
                 print(char.ID, char.state)
+
+    return current_characters
+
+
+def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> ModifiedPeople:
+    people = read_people_from_file(r"data\characters.csv")
+    fractions = read_fractions_from_file(r"data\fractions.csv")
+    attacker_NPC = people.get_char_by_ID(attacker.ID)
+    defender_NPC = people.get_char_by_ID(defender.ID)
+
+    attacker_bonus = 0
+
+    if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
+        attacker_bonus += 1
+
+    attacker_speed = attacker.speed + attacker_bonus
+    defender_speed = 0 if defender.state != "alive" else defender.speed
+
+    if attacker_speed > defender_speed:
+        if action == "rob":
+            stolen_items = defender.items
+            defender.items = []
+            attacker.items += stolen_items
+        elif action == "plant":
+            # TODO plant only the quest item and not all
+            planted_items = attacker.items
+            attacker.items = []
+            defender.items += planted_items
+
+    elif attacker_speed == defender_speed:
+        current_characters = fight(
+            attacker, defender, "stun", current_characters)
+
+    else:
+        defender.str += 1
+        current_characters = fight(
+            attacker, defender, "stun", current_characters)
 
     return current_characters
 
