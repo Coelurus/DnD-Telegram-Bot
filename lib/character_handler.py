@@ -82,12 +82,18 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
 
             if character.stage == "tostart" and current_phase.from_place_ID == character.place:
                 character.stage = "inprogress"
+                print(character.ID, "is now working on", character.phase)
+
+            elif character.stage == "inprogress" and current_phase.go_to != -1 and modified_characters.get_NPC(current_phase.go_to).place == character.place:
+                character.stage = "ended"
+                print(character.ID, "just ended", character.phase)
 
             elif character.stage == "inprogress" and current_phase.to_place_ID == character.place:
                 character.stage = "ended"
+                print(character.ID, "just ended", character.phase)
 
             if character.stage == "ended":
-                stage_failed = None
+                stage_failed = False
 
                 if current_phase.action == "kill" or current_phase.action == "stun":
                     defender = modified_characters.get_NPC(current_phase.go_to)
@@ -100,17 +106,16 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                     modified_characters, stage_failed = steal(
                         character, defender, current_phase.action, modified_characters)
 
-                if stage_failed is not None:
-                    if stage_failed == True:
-                        lines_to_update[character.line] = "F"
-                        character.stage = "-1"
-                        character.line = -1
-                        character.phase = "-1"
-                    else:
-                        lines_to_update[character.line] = "S"
-                        character.stage = "-1"
-                        character.line = -1
-                        character.phase = "-1"
+                if stage_failed == True:
+                    lines_to_update[character.line] = "F"
+                    character.stage = "-1"
+                    character.line = -1
+                    character.phase = "-1"
+                else:
+                    lines_to_update[character.line] = "S"
+                    character.stage = "-1"
+                    character.line = -1
+                    character.phase = "-1"
 
     return modified_characters, lines_to_update
 
@@ -122,15 +127,26 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     characters_definition = read_people_from_file("data\characters.csv")
     map = read_map_from_file("data\streets.csv")
     for character in modified_characters.list:
+        # Character has a quest to follow
         if character.phase != "-1":
             current_phase = str_to_mqp(character.phase)
-            if character.stage == "tostart":
-                final_point = current_phase.from_place_ID
+            # Final place is fixed
+            if current_phase.go_to == -1:
+                if character.stage == "tostart":
+                    final_point = current_phase.from_place_ID
+                else:
+                    final_point = current_phase.to_place_ID
+            # In case character should go to someone else, place is dynamicaly changed each turn
             else:
-                final_point = current_phase.to_place_ID
+                final_point = modified_characters.get_NPC(
+                    current_phase.go_to).place
+
+        # Character has designated end location
         elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
             final_point = characters_definition.get_char_by_ID(
                 character.ID).end_street_ID
+
+        # Character just moves on random
         else:
             final_point = choice(map.get_street_by_ID(
                 character.place).connections + [character.place])
