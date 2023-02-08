@@ -1,7 +1,7 @@
 from character import read_people_from_file, read_fractions_from_file, NPC
 from quest import str_to_mqp
-from map import read_map_from_file
-from items import read_items_from_file
+from map import read_map_from_file, Street
+from items import read_items_from_file, ItemsCollection
 from random import choice
 
 # could be improved by implemented by implemnting inheritance somehow, I guess
@@ -38,7 +38,8 @@ class ModifiedPeople:
             item_ID = str_to_mqp(character.phase).item_ID
             # Modifier -1 stands for nothing but any other whole number is index of an item
             if item_ID != -1:
-                character.items.append(item_ID)
+                if item_ID not in character.items:
+                    character.items.append(item_ID)
         self.list.append(character)
 
     def __repr__(self) -> str:
@@ -49,7 +50,7 @@ class ModifiedPeople:
         for NPC in self.list:
             items = ",".join([str(x) for x in NPC.items])
             list_to_link.append(
-                f"place:{NPC.place.ID},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
+                f"place:{NPC.place},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
         return "+".join(list_to_link)
 
     def get_NPC(self, ID: int) -> ModifiedNPC:
@@ -187,10 +188,13 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                                       map.get_street_by_ID(final_point))
 
         if len(path) == 1:
-            next_place = path[0]
+            next_place = path[0].ID
         else:
             # Idx is 1 because first street in path is starting street
-            next_place = path[1]
+            next_place = path[1].ID
+
+        if isinstance(next_place, int) is not True:
+            print("ojojooo")
         character.place = next_place
 
     return modified_characters
@@ -201,6 +205,23 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
 
 def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_file(r"data\fractions.csv")) -> int:
     return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
+
+
+def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
+    items_collection = read_items_from_file("data\items.csv")
+    lists_of_items_IDs = [person.items for person in list_of_people]
+    all_items: list[int] = []
+    for list in lists_of_items_IDs:
+        for item in list:
+            all_items.append(item)
+
+    if type == "str":
+        return sum([items_collection.get_item_by_ID(
+            item_ID).strength_mod for item_ID in all_items])
+
+    elif type == "speed":
+        return sum([items_collection.get_item_by_ID(
+            item_ID).speed_mod for item_ID in all_items])
 
 
 def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople, attacker_bonus: int = 0) -> tuple[ModifiedPeople, bool]:
@@ -234,8 +255,13 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
     attacker_bonus += (len(attacker_side) - len(defender_side)) * 2
 
-    total_attack_power = sum([x.str for x in attacker_side]) + attacker_bonus
-    total_defend_power = sum([x.str for x in defender_side])
+    items_attacker_mod = get_items_attributes(attacker_side, "str")
+    items_defender_mod = get_items_attributes(defender_side, "str")
+
+    total_attack_power = sum([x.str for x in attacker_side]) + \
+        items_attacker_mod + attacker_bonus
+    total_defend_power = sum(
+        [x.str for x in defender_side]) + items_defender_mod
 
     dead_list: list[ModifiedNPC] = []
     stun_list: list[ModifiedNPC] = []
@@ -294,6 +320,9 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
     if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
         attacker_bonus += 1
+
+    items_attacker_mod = get_items_attributes([attacker], "speed")
+    items_defender_mod = get_items_attributes([defender], "speed")
 
     attacker_speed = attacker.speed + attacker_bonus
     defender_speed = 0 if defender.state != "alive" else defender.speed

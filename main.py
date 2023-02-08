@@ -10,8 +10,8 @@ if __name__ == "__main__":
     get_lib()
     from save import rotation
     print("======= LOGS =======")
-    for i in range(20):
-        print(str(i)+".")
+    for i in range(8):
+        print(str(i)+")")
         rotation()
         print("="*20)
 

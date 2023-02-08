@@ -40,9 +40,7 @@ class NPC:
         self.quest_line_ID = int(quest_line_ID)
         self.spawn_street_ID = int(spawn_street_ID)
         self.end_street_ID = int(end_street_ID)
-        # TODO dodatečně přidané items, takže dopsat i do ostatních metod? Asi?
         self.items = [int(x) for x in items]
-        # TODO dodatečné přidání coins, dopsat do metod a předělat characters.csv
         self.coins = int(coins)
         self.speed = speed
         self.strength = strentgh
@@ -54,7 +52,7 @@ class NPC:
         end = "not defined"
         if self.end_street_ID != -1:
             end = self.end_street_ID
-        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, does: {self.quest_line_ID}, is in fraction: {self.fraction_ID}"
+        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, does: {self.quest_line_ID}, is in fraction: {self.fraction_ID}, has items: {self.items}, has {self.coins} coins"
 
 
 class Society:
@@ -120,8 +118,9 @@ def read_fractions_from_file(path):
 
 if __name__ == "__main__":
     society = read_people_from_file(r"data\characters.csv")
+    print("========== Society ==========")
     print(society)
-    print(society.get_characters_by_fraction(2))
 
     fractions = read_fractions_from_file(r"data\fractions.csv")
+    print("========== Politics ==========")
     print(fractions)

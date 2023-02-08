@@ -43,4 +43,5 @@ def read_items_from_file(path):
 
 if __name__ == "__main__":
     items = read_items_from_file(r"data\items.csv")
-    print(items)
+    print(items.get_item_by_ID(3))
+    # print(items)

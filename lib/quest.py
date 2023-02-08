@@ -38,7 +38,7 @@ class ModifiedQuestPhase:
         self.quest_phase_ID = int(qp_ID)
         if mod_who[0:4] == "char":
             character_list = mod_who.lstrip("char").split(";")
-            # TODO odstranit random a přidat podmínku, jestli žije
+            # TODO add condition that only one character can do one phase + remove random
         else:
             fraction_ID = int(mod_who.lstrip("frac"))
             character_list = characters.get_characters_by_fraction(fraction_ID)
@@ -60,7 +60,6 @@ class ModifiedQuestPhase:
         else:
             go_to_char_ID, action = mod_go_to.split(";")
 
-            # TODO musí se najít aktuální pozice postavy - tzn. až se přidají saves
             self.to_place_ID = characters.get_char_by_ID(
                 int(go_to_char_ID)).spawn_street_ID
             self.action = action

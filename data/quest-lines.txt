@@ -8,4 +8,4 @@
 3=Zabte
 7=char29=-1=-1=?=31;kill()()
 4=Okraď a vrať
-9=char32=-1=7=?=33;plant()()
+9=char32=-1=7=?=33;plant(9=char34=-1=-1=?=33;rob()())(9=char34=-1=-1=?=32;rob()())
