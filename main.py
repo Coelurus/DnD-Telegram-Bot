@@ -9,9 +9,10 @@ def get_lib() -> None:
 if __name__ == "__main__":
     get_lib()
     from save import rotation
-    rotation()
+    print("======= LOGS =======")
+    for i in range(20):
+        print(str(i)+".")
+        rotation()
+        print("="*20)
 
     # TODO functional relative paths
-    # for now start from save.py file
-    pass
-    # oh lol just found not even that works. you have to run the save.py file but from DnD folder...

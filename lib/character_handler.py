@@ -1,6 +1,7 @@
 from character import read_people_from_file, read_fractions_from_file, NPC
 from quest import str_to_mqp
 from map import read_map_from_file
+from items import read_items_from_file
 from random import choice
 
 # could be improved by implemented by implemnting inheritance somehow, I guess
@@ -32,6 +33,12 @@ class ModifiedPeople:
         self.list: list[ModifiedNPC] = []
 
     def add_NPC(self, character: ModifiedNPC) -> None:
+        # When character has a quest, then there is a modifier for an item
+        if character.line != -1:
+            item_ID = str_to_mqp(character.phase).item_ID
+            # Modifier -1 stands for nothing but any other whole number is index of an item
+            if item_ID != -1:
+                character.items.append(item_ID)
         self.list.append(character)
 
     def __repr__(self) -> str:
@@ -79,33 +86,57 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
     for character in modified_characters.list:
         if character.phase != "-1":
             current_phase = str_to_mqp(character.phase)
+            # If there is a character who has a quest and is dead it is labeled
+            # as ended and afterwards will yield in failure of this phase
+            if character.state == "dead":
+                character.stage = "ended"
 
+            # Character gets to starting location
             if character.stage == "tostart" and current_phase.from_place_ID == character.place:
                 character.stage = "inprogress"
                 print(character.ID, "is now working on", character.phase)
 
+            # Character whose phases is dynamically generated got in the location with his target
             elif character.stage == "inprogress" and current_phase.go_to != -1 and modified_characters.get_NPC(current_phase.go_to).place == character.place:
                 character.stage = "ended"
                 print(character.ID, "just ended", character.phase)
 
+            # Character got in the given fixed location
             elif character.stage == "inprogress" and current_phase.to_place_ID == character.place:
                 character.stage = "ended"
                 print(character.ID, "just ended", character.phase)
 
+            # Resolving additional actions performed by characters
             if character.stage == "ended":
-                stage_failed = False
+                if character.state != "dead":
+                    stage_failed = False
+                    if current_phase.action == "kill" or current_phase.action == "stun":
+                        defender = modified_characters.get_NPC(
+                            current_phase.go_to)
+                        # So characters can not kill already dead characters
+                        if defender.state == "dead":
+                            print(defender.ID, "is already dead")
+                        elif defender.state == "stun":
+                            if current_phase.action == "kill":
+                                defender.state = "dead"
+                                print(defender.ID, "was stunned and now is dead")
+                            elif current_phase.action == "stun":
+                                print(defender.ID, "is already stunned")
+                        else:
+                            modified_characters, stage_failed = fight(
+                                character, defender, current_phase.action, modified_characters)
 
-                if current_phase.action == "kill" or current_phase.action == "stun":
-                    defender = modified_characters.get_NPC(current_phase.go_to)
-                    modified_characters, stage_failed = fight(
-                        character, defender, current_phase.action, modified_characters)
+                    elif current_phase.action == "rob" or current_phase.action == "plant":
+                        defender = modified_characters.get_NPC(
+                            current_phase.go_to)
+                        modified_characters, stage_failed = steal(
+                            character, defender, current_phase.action, modified_characters)
 
-                elif current_phase.action == "rob" or current_phase.action == "plant":
-                    defender = modified_characters.get_NPC(
-                        current_phase.go_to)
-                    modified_characters, stage_failed = steal(
-                        character, defender, current_phase.action, modified_characters)
+                # Dead character automatically yields in failure
+                else:
+                    stage_failed = True
 
+                # Setting characters to be able to recieve new quests
                 if stage_failed == True:
                     lines_to_update[character.line] = "F"
                     character.stage = "-1"
@@ -172,13 +203,12 @@ def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_
     return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
 
 
-def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
+def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople, attacker_bonus: int = 0) -> tuple[ModifiedPeople, bool]:
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
     attacker_NPC = people.get_char_by_ID(attacker.ID)
     defender_NPC = people.get_char_by_ID(defender.ID)
 
-    attacker_bonus = 0
     phase_failed = False
 
     # attackers speed or moment of surprise inflicts advantage for him
@@ -207,35 +237,48 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
     total_attack_power = sum([x.str for x in attacker_side]) + attacker_bonus
     total_defend_power = sum([x.str for x in defender_side])
 
+    dead_list: list[ModifiedNPC] = []
+    stun_list: list[ModifiedNPC] = []
+
     if total_attack_power > total_defend_power+1:
         if action == "kill":
             for char in defender_side:
                 char.state = "dead"
-                print(char.ID, char.state)
-        else:
+                dead_list.append(char)
+        elif action == "stun":
             for char in defender_side:
                 char.state = "stun"
-                print(char.ID, char.state)
+                stun_list.append(char)
 
     elif total_attack_power > total_defend_power:
         for char in defender_side:
             char.state = "stun"
-            print(char.ID, char.state)
+            stun_list.append(char)
 
     elif total_attack_power == total_defend_power:
         for char in defender_side + attacker_side:
             char.state = "stun"
-            print(char.ID, char.state)
+            stun_list.append(char)
 
     elif total_attack_power < total_defend_power:
         if action == "kill":
             for char in attacker_side:
                 char.state = "dead"
-                print(char.ID, char.state)
+                dead_list.append(char)
         else:
             for char in attacker_side:
                 char.state = "stun"
-                print(char.ID, char.state)
+                stun_list.append(char)
+
+    for char in dead_list:
+        char.stage = "ended"
+
+    if len(dead_list) > 0:
+        print(", ".join([str(char.ID)
+              for char in dead_list]), "fought and died")
+    if len(stun_list) > 0:
+        print(", ".join([str(char.ID)
+                         for char in stun_list]), "fought and got stunned")
 
     return current_characters, phase_failed
 
@@ -280,9 +323,8 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
     else:
         print(attacker_NPC.name_cz, "failed", action)
-        defender.str += 1
         current_characters, _ = fight(
-            attacker, defender, "stun", current_characters)
+            attacker, defender, "stun", current_characters, -1)
 
     return current_characters, phase_failed
 
