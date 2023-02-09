@@ -30,6 +30,15 @@ class Player:
 
         self.place_ID = options[idx].ID
 
+    def move_possibilities(self, map=read_map_from_file("data\streets.csv")) -> list[Street]:
+        current_street = map.get_street_by_ID(
+            self.place_ID)
+        connected_streets = current_street.get_connected_streets()
+        options = [current_street]
+        for possible_street in connected_streets:
+            options.append(map.get_street_by_ID(possible_street))
+        return options
+
 
 if __name__ == "__main__":
     map = read_map_from_file("data\streets.csv")

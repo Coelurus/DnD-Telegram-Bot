@@ -5,9 +5,13 @@ import csv
 class Map:
     def __init__(self) -> None:
         self.streets: list[Street] = []
+        # Since player defines place where he wanna move,
+        # there is need to find ID quickly
+        self.name_cz_to_ID: list[str, int] = dict()
 
     def add_street(self, street: Street) -> None:
         self.streets.append(street)
+        self.name_cz_to_ID[street.name_cz] = street.ID
         # TODO unordered csv file
 
     def print_streets_and_connections(self) -> None:
