@@ -19,7 +19,7 @@ ID,name_cz,connected_ID,description_cz,possibilities,access
 17,Obludná,12;13;18;22,"Obludná ulice je lemovaná domy, jejichž zdi vykazují známky stárnutí a střechy se prohýbají.",,free
 18,Zakopaná,17;19,"Zakopaná ulice je ponurá a zamlžená ulice, zahalená tmou a plná nevyzpytatelného šepotu.",,free
 19,Smečky,34;18;13;10,"Smečky jsou ulicí plnou domů, jejichž klid je ideálním místem k odpočinku a relaxaci.",,free
-20,Rajská,33;14;25,"Rajská je ulice lemovaná cihlovými domy, z jejichž komínů se line vůně dřevěného kouře.",,free
+20,Rajská,33;14;25;0,"Rajská je ulice lemovaná cihlovými domy, z jejichž komínů se line vůně dřevěného kouře.",,free
 21,Bulvár spásy,20;25;26;27;16,Bulvár spásy je ulice plná úhledných domů s čistě zametenými prahy a vyleštěnými okny.,,free
 22,Vznešená třída,34;17;16,"Vznešená třída je krásná alej s křišťálově lesklou dlažbou, obklopená čistě bílými budovami.",,free
 23,Kořenová,29;16,Kořenová ulice je plná skromných domů s pevně zavřenými okny a dveřmi.,,free

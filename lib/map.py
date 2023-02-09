@@ -23,7 +23,7 @@ class Map:
         STREET = 0
         DEPTH = 1
         BFS_combined = list(zip(BFS_streets, BFS_depths))
-        while BFS_combined[-1][STREET] != to_street:
+        while BFS_combined[-1][STREET].ID != to_street.ID:
             BFS_combined.pop()
 
         current_street, distance_to_start = BFS_combined.pop()

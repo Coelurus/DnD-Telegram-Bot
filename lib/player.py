@@ -14,7 +14,7 @@ class Player:
         self.speed = int(speed)
         self.relations = [int(x) for x in relations]
 
-    def move(self, map: Map):
+    def move(self, map=read_map_from_file("data\streets.csv")):
         connected_streets = map.get_street_by_ID(
             self.place_ID).get_connected_streets()
 
