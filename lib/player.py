@@ -1,5 +1,6 @@
 from map import read_map_from_file, Map, Street
 from gui import *
+from character_handler import ModifiedPeople
 
 
 class Player:
@@ -38,6 +39,14 @@ class Player:
         for possible_street in connected_streets:
             options.append(map.get_street_by_ID(possible_street))
         return options
+
+    def get_actions(self, current_characters: ModifiedPeople, map=read_map_from_file("data\streets.csv")):
+        people_here = current_characters.get_people_in_place(self.place_ID)
+        possible_actions_str = map.get_street_by_ID(self.place_ID).possibilites
+        action_dict = {}
+        for action in possible_actions_str.split(";"):
+            key, val = action.split(":")
+            action_dict[key] = val
 
 
 if __name__ == "__main__":

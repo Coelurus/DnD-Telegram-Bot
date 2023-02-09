@@ -19,7 +19,7 @@ class Item:
 
 class ItemsCollection:
     def __init__(self) -> None:
-        self.list = []
+        self.list: list[Item] = []
 
     def __repr__(self):
         return "\n".join([str(x) for x in self.list])
@@ -29,6 +29,13 @@ class ItemsCollection:
 
     def get_item_by_ID(self, ID: int) -> Item:
         return self.list[ID]
+
+    def items_by_type(self, type: str) -> list[Item]:
+        type_list = []
+        for item in self.list:
+            if item.type == type:
+                type_list.append(item)
+        return type_list
 
 
 def read_items_from_file(path):

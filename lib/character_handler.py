@@ -56,6 +56,13 @@ class ModifiedPeople:
     def get_NPC(self, ID: int) -> ModifiedNPC:
         return self.list[ID]
 
+    def get_people_in_place(self, place_ID: int) -> list[ModifiedNPC]:
+        found_people = []
+        for char in self.list:
+            if char.place == place_ID:
+                found_people.append(char)
+        return found_people
+
 
 def get_current_characters(old_character_save: str) -> ModifiedPeople:
     """
