@@ -190,9 +190,8 @@ def generate_new_save(chat_ID) -> None:
     rewrite_save_file(chat_ID, first_save_line)
 
 
-def rotation():
+def rotation(chat_ID=get_chat_ID()):
  # 1
-    chat_ID = get_chat_ID()
     current_save = read_current_save(chat_ID)
     if current_save != "NEW_GAME":
         current_player_str, current_quests_str, current_characters_str = current_save.split(

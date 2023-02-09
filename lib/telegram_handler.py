@@ -7,7 +7,7 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler,
 )
-from save import generate_new_save
+import save
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -40,12 +40,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("new")
     chat_ID = update.callback_query.message.chat.id
-    generate_new_save(chat_ID)
+    save.generate_new_save(chat_ID)
 
 
-async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_ID = update.callback_query.message.chat.id
+async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     print("old")
+    query = update.callback_query
+    chat_ID = query.message.chat.id
+    current_save = save.read_current_save(chat_ID)
+    if current_save == "NEW_GAME":
+        await query.edit_message_text(text="Škoda...\n...tak třeba jindy")
+        return ConversationHandler.END
+    else:
+        save.rotation(chat_ID)
 
 
 def main() -> None:
