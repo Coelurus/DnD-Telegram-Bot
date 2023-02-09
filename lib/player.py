@@ -1,3 +1,7 @@
+from map import read_map_from_file, Map, Street
+from gui import *
+
+
 class Player:
     def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str, relations: list[str]) -> None:
         self.place_ID = int(place_ID)
@@ -10,5 +14,25 @@ class Player:
         self.speed = int(speed)
         self.relations = [int(x) for x in relations]
 
-    def move(self):
-        self.place_ID += 1
+    def move(self, map: Map):
+        connected_streets = map.get_street_by_ID(
+            self.place_ID).get_connected_streets()
+
+        output_str = ""
+        output_str += "You can go to: \n"
+        options: list[Street] = []
+        for possible_street in connected_streets:
+            output_str += map.get_street_by_ID(possible_street).name_cz + "\n"
+            options.append(map.get_street_by_ID(possible_street))
+
+        output(output_str)
+        idx = choose([x.name_cz for x in options])
+
+        self.place_ID = options[idx].ID
+
+
+if __name__ == "__main__":
+    map = read_map_from_file("data\streets.csv")
+    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2])
+    for _ in range(10):
+        spawn_player.move(map)
