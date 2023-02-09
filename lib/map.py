@@ -4,7 +4,7 @@ import csv
 
 class Map:
     def __init__(self) -> None:
-        self.streets = []
+        self.streets: list[Street] = []
 
     def add_street(self, street: Street) -> None:
         self.streets.append(street)
@@ -77,13 +77,16 @@ class Map:
 class Street:
     """Haha"""
 
-    def __init__(self, ID: str, name_cz: str, connections: str) -> None:
+    def __init__(self, ID: str, name_cz: str, connections: str, description_cz: str, possibilites: str, access: str) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.connections = [int(x) for x in connections.split(";")]
+        self.description_cz = description_cz
+        self.possibilites = possibilites
+        self.access = access
 
     def to_str(self):
-        return f"ID[{self.ID}] - {self.name_cz} is connected to: {self.connections}"
+        return f"ID[{self.ID}] - {self.name_cz} is connected to: {self.connections}. There is: {self.possibilites}. And access here is: {self.access}. Description be like: {self.description_cz}"
 
     def get_connected_streets(self) -> list[int]:
         return self.connections
@@ -94,21 +97,26 @@ class Street:
 
 def read_map_from_file(path: str) -> Map:
     csv_file = open(path, newline="", encoding="utf-8")
-    reader = csv.DictReader(csv_file, delimiter=",")
+    reader = csv.DictReader(csv_file, delimiter=",", quotechar='"')
 
     map = Map()
     for row in reader:
-        map.add_street(Street(row["ID"], row["name_cz"], row["connected_ID"]))
+        map.add_street(Street(row["ID"], row["name_cz"],
+                       row["connected_ID"], row["description_cz"], row["possibilities"], row["access"]))
     return map
 
 
 if __name__ == "__main__":
     map = read_map_from_file("data\streets.csv")
 
-    # map.print_streets_and_connections()
-    streetList, depth = map.BFS(map.streets[37])
-    # for routeIdx in range(len(streetList)):
-    #    print(depth[routeIdx], streetList[routeIdx].get_name_cz())
+    map.print_streets_and_connections()
 
-    for i in map.find_shortest_path(streetList, depth, map.streets[36]):
-        print(i.get_name_cz())
+    for place in map.streets:
+        print(place.to_str())
+
+        # streetList, depth = map.BFS(map.streets[37])
+        # for routeIdx in range(len(streetList)):
+        #    print(depth[routeIdx], streetList[routeIdx].get_name_cz())
+
+        # for i in map.find_shortest_path(streetList, depth, map.streets[36]):
+        #    print(i.get_name_cz())
