@@ -109,11 +109,12 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function that offers player choice of places where he can move."""
-    current_player = context.user_data["player"]
+    current_player: player.Player = context.user_data["player"]
 
-    move_options = current_player.move_possibilities()
+    move_options, current_street = current_player.move_possibilities()
 
-    reply_keyboard = [[x.name_cz] for x in move_options]
+    reply_keyboard = [[current_street.name_cz + " (zůstat a přeskočit kolo)"]
+                      ] + [[x.name_cz] for x in move_options] + [["Zpět do menu"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     await update.message.reply_text("Do jaké ulice se chceš přesunout?", reply_markup=markup)
@@ -125,11 +126,14 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
     town_map: map.Map = context.user_data["map"]
     current_player: player.Player = context.user_data["player"]
-    new_street_ID = town_map.name_cz_to_ID[update.message.text]
+    street_name = update.message.text.split(" (")[0]
+    new_street_ID = town_map.name_cz_to_ID[street_name]
     current_player.place_ID = new_street_ID
 
-    await update.message.reply_text(town_map.get_street_by_ID(new_street_ID).description_cz)
-
+    if len(street_name) == len(update.message.text):
+        await update.message.reply_text(town_map.get_street_by_ID(new_street_ID).description_cz)
+    else:
+        await update.message.reply_text("Svět se hnul, ale tys zůstal na místě.")
     return await basic_window(update)
 
 
@@ -166,34 +170,31 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         people_here, society)
 
     context.user_data["char_ID_to_relation"] = char_ID_to_relation
-    context.user_data["people_here"] = people_here
 
-    reply_keyboard = [
-        ["Mluvit s člověkem"],
-    ]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
-    return "choose"
+    reply_keyboard = []
+    if len(action_dict) > 0:
+        context.user_data["action_dict"] = action_dict
+        reply_keyboard.append(["Nakoupit v obchodě"])
+    if len(people_here) > 0:
+        context.user_data["people_here"] = people_here
+        reply_keyboard.append(["Mluvit s člověkem"])
 
-
-async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    current_player: player.Player = context.user_data["player"]
-    char_ID_to_relation = context.user_data["char_ID_to_relation"]
-    society: character.Society = context.user_data["people"]
-    char_relation = char_ID_to_relation[society.name_cz_to_ID[
-        update.message.text]]
-
-    await update.message.reply_text(f"{update.message.text} k tobě má vztah na úrovni {char_relation}")
-
-    return await basic_window(update)
+    if len(reply_keyboard) > 0:
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
+        return "choose_action"
+    else:
+        await update.message.reply_text("Bohužel, zrovna tady na tebe žádné dobrodružství nečeká.")
+        return await basic_window(update)
 
 
 async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function summons window all characters present in the same place as player."""
     people_list = context.user_data["people_here"]
     society = context.user_data["people"]
     if len(people_list) != 0:
         reply_keyboard = [
-            [person.get_name_cz(society)] for person in people_list]
+            [person.get_name_cz(society)] for person in people_list] + [["Zpět do menu"]]
         print("aaa", reply_keyboard)
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
@@ -205,7 +206,53 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await basic_window(update)
 
 
-async def basic_window(update: Update) -> str:
+async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start interaction with chosen NPC"""
+    current_player: player.Player = context.user_data["player"]
+    char_ID_to_relation = context.user_data["char_ID_to_relation"]
+    society: character.Society = context.user_data["people"]
+    char_relation = char_ID_to_relation[society.name_cz_to_ID[
+        update.message.text]]
+
+    await update.message.reply_text(f"{update.message.text} k tobě má vztah na úrovni {char_relation}")
+
+    return await basic_window(update)
+
+
+async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function summons window where with options of buyable items"""
+    items_colection: items.ItemsCollection = context.user_data["items"]
+    action_dict: dict[str, str] = context.user_data["action_dict"]
+    type = action_dict["shop"]
+    items_to_sell = items_colection.items_by_type(type)
+
+    reply_keyboard = [
+        [item.name_cz + " (" + str(item.price) + ")"] for item in items_to_sell]
+    reply_keyboard.append(["Zpět do menu"])
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Co bys sis rád koupil?", reply_markup=markup)
+    return "buy_item"
+
+
+async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function to check if player can afford the item ho chose and following adding this item into his inventory"""
+    current_player: player.Player = context.user_data["player"]
+    items_col: items.ItemsCollection = context.user_data["items"]
+    # Get rid of the price tag
+    chosen_item_name = update.message.text.split(" (")[0]
+    item_ID = items_col.name_cz_to_ID[chosen_item_name]
+    item = items_col.get_item_by_ID(item_ID)
+    if item.price > current_player.coins:
+        await update.message.reply_text("Předmět je na tebe bohužel moc drahý")
+    else:
+        current_player.coins -= item.price
+        current_player.items.append(item_ID)
+        await update.message.reply_text(f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak ho najdeš v inventáři.")
+
+    return await basic_window(update)
+
+
+async def basic_window(update: Update, context=None) -> str:
     """Function creates basic menu with choices for player about what he wants to do next"""
     reply_keyboard = [
         ["Provést akci zde"],
@@ -252,16 +299,32 @@ def main() -> None:
             ],
             "character_move": [
                 MessageHandler(
+                    filters.Regex("Zpět"), basic_window
+                ),
+                MessageHandler(
                     filters.TEXT, change_location
                 )
             ],
             "person_to_talk": [
                 MessageHandler(
+                    filters.Regex("Zpět"), basic_window
+                ),
+                MessageHandler(
                     filters.TEXT, talk_to_person
                 )
-            ], "choose": [
+            ], "choose_action": [
                 MessageHandler(
-                    filters.TEXT, choose_person
+                    filters.Regex("Mluvit"), choose_person
+                ),
+                MessageHandler(
+                    filters.Regex("Nakoupit"), open_shop
+                )
+            ], "buy_item": [
+                MessageHandler(
+                    filters.Regex("Zpět"), basic_window
+                ),
+                MessageHandler(
+                    filters.TEXT, buy_item
                 )
             ]
 

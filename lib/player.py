@@ -32,14 +32,14 @@ class Player:
 
         self.place_ID = options[idx].ID
 
-    def move_possibilities(self, map=read_map_from_file("data\streets.csv")) -> list[Street]:
+    def move_possibilities(self, map=read_map_from_file("data\streets.csv")) -> tuple[list[Street], Street]:
         current_street = map.get_street_by_ID(
             self.place_ID)
         connected_streets = current_street.get_connected_streets()
-        options = [current_street]
+        options = []
         for possible_street in connected_streets:
             options.append(map.get_street_by_ID(possible_street))
-        return options
+        return options, current_street
 
     def get_actions(self, current_characters: ModifiedPeople, map=read_map_from_file("data\streets.csv")) -> tuple[dict[str, str], list[ModifiedNPC]]:
         people_here = current_characters.get_people_in_place(self.place_ID)

@@ -20,12 +20,14 @@ class Item:
 class ItemsCollection:
     def __init__(self) -> None:
         self.list: list[Item] = []
+        self.name_cz_to_ID: dict[str, int] = dict()
 
     def __repr__(self):
         return "\n".join([str(x) for x in self.list])
 
     def add_item(self, item: Item):
         self.list.append(item)
+        self.name_cz_to_ID[item.name_cz] = item.ID
 
     def get_item_by_ID(self, ID: int) -> Item:
         return self.list[ID]

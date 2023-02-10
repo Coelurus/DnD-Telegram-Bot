@@ -13,7 +13,7 @@ ID,name_cz,connected_ID,description_cz,possibilities,access
 11,Třída vykoupení,33;5;14;15,"Třída vykoupení je ulice s velkolepou architekturou a širokými chodníky, lemovaná luxusními obchody.",,free
 12,Ostrá,13;17;9;8;7;35,"Ostrá ulice je temnou a úzkou pasáží, zarostlou liánami, jež lemují rozpadající se zdi.",,free
 13,Ezoterická,10;19;12;17,Ezoterická ulice je rozmarná ulice plná pestrobarevně malovaných fasád a s  podivným zápachem magie ve vzduchu.,"shop:misc",free
-14,Cedrová,11;20,"Cedrová ulice je plná domů obložených cedrovým dřevem, jejichž verandy a balkony poskytují úkryt před zapadjícím sluncem.",,free
+14,Cedrová,11;20,"Cedrová ulice je plná domů obložených cedrovým dřevem, jejichž verandy a balkony poskytují úkryt před zapadajícím sluncem.",,free
 15,Náměstí Páně,11;6;7;16;25;39,"Náměstí páně je velké otevřené náměstí obklopené prodejci nejrůznorodějších produktů, ručně vyráběného zboží a mnoha dalšího.",,free
 16,Bílý trh,15;22;23;27,"Bílý trh je rušná oblast plná prodejců nejrůznějšího zboží, od ovoce a zeleniny až po exotické koření a cetky. Skutečná tvář trhu se však skrývá v jeho špinavém podhoubí, kde prodejci obchodují s kradeným zbožím, nelegálním zbožím a dalším ne zrovna čestným zbožím.","shop:drugs",free
 17,Obludná,12;13;18;22,"Obludná ulice je lemovaná domy, jejichž zdi vykazují známky stárnutí a střechy se prohýbají.",,free
