@@ -35,7 +35,10 @@ def get_current_player(previous_save: str) -> Player:
         key, val = part.split(":")
         parts_dict[key] = val
 
-    return Player(parts_dict["place"], parts_dict["coins"], parts_dict["items"].split(";"), parts_dict["str"], parts_dict["speed"], parts_dict["relations"].split(";"))
+    return Player(parts_dict["place"], parts_dict["coins"], parts_dict["items"].split(";"),
+                  parts_dict["str"], parts_dict["speed"],
+                  parts_dict["relations"].split(";"), parts_dict["fraction"],
+                  parts_dict["state"], parts_dict["duration"])
 
 
 def player_save_generator(player: Player) -> str:
@@ -44,7 +47,16 @@ def player_save_generator(player: Player) -> str:
     """
     items_str = ";".join([str(x) for x in player.items])
     relations_str = ";".join([str(x) for x in player.relations])
-    return f"place:{player.place_ID},coins:{player.coins},items:{items_str},str:{player.strength},speed:{player.speed},relations:{relations_str}"
+
+    if player.state == "stun":
+        player.duration["stun"] -= 1
+        if player.duration["stun"] == 0:
+            player.duration.pop("stun")
+            player.state = "alive"
+    duration = ";".join([key + "/" + str(player.duration[key])
+                        for key in player.duration])
+
+    return f"place:{player.place_ID},coins:{player.coins},items:{items_str},str:{player.strength},speed:{player.speed},relations:{relations_str},fraction:{player.fraction_ID},state:{player.state},duration:{duration}"
 
 
 def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
@@ -175,7 +187,7 @@ def rewrite_save_file(change_line_ID: int, new_save_str: str) -> None:
 def generate_new_save(chat_ID) -> None:
     """Generating whole new save"""
     # Player introduce - set his starting position and other stuff
-    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2])
+    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4)
     new_player_save = player_save_generator(spawn_player)
 
     # Start quest lines

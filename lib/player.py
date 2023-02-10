@@ -5,7 +5,7 @@ from character import Society
 
 
 class Player:
-    def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str, relations: list[str]) -> None:
+    def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str, relations: list[str], fraction_ID: str = "4", state: str = "alive", duration: str = "") -> None:
         self.place_ID = int(place_ID)
         self.coins = int(coins)
         if items == [""]:
@@ -15,6 +15,14 @@ class Player:
         self.strength = int(strength)
         self.speed = int(speed)
         self.relations = [int(x) for x in relations]
+        self.fraction_ID = int(fraction_ID)
+        self.state = state
+
+        self.duration: dict[str, int] = dict()
+        if duration != "":
+            for effects in duration.split(";"):
+                key, val = effects.split("/")
+                self.duration[key] = int(val)
 
     def move(self, map=read_map_from_file("data\streets.csv")):
         connected_streets = map.get_street_by_ID(
@@ -61,6 +69,6 @@ class Player:
 
 if __name__ == "__main__":
     map = read_map_from_file("data\streets.csv")
-    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2])
+    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4, "alive")
     for _ in range(10):
         spawn_player.move(map)

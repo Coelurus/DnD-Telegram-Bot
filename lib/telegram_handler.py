@@ -105,9 +105,9 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
-    current_characters = context.user_data["current_people"]
-    current_quests_str = context.user_data["current_quests_str"]
-    current_player = context.user_data["player"]
+    current_characters: handler.ModifiedPeople = context.user_data["current_people"]
+    current_quests_str: str = context.user_data["current_quests_str"]
+    current_player: player.Player = context.user_data["player"]
 
     current_characters, lines_to_update = save.update_phases(
         current_characters)
@@ -126,6 +126,10 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     combined_save = f"{new_player_save}_{new_quests_str}_{current_characters_str}"
 
     save.rewrite_save_file(chat_ID, combined_save)
+
+    if current_player.state == "stun" and current_player.duration["stun"] >= 1:
+        print("ando nce more")
+        await rotation(chat_ID, context)
 
 
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -220,15 +224,17 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     current_player: player.Player = context.user_data["player"]
     char_ID_to_relation = context.user_data["char_ID_to_relation"]
     society: character.Society = context.user_data["people"]
-    char_relation = char_ID_to_relation[society.name_cz_to_ID[
-        update.message.text]]
+    char_ID = society.name_cz_to_ID[update.message.text]
+    context.user_data["char_ID"] = char_ID
 
+    char_relation = char_ID_to_relation[char_ID]
     context.user_data["char_relation"] = char_relation
     await update.message.reply_text(f"{update.message.text} k tobě má vztah na úrovni {char_relation}")
 
     reply_keyboard = [
         ["Zeptat se na cestu"],
-        ["Zeptat se na postavu"]
+        ["Zeptat se na postavu"],
+        ["Zaútočit na postavu"]
     ]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
@@ -344,7 +350,7 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_place_ID: int = context.user_data["player"].place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = current_chars.get_NPC(
-        society.name_cz_to_ID[update.message.text]).place
+        society.name_cz_to_ID[update.message.text]).place_ID
     path = town_map.shortest_path(start_place_ID, final_place_ID)
     revealed_path = path[1:num_of_streets+1]
 
@@ -354,6 +360,28 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + " a pak to už nějak najdeš")
     elif len(path)-2 <= len(revealed_path):
         await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + ". No a jsi tam.")
+
+    return await basic_window(update)
+
+
+async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    current_player: player.Player = context.user_data["player"]
+    society: character.Society = context.user_data["people"]
+    current_chars: handler.ModifiedPeople = context.user_data["current_people"]
+    defender_ID = context.user_data["char_ID"]
+    defender = current_chars.get_NPC(defender_ID)
+
+    current_characters, failed = handler.fight(
+        current_player, defender, "stun", current_chars)
+
+    context.user_data["current_people"] = current_characters
+    if failed:
+        await update.message.reply_text("Tak tohle se ti moc nepovedlo a bohužel na chvíli ztrácíš vědomí.")
+        current_player.state = "stun"
+        current_player.duration["stun"] = 2
+        await rotation(update.message.chat.id, context)
+    else:
+        await update.message.reply_text(f"Úspěšně se ti podařilo omráčit postavu. {society.get_char_by_ID(defender_ID).name_cz} tu teď leží v mrákotách.")
 
     return await basic_window(update)
 
@@ -435,8 +463,12 @@ def main() -> None:
                     filters.Regex("na cestu"), ask_for_path
                 ),
                 MessageHandler(
-                    filters.Regex("na postavu"), ask_for_person
+                    filters.Regex("na postavu") & ~(filters.Regex(
+                        "Zaútoč")), ask_for_person
                 ),
+                MessageHandler(
+                    filters.Regex("Zaútoč"), attack_on_person
+                )
 
             ],
             "look_for_path": [

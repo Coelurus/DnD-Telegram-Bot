@@ -10,9 +10,9 @@ from random import choice
 class ModifiedNPC:
     def __init__(self, ID: str, place: str, coins: str, items: str, str: str, speed: str, line: str, phase: str, stage: str, state: str) -> None:
         self.ID = int(ID)
-        self.place = int(place)
+        self.place_ID = int(place)
         self.coins = int(coins)
-        self.str = int(str)
+        self.strength = int(str)
         self.speed = int(speed)
         self.line = int(line)
         self.phase = phase
@@ -25,7 +25,7 @@ class ModifiedNPC:
         line_part = ""
         if self.phase != "-1":
             line_part = f"Does quest line {self.line} is at phase {self.phase}. Currently at: {self.stage}"
-        return f"NPC {characters_definition.people_list[self.ID]} currently at place {self.place} has {self.coins} coins. Str = {self.str}, speed = {self.speed}. Has items: {self.items}. " + line_part
+        return f"NPC {characters_definition.people_list[self.ID]} currently at place {self.place_ID} has {self.coins} coins. Str = {self.strength}, speed = {self.speed}. Has items: {self.items}. " + line_part
 
     def get_name_cz(self, society: Society):
         return society.get_char_by_ID(self.ID).name_cz
@@ -53,7 +53,7 @@ class ModifiedPeople:
         for NPC in self.list:
             items = ",".join([str(x) for x in NPC.items])
             list_to_link.append(
-                f"place:{NPC.place},coins:{NPC.coins},items:{items},str:{NPC.str},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
+                f"place:{NPC.place_ID},coins:{NPC.coins},items:{items},str:{NPC.strength},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
         return "+".join(list_to_link)
 
     def get_NPC(self, ID: int) -> ModifiedNPC:
@@ -62,7 +62,7 @@ class ModifiedPeople:
     def get_people_in_place(self, place_ID: int) -> list[ModifiedNPC]:
         found_people = []
         for char in self.list:
-            if char.place == place_ID:
+            if char.place_ID == place_ID:
                 found_people.append(char)
         return found_people
 
@@ -103,17 +103,17 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                 character.stage = "ended"
 
             # Character gets to starting location
-            if character.stage == "tostart" and current_phase.from_place_ID == character.place:
+            if character.stage == "tostart" and current_phase.from_place_ID == character.place_ID:
                 character.stage = "inprogress"
                 print(character.ID, "is now working on", character.phase)
 
             # Character whose phases is dynamically generated got in the location with his target
-            elif character.stage == "inprogress" and current_phase.go_to != -1 and modified_characters.get_NPC(current_phase.go_to).place == character.place:
+            elif character.stage == "inprogress" and current_phase.go_to != -1 and modified_characters.get_NPC(current_phase.go_to).place_ID == character.place_ID:
                 character.stage = "ended"
                 print(character.ID, "just ended", character.phase)
 
             # Character got in the given fixed location
-            elif character.stage == "inprogress" and current_phase.to_place_ID == character.place:
+            elif character.stage == "inprogress" and current_phase.to_place_ID == character.place_ID:
                 character.stage = "ended"
                 print(character.ID, "just ended", character.phase)
 
@@ -181,7 +181,7 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
             # In case character should go to someone else, place is dynamicaly changed each turn
             else:
                 final_point = modified_characters.get_NPC(
-                    current_phase.go_to).place
+                    current_phase.go_to).place_ID
 
         # Character has designated end location
         elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
@@ -191,10 +191,10 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
         # Character just moves on random
         else:
             final_point = choice(map.get_street_by_ID(
-                character.place).connections + [character.place])
+                character.place_ID).connections + [character.place_ID])
 
         # TODO add places and characters to avoid
-        path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place)),
+        path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place_ID)),
                                       map.get_street_by_ID(final_point))
 
         if len(path) == 1:
@@ -205,12 +205,9 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
 
         if isinstance(next_place, int) is not True:
             print("ojojooo")
-        character.place = next_place
+        character.place_ID = next_place
 
     return modified_characters
-
-
-"""originaly in character_interactions but circular import :("""
 
 
 def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_file(r"data\fractions.csv")) -> int:
@@ -234,30 +231,44 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
             item_ID).speed_mod for item_ID in all_items])
 
 
-def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople, attacker_bonus: int = 0) -> tuple[ModifiedPeople, bool]:
+def fight(attacker, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople, attacker_bonus: int = 0) -> tuple[ModifiedPeople, bool]:
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
-    attacker_NPC = people.get_char_by_ID(attacker.ID)
+
+    if isinstance(attacker, ModifiedNPC):
+        attacker_NPC = people.get_char_by_ID(attacker.ID)
+        attacker_fraction = attacker_NPC.fraction_ID
+    else:
+        attacker_fraction = attacker.fraction_ID
+
     defender_NPC = people.get_char_by_ID(defender.ID)
 
     phase_failed = False
 
     # attackers speed or moment of surprise inflicts advantage for him
-    if attacker.speed > defender.speed + 1 or attacker_NPC.fraction_ID == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_NPC.fraction_ID] >= 2:
+    if attacker.speed > defender.speed + 1 or attacker_fraction == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_fraction] >= 2:
         attacker_bonus = 1
 
-    attacker_side: list[ModifiedNPC] = []
+    if isinstance(attacker, ModifiedNPC):
+        attacker_side: list[ModifiedNPC] = []
+    else:
+        attacker_side: list[ModifiedNPC] = [attacker]
     defender_side: list[ModifiedNPC] = []
 
     for character in current_characters.list:
-        if character.place == attacker.place:
+        if character.place_ID == attacker.place_ID:
             character_NPC = people.get_char_by_ID(character.ID)
-            likes_attacker = how_char1_loves_char2(character_NPC, attacker_NPC)
+            if isinstance(attacker, ModifiedNPC):
+                likes_attacker = how_char1_loves_char2(
+                    character_NPC, attacker_NPC)
+            else:
+                likes_attacker = attacker.get_relationships(
+                    [character], people)[character.ID]
             likes_defender = how_char1_loves_char2(character_NPC, defender_NPC)
             if likes_attacker >= 3 and likes_defender >= 3:
                 likes_defender = likes_attacker = 2
 
-            if character_NPC.fraction_ID == attacker_NPC.fraction_ID or likes_attacker >= 3:
+            if character_NPC.fraction_ID == attacker_fraction or likes_attacker >= 3:
                 attacker_side.append(character)
 
             if character_NPC.fraction_ID == defender_NPC.fraction_ID or likes_defender >= 3:
@@ -268,10 +279,10 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
     items_attacker_mod = get_items_attributes(attacker_side, "str")
     items_defender_mod = get_items_attributes(defender_side, "str")
 
-    total_attack_power = sum([x.str for x in attacker_side]) + \
+    total_attack_power = sum([x.strength for x in attacker_side]) + \
         items_attacker_mod + attacker_bonus
     total_defend_power = sum(
-        [x.str for x in defender_side]) + items_defender_mod
+        [x.strength for x in defender_side]) + items_defender_mod
 
     dead_list: list[ModifiedNPC] = []
     stun_list: list[ModifiedNPC] = []
@@ -294,27 +305,30 @@ def fight(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
     elif total_attack_power == total_defend_power:
         for char in defender_side + attacker_side:
             char.state = "stun"
+            phase_failed = True
             stun_list.append(char)
 
     elif total_attack_power < total_defend_power:
         if action == "kill":
             for char in attacker_side:
                 char.state = "dead"
+                phase_failed = True
                 dead_list.append(char)
         else:
             for char in attacker_side:
                 char.state = "stun"
+                phase_failed = True
                 stun_list.append(char)
 
     for char in dead_list:
         char.stage = "ended"
 
     if len(dead_list) > 0:
-        print(", ".join([str(char.ID)
-              for char in dead_list]), "fought and died")
+        print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
+              else "hráč" for char in dead_list]), "fought and died")
     if len(stun_list) > 0:
-        print(", ".join([str(char.ID)
-                         for char in stun_list]), "fought and got stunned")
+        print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
+              else "hráč" for char in stun_list]), "fought and got stunned")
 
     return current_characters, phase_failed
 
