@@ -52,31 +52,13 @@ def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: str) -> 
     current_player_str, current_quests_str, current_chars_str = current_save.split(
         "_")
 
+    context.user_data["current_quests_str"] = current_quests_str
+
     current_player = save.get_current_player(current_player_str)
     context.user_data["player"] = current_player
 
     current_characters = save.get_current_characters(current_chars_str)
     context.user_data["current_people"] = current_characters
-
-    # Character movement and other things
-    """
-    current_characters, lines_to_update = save.update_phases(
-        current_characters)
-
-    new_quests_str = save.update_quests(current_quests_str, lines_to_update)
-
-    current_quests_save = save.get_current_quests(new_quests_str)
-
-    current_characters = save.assign_quests(current_characters, current_quests_save)
-    
-    current_characters = move_characters(current_characters).to_str()
-
-    new_player_save = player_save_generator(current_player)
-
-    combined_save = f"{new_player_save}_{new_quests_str}_{current_characters}"
-
-    rewrite_save_file(chat_ID, combined_save)
-    """
 
 
 async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -122,6 +104,30 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return "character_move"
 
 
+async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    current_characters = context.user_data["current_people"]
+    current_quests_str = context.user_data["current_quests_str"]
+    current_player = context.user_data["player"]
+
+    current_characters, lines_to_update = save.update_phases(
+        current_characters)
+
+    new_quests_str = save.update_quests(current_quests_str, lines_to_update)
+
+    current_quests_save = save.get_current_quests(new_quests_str)
+
+    current_characters = save.assign_quests(
+        current_characters, current_quests_save)
+
+    current_characters_str = save.move_characters(current_characters).to_str()
+
+    new_player_save = save.player_save_generator(current_player)
+
+    combined_save = f"{new_player_save}_{new_quests_str}_{current_characters_str}"
+
+    save.rewrite_save_file(chat_ID, combined_save)
+
+
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
     town_map: map.Map = context.user_data["map"]
@@ -134,6 +140,9 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(town_map.get_street_by_ID(new_street_ID).description_cz)
     else:
         await update.message.reply_text("Svět se hnul, ale tys zůstal na místě.")
+
+    await rotation(update.message.chat.id, context)
+
     return await basic_window(update)
 
 
@@ -152,6 +161,7 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Opens menu for player to choose an action he wants to perform. If there is no option available it returns him to main menu"""
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
 
@@ -259,6 +269,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Player asks NPC if he could help him with finding a way to street. Answer is based on their relationship"""
     town_map: map.Map = context.user_data["map"]
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
@@ -282,6 +293,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Based on how much does NPC like player he hints him how to get to find the person"""
     town_map: map.Map = context.user_data["map"]
     start_place_ID: int = context.user_data["player"].place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
@@ -300,6 +312,7 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Player asks NPC if he could help him finding another NPC. Answer is based on their relationship"""
     town_map: map.Map = context.user_data["map"]
     society: character.Society = context.user_data["people"]
     char_relation = context.user_data["char_relation"]
@@ -324,6 +337,7 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Based on how much does NPC like player he hints him how to get to find the person"""
     town_map: map.Map = context.user_data["map"]
     society: character.Society = context.user_data["people"]
     current_chars: handler.ModifiedPeople = context.user_data["current_people"]
@@ -367,26 +381,21 @@ def main() -> None:
         states={
             "starting_new_game": [
                 MessageHandler(
-                    filters.Regex(
-                        "Začít"), start_new_game
+                    filters.Regex("Začít"), start_new_game
                 ),
                 MessageHandler(
-                    filters.Regex(
-                        "Nezačínat"), read_old_game
+                    filters.Regex("Nezačínat"), read_old_game
                 )
             ],
             "player_actions": [
                 MessageHandler(
-                    filters.Regex(
-                        "Provést"), make_action
+                    filters.Regex("Provést"), make_action
                 ),
                 MessageHandler(
-                    filters.Regex(
-                        "statistiky"), inspect_player
+                    filters.Regex("statistiky"), inspect_player
                 ),
                 MessageHandler(
-                    filters.Regex(
-                        "Jít"), move_character
+                    filters.Regex("Jít"), move_character
                 )
             ],
             "character_move": [
