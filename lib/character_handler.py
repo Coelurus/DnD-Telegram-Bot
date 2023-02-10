@@ -1,4 +1,4 @@
-from character import read_people_from_file, read_fractions_from_file, NPC
+from character import read_people_from_file, read_fractions_from_file, NPC, Society
 from quest import str_to_mqp
 from map import read_map_from_file, Street
 from items import read_items_from_file, ItemsCollection
@@ -26,6 +26,9 @@ class ModifiedNPC:
         if self.phase != "-1":
             line_part = f"Does quest line {self.line} is at phase {self.phase}. Currently at: {self.stage}"
         return f"NPC {characters_definition.people_list[self.ID]} currently at place {self.place} has {self.coins} coins. Str = {self.str}, speed = {self.speed}. Has items: {self.items}. " + line_part
+
+    def get_name_cz(self, society: Society):
+        return society.get_char_by_ID(self.ID).name_cz
 
 
 class ModifiedPeople:

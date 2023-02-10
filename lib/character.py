@@ -58,9 +58,11 @@ class NPC:
 class Society:
     def __init__(self) -> None:
         self.people_list: list[NPC] = []
+        self.name_cz_to_ID: dict[str, int] = dict()
 
     def add_person(self, person: NPC) -> None:
         self.people_list.append(person)
+        self.name_cz_to_ID[person.name_cz] = person.ID
 
     def __repr__(self) -> str:
         return "\n".join([str(x) for x in self.people_list])

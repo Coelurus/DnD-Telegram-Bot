@@ -14,6 +14,7 @@ import map
 import player
 import items
 import character
+import character_handler as handler
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -37,6 +38,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 
 
 def load_static_data(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Function to read data from csv files and saving them in user data thus they don't have to be loaded from files again and again"""
     context.user_data["map"] = map.read_map_from_file(r"data\streets.csv")
     context.user_data["items"] = items.read_items_from_file(r"data\items.csv")
     context.user_data["fractions"] = character.read_fractions_from_file(
@@ -46,6 +48,7 @@ def load_static_data(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: str) -> None:
+    """Function to read current player and other characters data as they are needed to generate possibilities for player"""
     current_player_str, current_quests_str, current_chars_str = current_save.split(
         "_")
 
@@ -77,7 +80,7 @@ def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: str) -> 
 
 
 async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    """Function to start gain from round one. If game have not existed before it will be created. If it did the progress will be lost"""
     chat_ID = update.message.chat.id
     save.generate_new_save(chat_ID)
 
@@ -90,6 +93,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Function reads a game save based on chat ID. If the save does not exist it will terminate the programme"""
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
     if current_save == "NEW_GAME":
@@ -104,6 +108,7 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """Function that offers player choice of places where he can move."""
     current_player = context.user_data["player"]
 
     move_options = current_player.move_possibilities()
@@ -117,6 +122,7 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function that determines which place player chose to move to and moves him there."""
     town_map: map.Map = context.user_data["map"]
     current_player: player.Player = context.user_data["player"]
     new_street_ID = town_map.name_cz_to_ID[update.message.text]
@@ -128,6 +134,7 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function returns data about characters current state."""
     town_map = context.user_data["map"]
     current_player: player.Player = context.user_data["player"]
     items_collection: items.ItemsCollection = items.read_items_from_file(
@@ -143,15 +150,63 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
+
     town_map: map.Map = context.user_data["map"]
     current_player: player.Player = context.user_data["player"]
+    item_collection: items.ItemsCollection = context.user_data["items"]
+    society: character.Society = context.user_data["people"]
+    current_characters: handler.ModifiedPeople = context.user_data["current_people"]
+    current_place: map.Street = town_map.get_street_by_ID(
+        current_player.place_ID)
 
-    await context.bot.send_message(chat_ID, "action these nuts")
+    action_dict, people_here = current_player.get_actions(
+        current_characters, town_map)
+
+    char_ID_to_relation = current_player.get_relationships(
+        people_here, society)
+
+    context.user_data["char_ID_to_relation"] = char_ID_to_relation
+    context.user_data["people_here"] = people_here
+
+    reply_keyboard = [
+        ["Mluvit s člověkem"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
+    return "choose"
+
+
+async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    current_player: player.Player = context.user_data["player"]
+    char_ID_to_relation = context.user_data["char_ID_to_relation"]
+    society: character.Society = context.user_data["people"]
+    char_relation = char_ID_to_relation[society.name_cz_to_ID[
+        update.message.text]]
+
+    await update.message.reply_text(f"{update.message.text} k tobě má vztah na úrovni {char_relation}")
 
     return await basic_window(update)
 
 
+async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    people_list = context.user_data["people_here"]
+    society = context.user_data["people"]
+    if len(people_list) != 0:
+        reply_keyboard = [
+            [person.get_name_cz(society)] for person in people_list]
+        print("aaa", reply_keyboard)
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+        await update.message.reply_text("S kým chceš mluvit?", reply_markup=markup)
+
+        return "person_to_talk"
+    else:
+        await update.message.reply_text("Nikdo tu bohužel není :(")
+        return await basic_window(update)
+
+
 async def basic_window(update: Update) -> str:
+    """Function creates basic menu with choices for player about what he wants to do next"""
     reply_keyboard = [
         ["Provést akci zde"],
         ["Mé statistiky"],
@@ -198,6 +253,15 @@ def main() -> None:
             "character_move": [
                 MessageHandler(
                     filters.TEXT, change_location
+                )
+            ],
+            "person_to_talk": [
+                MessageHandler(
+                    filters.TEXT, talk_to_person
+                )
+            ], "choose": [
+                MessageHandler(
+                    filters.TEXT, choose_person
                 )
             ]
 
