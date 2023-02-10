@@ -23,6 +23,9 @@ class Map:
             print(street.get_name_cz(), " -> ", ", ".join([
                   self.streets[x].get_name_cz() for x in street.get_connected_streets()]))
 
+    def shortest_path(self, from_ID: int, to_ID: int) -> list[int]:
+        return [x.ID for x in self.find_shortest_path(*self.BFS(self.get_street_by_ID(from_ID)), self.get_street_by_ID(to_ID))]
+
     def find_shortest_path(self, BFS_streets: list[Street], BFS_depths: list[int], to_street: Street) -> list[Street]:
         STREET = 0
         DEPTH = 1

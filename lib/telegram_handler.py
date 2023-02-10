@@ -195,7 +195,6 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(people_list) != 0:
         reply_keyboard = [
             [person.get_name_cz(society)] for person in people_list] + [["Zpět do menu"]]
-        print("aaa", reply_keyboard)
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
         await update.message.reply_text("S kým chceš mluvit?", reply_markup=markup)
@@ -214,9 +213,16 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     char_relation = char_ID_to_relation[society.name_cz_to_ID[
         update.message.text]]
 
+    context.user_data["char_relation"] = char_relation
     await update.message.reply_text(f"{update.message.text} k tobě má vztah na úrovni {char_relation}")
 
-    return await basic_window(update)
+    reply_keyboard = [
+        ["Zeptat se na cestu"],
+        ["Zeptat se na postavu"]
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
+    return "NPC_interaction"
 
 
 async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -248,6 +254,92 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_player.coins -= item.price
         current_player.items.append(item_ID)
         await update.message.reply_text(f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak ho najdeš v inventáři.")
+
+    return await basic_window(update)
+
+
+async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    town_map: map.Map = context.user_data["map"]
+    char_relation = context.user_data["char_relation"]
+    if char_relation == 0:
+        await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)")
+        # TODO add fight
+        return await basic_window(update)
+    elif char_relation == 1:
+        await update.message.reply_text("Promiň kámo, ale fakt ti nepomůžu...")
+        return await basic_window(update)
+    elif char_relation == 3:
+        text = "'Jasně kámo, kam pádíš?'"
+        context.user_data["num_of_streets"] = 2
+    else:
+        text = "'Uhh...asi bych věděl...podle toho kam?'"
+        context.user_data["num_of_streets"] = 1
+
+    reply_keyboard = [[x.name_cz] for x in town_map.streets]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text(text, reply_markup=markup)
+    return "look_for_path"
+
+
+async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    town_map: map.Map = context.user_data["map"]
+    start_place_ID: int = context.user_data["player"].place_ID
+    num_of_streets: int = context.user_data["num_of_streets"]
+    final_place_ID: int = town_map.name_cz_to_ID[update.message.text]
+    path = town_map.shortest_path(start_place_ID, final_place_ID)
+    revealed_path = path[1:num_of_streets+1]
+
+    if len(revealed_path) == 0:
+        await update.message.reply_text("Vítej v cíli chytráku...")
+    elif len(path)-2 > len(revealed_path):
+        await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + " a pak to už nějak najdeš")
+    elif len(path)-2 <= len(revealed_path):
+        await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + ". No a jsi tam.")
+
+    return await basic_window(update)
+
+
+async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    town_map: map.Map = context.user_data["map"]
+    society: character.Society = context.user_data["people"]
+    char_relation = context.user_data["char_relation"]
+    if char_relation == 0:
+        await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)")
+        # TODO add fight
+        return await basic_window(update)
+    elif char_relation == 1:
+        await update.message.reply_text("Promiň kámo, ale fakt ti nepomůžu...")
+        return await basic_window(update)
+    elif char_relation == 3:
+        text = "'Jasně kámo, kam pádíš?'"
+        context.user_data["num_of_streets"] = 2
+    else:
+        text = "'Uhh...asi bych věděl...podle toho kam?'"
+        context.user_data["num_of_streets"] = 1
+
+    reply_keyboard = [[x.name_cz] for x in society.people_list]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text(text, reply_markup=markup)
+    return "look_for_person"
+
+
+async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    town_map: map.Map = context.user_data["map"]
+    society: character.Society = context.user_data["people"]
+    current_chars: handler.ModifiedPeople = context.user_data["current_people"]
+    start_place_ID: int = context.user_data["player"].place_ID
+    num_of_streets: int = context.user_data["num_of_streets"]
+    final_place_ID: int = current_chars.get_NPC(
+        society.name_cz_to_ID[update.message.text]).place
+    path = town_map.shortest_path(start_place_ID, final_place_ID)
+    revealed_path = path[1:num_of_streets+1]
+
+    if len(revealed_path) == 0:
+        await update.message.reply_text("To jsem já ty blboune...")
+    elif len(path)-2 > len(revealed_path):
+        await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + " a pak to už nějak najdeš")
+    elif len(path)-2 <= len(revealed_path):
+        await update.message.reply_text("Jo tak to první bude " + " a pak".join([town_map.get_street_by_ID(x).name_cz for x in revealed_path]) + ". No a jsi tam.")
 
     return await basic_window(update)
 
@@ -312,19 +404,40 @@ def main() -> None:
                 MessageHandler(
                     filters.TEXT, talk_to_person
                 )
-            ], "choose_action": [
+            ],
+            "choose_action": [
                 MessageHandler(
                     filters.Regex("Mluvit"), choose_person
                 ),
                 MessageHandler(
                     filters.Regex("Nakoupit"), open_shop
                 )
-            ], "buy_item": [
+            ],
+            "buy_item": [
                 MessageHandler(
                     filters.Regex("Zpět"), basic_window
                 ),
                 MessageHandler(
                     filters.TEXT, buy_item
+                )
+            ],
+            "NPC_interaction": [
+                MessageHandler(
+                    filters.Regex("na cestu"), ask_for_path
+                ),
+                MessageHandler(
+                    filters.Regex("na postavu"), ask_for_person
+                ),
+
+            ],
+            "look_for_path": [
+                MessageHandler(
+                    filters.TEXT, find_path_to
+                )
+            ],
+            "look_for_person": [
+                MessageHandler(
+                    filters.TEXT, path_to_person
                 )
             ]
 
