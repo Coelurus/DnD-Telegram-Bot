@@ -2,13 +2,13 @@ from map import read_map_from_file, Map, Street
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
 from items import Item, ItemsCollection
-from quest import ModifiedQuestPhase
+from quest import ModifiedQuestPhase, str_to_mqp
 
 
 class Player:
     def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str,
                  relations: list[str], fraction_ID: str = "4", state: str = "alive",
-                 duration: str = "", weapons: list[str] = [""], quests: list[str] = []) -> None:
+                 duration: str = "", weapons: list[str] = [""], quests: list[str] = [], progress: list[str] = []) -> None:
         self.place_ID = int(place_ID)
         self.coins = int(coins)
         self.items = [int(x) for x in items if x != ""]
@@ -27,6 +27,7 @@ class Player:
         self.equiped_weapons = [int(x) for x in weapons if x != ""]
 
         self.quests = quests
+        self.progress = progress
 
     def move(self, map=read_map_from_file("data\streets.csv")):
         """Method that is NOT used. Created only for development and console control"""
@@ -49,6 +50,8 @@ class Player:
         self.place_ID = options[idx].ID
 
     def move_possibilities(self, map=read_map_from_file("data\streets.csv")) -> tuple[list[Street], Street]:
+        """Method returns list of Streets objects where Player can move based on his current location 
+        and also returns Street object of place where is currently character"""
         current_street = map.get_street_by_ID(
             self.place_ID)
         connected_streets = current_street.get_connected_streets()
@@ -58,6 +61,11 @@ class Player:
         return options, current_street
 
     def get_actions(self, current_characters: ModifiedPeople, map=read_map_from_file("data\streets.csv")) -> tuple[dict[str, str], list[ModifiedNPC]]:
+        """
+        Method takes current state of NPCs and returns 2 values:
+        1. dictionary where key is possible action and value is modifier
+        2. list of all characters that are in the same location as player
+        """
         people_here = current_characters.get_people_in_place(self.place_ID)
         possible_actions_str = map.get_street_by_ID(self.place_ID).possibilites
         action_dict = {}
@@ -68,6 +76,8 @@ class Player:
         return action_dict, people_here
 
     def get_relationships(self, people_here: list[ModifiedNPC], society: Society) -> dict[int, int]:
+        """Method takes list of people in same location as player and static data about all characters.
+        Returns dictionary where keys are IDs of people in the same location and values are their relationship to player"""
         char_ID_to_realtion: dict[int, int] = dict()
         for person in people_here:
             char_ID_to_realtion[person.ID] = self.relations[society.get_char_by_ID(
@@ -128,12 +138,31 @@ class Player:
         self.update_attributes_on_remove(remove_item)
 
     def update_attributes_on_equip(self, item: Item) -> None:
+        """Updates players stats based on equiped item"""
         self.speed += item.speed_mod
         self.strength += item.strength_mod
 
     def update_attributes_on_remove(self, item: Item) -> None:
+        """Updates players stats based on removed item"""
         self.speed -= item.speed_mod
         self.strength -= item.strength_mod
+
+    def update_quest_progresses(self, current_characters: ModifiedPeople) -> None:
+        for quest_ID in range(len(self.quests)):
+            quest = str_to_mqp(self.quests[quest_ID])
+
+            if self.progress[quest_ID] == "tostart" and self.place_ID == quest.from_place_ID:
+                self.progress[quest_ID] = "inprogress"
+
+            elif self.progress[quest_ID] == "inprogress" and quest.go_to != -1 and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID:
+                self.progress[quest_ID] = "infinal"
+
+            elif self.progress[quest_ID] == "inprogress" and quest.go_to == -1 and self.place_ID == quest.to_place_ID:
+                self.progress[quest_ID] = "infinal"
+
+            if self.progress[quest_ID] == "infinal":
+                print("TODO - quest dokončit úkol")
+                self.progress[quest_ID] = "ended"
 
 
 if __name__ == "__main__":

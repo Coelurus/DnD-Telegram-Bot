@@ -115,6 +115,8 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     current_characters_str = save.move_characters(current_characters).to_str()
 
+    player.update_quest_progresses(current_characters)
+
     new_player_save = save.player_save_generator(player)
 
     context.user_data["current_quests_str"] = new_quests_str
@@ -147,6 +149,7 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
     town_map: Map = context.user_data["map"]
     player: Player = context.user_data["player"]
+    people: ModifiedPeople = context.user_data["current_people"]
     street_name = update.message.text.split(" (")[0]
     new_street_ID = town_map.name_cz_to_ID[street_name]
     player.place_ID = new_street_ID
@@ -302,7 +305,7 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         markup = ReplyKeyboardMarkup(
             reply_keyboard + [["Zpět"]], one_time_keyboard=True)
-        await update.message.reply_text("Jaká z úkolů tě zajímá?", reply_markup=markup)
+        await update.message.reply_text("Jaký z úkolů tě zajímá?", reply_markup=markup)
         return "get_quest"
 
     return await basic_window(update)
@@ -312,23 +315,37 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     map: Map = context.user_data["map"]
     items: ItemsCollection = context.user_data["items"]
     society: Society = context.user_data["people"]
+    player: Player = context.user_data["player"]
     quest_ID_to_str: dict[int, str] = context.user_data["player_quests"]
     # Get a quest definition string based on ordinal number before quest
-    quest_str = quest_ID_to_str[int(update.message.text.split(". ")[0])]
+    visual_quest_ID = int(update.message.text.split(". ")[0])
+    quest_str = quest_ID_to_str[visual_quest_ID]
     quest_mqp = quest.str_to_mqp(quest_str)
 
+    progress = player.progress[visual_quest_ID - 1]
+
     from_txt = "" if quest_mqp.from_place_ID == - \
-        1 else f"\nNejdřív se dostav sem: {map.get_street_by_ID(quest_mqp.from_place_ID).name_cz}"
+        1 else u"\u2705" if progress != "tostart" else u"\u2716"
 
-    item_txt = "" if quest_mqp.item_ID == - \
-        1 else f"\nDostaneš k tomu tenhle předmět: {items.get_item(quest_mqp.item_ID).name_cz}. Hlavně ho neztrať!"
+    from_txt += "" if quest_mqp.from_place_ID == - \
+        1 else f"Dostav se sem: {map.get_street_by_ID(quest_mqp.from_place_ID).name_cz}\n"
 
-    to_txt = f"Dojdi do: {map.get_street_by_ID(quest_mqp.to_place_ID).name_cz}" if quest_mqp.go_to == - \
-        1 else f"Dojdi za: {society.get_char_by_ID(quest_mqp.go_to).name_cz}"
+    item_txt = "" if quest_mqp.from_place_ID == - \
+        1 else u"\u2705" if progress != "tostart" else u"\u2716"
 
-    action_txt = "" if quest_mqp.action == "none" else "...a tu osobu zab" if quest_mqp.action == "kill" else "...a tu osobu omrač" if quest_mqp.action == "stun" else "...a tu osobu okraď" if quest_mqp.action == "rob" else f"{quest_mqp.action}"
+    item_txt += "" if quest_mqp.item_ID == - \
+        1 else f"Převezmi předmět: {items.get_item(quest_mqp.item_ID).name_cz}\n"
 
-    text = f"Více informací:{from_txt}{item_txt}\n{to_txt}\n{action_txt}"
+    to_txt = u"\u2705" if progress == "ended" or progress == "infinal" else u"\u2716"
+
+    to_txt += f"Dojdi do: {map.get_street_by_ID(quest_mqp.to_place_ID).name_cz}" if quest_mqp.go_to == - \
+        1 else f"Cílem je: {society.get_char_by_ID(quest_mqp.go_to).name_cz}"
+
+    action_txt = "" if quest_mqp.action == "none" else u"\u2705" if progress == "ended" else u"\u2716"
+
+    action_txt += "" if quest_mqp.action == "none" else "Zab cíl" if quest_mqp.action == "kill" else "Omrač cíl" if quest_mqp.action == "stun" else "Okraď cíl" if quest_mqp.action == "rob" else f"{quest_mqp.action}"
+
+    text = f"Více informací:\n{from_txt}{item_txt}{to_txt}\n{action_txt}"
 
     await update.message.reply_text(text)
 

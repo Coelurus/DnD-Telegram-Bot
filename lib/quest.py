@@ -55,8 +55,13 @@ class ModifiedQuestPhase:
         # The case where final place of phase is specifically defined by phase itself
         if mod_where != "?":
             self.to_place_ID = int(mod_where)
+            """ID of place where quest ends"""
+
             self.action = "none"
+
             self.go_to = -1
+            """ID of character to find\n
+            -1 => final place is static"""
 
         # Final phase is based on location of another character
         else:
