@@ -33,11 +33,10 @@ class PoliticalMap:
 
 
 class NPC:
-    def __init__(self, ID: str, name_cz: str, fraction_ID: str, quest_line_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:
+    def __init__(self, ID: str, name_cz: str, fraction_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.fraction_ID = int(fraction_ID)
-        self.quest_line_ID = int(quest_line_ID)
         self.spawn_street_ID = int(spawn_street_ID)
         self.end_street_ID = int(end_street_ID)
         self.items = [int(x) for x in items]
@@ -52,7 +51,7 @@ class NPC:
         end = "not defined"
         if self.end_street_ID != -1:
             end = self.end_street_ID
-        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, does: {self.quest_line_ID}, is in fraction: {self.fraction_ID}, has items: {self.items}, has {self.coins} coins"
+        return f"[{self.ID}] - {self.name_cz}: is from: {self.spawn_street_ID}, ends in: {end}, is in fraction: {self.fraction_ID}, has items: {self.items}, has {self.coins} coins"
 
 
 class Society:
@@ -99,7 +98,7 @@ def read_people_from_file(path):
     society = Society()
     for row in reader:
         society.add_person(NPC(
-            *[row[x] for x in ["ID", "name_cz", "fraction_ID", "quest_line_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
+            *[row[x] for x in ["ID", "name_cz", "fraction_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
 
     csv_file.close()
     return society

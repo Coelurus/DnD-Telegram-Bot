@@ -11,10 +11,17 @@ from telegram.ext import (
 )
 import save
 import map
+from map import Map
 import player
+from player import Player
 import items
+from items import Item, ItemsCollection
 import character
+from character import Society
 import character_handler as handler
+from character_handler import ModifiedPeople
+import quest
+from quest import ModifiedQuestPhase
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -92,9 +99,9 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Function take care of handling movement of NPC, making them follow missions etc. 
     It also updates questlines progresses and assign phases to NPCs based on it"""
-    current_characters: handler.ModifiedPeople = context.user_data["current_people"]
+    current_characters: ModifiedPeople = context.user_data["current_people"]
     current_quests_str: str = context.user_data["current_quests_str"]
-    current_player: player.Player = context.user_data["player"]
+    player: Player = context.user_data["player"]
 
     current_characters, lines_to_update = save.update_phases(
         current_characters)
@@ -108,7 +115,7 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     current_characters_str = save.move_characters(current_characters).to_str()
 
-    new_player_save = save.player_save_generator(current_player)
+    new_player_save = save.player_save_generator(player)
 
     context.user_data["current_quests_str"] = new_quests_str
 
@@ -116,16 +123,16 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     save.rewrite_save_file(chat_ID, combined_save)
 
-    if current_player.state == "stun" and current_player.duration["stun"] >= 1:
+    if player.state == "stun" and player.duration["stun"] >= 1:
         print("ando nce more")
         await rotation(chat_ID, context)
 
 
 async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function that offers player choice of places where he can move."""
-    current_player: player.Player = context.user_data["player"]
+    player: Player = context.user_data["player"]
 
-    move_options, current_street = current_player.move_possibilities()
+    move_options, current_street = player.move_possibilities()
 
     reply_keyboard = [[current_street.name_cz + " (zůstat a přeskočit kolo)"]
                       ] + [[x.name_cz] for x in move_options] + [["Zpět do menu"]]
@@ -138,11 +145,11 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
-    town_map: map.Map = context.user_data["map"]
-    current_player: player.Player = context.user_data["player"]
+    town_map: Map = context.user_data["map"]
+    player: Player = context.user_data["player"]
     street_name = update.message.text.split(" (")[0]
     new_street_ID = town_map.name_cz_to_ID[street_name]
-    current_player.place_ID = new_street_ID
+    player.place_ID = new_street_ID
 
     if len(street_name) == len(update.message.text):
         await update.message.reply_text(town_map.get_street_by_ID(new_street_ID).description_cz)
@@ -157,12 +164,12 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function returns data about characters current state."""
     town_map = context.user_data["map"]
-    current_player: player.Player = context.user_data["player"]
-    items_collection: items.ItemsCollection = items.read_items_from_file(
+    player: Player = context.user_data["player"]
+    items_collection: ItemsCollection = items.read_items_from_file(
         "data\items.csv")
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
-    player_information = f"Místo, kde se nacházíš, se jmenuje {town_map.get_street_by_ID(current_player.place_ID).name_cz}.\nMomentálně u sebe máš {current_player.coins} peněz a následující předměty: {', '.join([items_collection.get_item(x).name_cz for x in current_player.items])}\nTvoje síla je na úrovni {current_player.strength} a rychlost na úrovni {current_player.speed}"
+    player_information = f"Místo, kde se nacházíš, se jmenuje {town_map.get_street_by_ID(player.place_ID).name_cz}.\nMomentálně u sebe máš {player.coins} peněz a následující předměty: {', '.join([items_collection.get_item(x).name_cz for x in player.items])}\nTvoje síla je na úrovni {player.strength} a rychlost na úrovni {player.speed}"
     await context.bot.send_message(chat_ID, player_information)
 
     reply_keyboard = [
@@ -178,12 +185,13 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    i_c: items.ItemsCollection = context.user_data["items"]
-    current_player: player.Player = context.user_data["player"]
+    """Function creates menu with items that player has in inventory with type tag consumable/equipable"""
+    i_c: ItemsCollection = context.user_data["items"]
+    player: Player = context.user_data["player"]
 
-    if len(current_player.items) != 0:
+    if len(player.items) != 0:
         reply_keyboard = [[i_c.get_item(x).name_cz + (" (spotřebovatelný)" if i_c.get_item(
-            x).usage == "consume" else " (nasaditelný)" if i_c.get_item(x).usage == "equip" else "")] for x in current_player.items]
+            x).usage == "consume" else " (nasaditelný)" if i_c.get_item(x).usage == "equip" else "")] for x in player.items]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         await update.message.reply_text("Který předmět tě zajímá?", reply_markup=markup)
         return "choose_item"
@@ -194,8 +202,9 @@ async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    current_player: player.Player = context.user_data["player"]
-    items_col: items.ItemsCollection = context.user_data["items"]
+    """Funciton creates a part of dialogue where is player asked if he wants to use chosen item"""
+    player: Player = context.user_data["player"]
+    items_col: ItemsCollection = context.user_data["items"]
     # Get rid of the usage tag
     chosen_item_name = update.message.text.split(" (")[0]
     item_ID = items_col.name_cz_to_ID[chosen_item_name]
@@ -226,13 +235,12 @@ async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    current_player: player.Player = context.user_data["player"]
-    items_col: items.ItemsCollection = context.user_data["items"]
+    """Function takes reads item chosen by player and applies its effects on him"""
+    player: Player = context.user_data["player"]
     # Get rid of the usage tag
-    item: items.Item = context.user_data["item"]
+    item: Item = context.user_data["item"]
 
-    current_player.use_item(item)
-    # current_player.items.remove(item.ID)
+    player.use_item(item)
 
     await update.message.reply_text(f"Použil jsi {item.name_cz}.")
 
@@ -240,12 +248,13 @@ async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    current_player: player.Player = context.user_data["player"]
-    equip_succes = current_player.equip_weapon(context.user_data["item"])
+    """Function takes care of case when player chose and equipable item from his inventory"""
+    player: Player = context.user_data["player"]
+    equip_succes = player.equip_weapon(context.user_data["item"])
     if equip_succes:
         return await basic_window(update)
     else:
-        equiped = current_player.get_equiped_weapons(
+        equiped = player.get_equiped_weapons(
             context.user_data["items"])
         reply_keyboard = [
             [f"{item.name_cz} ({item.strength_mod} síla) ({item.speed_mod} rychlost)"] for item in equiped]
@@ -255,17 +264,74 @@ async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    items_col: items.ItemsCollection = context.user_data["items"]
+    """Function takes care of situation where player had already 2 weapons equiped, 
+    thus have to swap this new one with different one"""
+    items_col: ItemsCollection = context.user_data["items"]
     item_name = update.message.text.split(" (")[0]
     item_ID = items_col.name_cz_to_ID[item_name]
     replace_item = items_col.get_item(item_ID)
 
-    current_player: player.Player = context.user_data["player"]
-    current_player.swap_weapon(replace_item, context.user_data["item"])
+    player: Player = context.user_data["player"]
+    player.swap_weapon(replace_item, context.user_data["item"])
     return await basic_window(update)
 
 
 async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    player: Player = context.user_data["player"]
+    map: Map = context.user_data["map"]
+    society: Society = context.user_data["people"]
+
+    quest_ID_to_str: dict[int, str] = dict()
+
+    if len(player.quests) != 0:
+
+        reply_keyboard = []
+        for quest_str_idx in range(len(player.quests)):
+            quest_str = player.quests[quest_str_idx]
+            mqp = quest.str_to_mqp(quest_str)
+            if mqp.go_to == -1:
+                reply_keyboard += [
+                    [f"{quest_str_idx+1}. Dostav se na místo {map.get_street_by_ID(mqp.to_place_ID).name_cz}"]]
+            else:
+                reply_keyboard += [
+                    [f"{quest_str_idx+1}. Najdi postavu {society.get_char_by_ID(mqp.go_to).name_cz}"]]
+
+            quest_ID_to_str[quest_str_idx+1] = quest_str
+
+        context.user_data["player_quests"] = quest_ID_to_str
+
+        markup = ReplyKeyboardMarkup(
+            reply_keyboard + [["Zpět"]], one_time_keyboard=True)
+        await update.message.reply_text("Jaká z úkolů tě zajímá?", reply_markup=markup)
+        return "get_quest"
+
+    return await basic_window(update)
+
+
+async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    map: Map = context.user_data["map"]
+    items: ItemsCollection = context.user_data["items"]
+    society: Society = context.user_data["people"]
+    quest_ID_to_str: dict[int, str] = context.user_data["player_quests"]
+    # Get a quest definition string based on ordinal number before quest
+    quest_str = quest_ID_to_str[int(update.message.text.split(". ")[0])]
+    quest_mqp = quest.str_to_mqp(quest_str)
+
+    from_txt = "" if quest_mqp.from_place_ID == - \
+        1 else f"\nNejdřív se dostav sem: {map.get_street_by_ID(quest_mqp.from_place_ID).name_cz}"
+
+    item_txt = "" if quest_mqp.item_ID == - \
+        1 else f"\nDostaneš k tomu tenhle předmět: {items.get_item(quest_mqp.item_ID).name_cz}. Hlavně ho neztrať!"
+
+    to_txt = f"Dojdi do: {map.get_street_by_ID(quest_mqp.to_place_ID).name_cz}" if quest_mqp.go_to == - \
+        1 else f"Dojdi za: {society.get_char_by_ID(quest_mqp.go_to).name_cz}"
+
+    action_txt = "" if quest_mqp.action == "none" else "...a tu osobu zab" if quest_mqp.action == "kill" else "...a tu osobu omrač" if quest_mqp.action == "stun" else "...a tu osobu okraď" if quest_mqp.action == "rob" else f"{quest_mqp.action}"
+
+    text = f"Více informací:{from_txt}{item_txt}\n{to_txt}\n{action_txt}"
+
+    await update.message.reply_text(text)
+
     return await basic_window(update)
 
 
@@ -274,18 +340,18 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
 
-    town_map: map.Map = context.user_data["map"]
-    current_player: player.Player = context.user_data["player"]
-    item_collection: items.ItemsCollection = context.user_data["items"]
-    society: character.Society = context.user_data["people"]
-    current_characters: handler.ModifiedPeople = context.user_data["current_people"]
+    town_map: Map = context.user_data["map"]
+    player: Player = context.user_data["player"]
+    item_collection: ItemsCollection = context.user_data["items"]
+    society: Society = context.user_data["people"]
+    current_characters: ModifiedPeople = context.user_data["current_people"]
     current_place: map.Street = town_map.get_street_by_ID(
-        current_player.place_ID)
+        player.place_ID)
 
-    action_dict, people_here = current_player.get_actions(
+    action_dict, people_here = player.get_actions(
         current_characters, town_map)
 
-    char_ID_to_relation = current_player.get_relationships(
+    char_ID_to_relation = player.get_relationships(
         people_here, society)
 
     context.user_data["char_ID_to_relation"] = char_ID_to_relation
@@ -326,9 +392,9 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start interaction with chosen NPC"""
-    current_player: player.Player = context.user_data["player"]
+    player: Player = context.user_data["player"]
     char_ID_to_relation = context.user_data["char_ID_to_relation"]
-    society: character.Society = context.user_data["people"]
+    society: Society = context.user_data["people"]
     char_ID = society.name_cz_to_ID[update.message.text]
     context.user_data["char_ID"] = char_ID
 
@@ -348,7 +414,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window where with options of buyable items"""
-    items_colection: items.ItemsCollection = context.user_data["items"]
+    items_colection: ItemsCollection = context.user_data["items"]
     action_dict: dict[str, str] = context.user_data["action_dict"]
     type = action_dict["shop"]
     items_to_sell = items_colection.items_by_type(type)
@@ -363,17 +429,17 @@ async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to check if player can afford the item ho chose and following adding this item into his inventory"""
-    current_player: player.Player = context.user_data["player"]
-    items_col: items.ItemsCollection = context.user_data["items"]
+    player: Player = context.user_data["player"]
+    items_col: ItemsCollection = context.user_data["items"]
     # Get rid of the price tag
     chosen_item_name = update.message.text.split(" (")[0]
     item_ID = items_col.name_cz_to_ID[chosen_item_name]
     item = items_col.get_item(item_ID)
-    if item.price > current_player.coins:
+    if item.price > player.coins:
         await update.message.reply_text("Předmět je na tebe bohužel moc drahý")
     else:
-        current_player.coins -= item.price
-        current_player.items.append(item_ID)
+        player.coins -= item.price
+        player.items.append(item_ID)
         await update.message.reply_text(f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak ho najdeš v inventáři.")
 
     return await basic_window(update)
@@ -381,7 +447,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Player asks NPC if he could help him with finding a way to street. Answer is based on their relationship"""
-    town_map: map.Map = context.user_data["map"]
+    town_map: Map = context.user_data["map"]
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
         await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)")
@@ -405,7 +471,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to find the person"""
-    town_map: map.Map = context.user_data["map"]
+    town_map: Map = context.user_data["map"]
     start_place_ID: int = context.user_data["player"].place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = town_map.name_cz_to_ID[update.message.text]
@@ -424,8 +490,8 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Player asks NPC if he could help him finding another NPC. Answer is based on their relationship"""
-    town_map: map.Map = context.user_data["map"]
-    society: character.Society = context.user_data["people"]
+    town_map: Map = context.user_data["map"]
+    society: Society = context.user_data["people"]
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
         await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)")
@@ -449,9 +515,9 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to find the person"""
-    town_map: map.Map = context.user_data["map"]
-    society: character.Society = context.user_data["people"]
-    current_chars: handler.ModifiedPeople = context.user_data["current_people"]
+    town_map: Map = context.user_data["map"]
+    society: Society = context.user_data["people"]
+    current_chars: ModifiedPeople = context.user_data["current_people"]
     start_place_ID: int = context.user_data["player"].place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = current_chars.get_NPC(
@@ -474,20 +540,20 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Function that takes care of fight between a player and NPC. 
     Successful attack knocks the NPC out whereas failed knocks out Player for 2 rounds
     """
-    current_player: player.Player = context.user_data["player"]
-    society: character.Society = context.user_data["people"]
-    current_chars: handler.ModifiedPeople = context.user_data["current_people"]
+    player: Player = context.user_data["player"]
+    society: Society = context.user_data["people"]
+    current_chars: ModifiedPeople = context.user_data["current_people"]
     defender_ID = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
 
     current_characters, failed = handler.fight(
-        current_player, defender, "stun", current_chars)
+        player, defender, "stun", current_chars)
 
     context.user_data["current_people"] = current_characters
     if failed:
         await update.message.reply_text("Tak tohle se ti moc nepovedlo a bohužel na chvíli ztrácíš vědomí.")
-        current_player.state = "stun"
-        current_player.duration["stun"] = 2
+        player.state = "stun"
+        player.duration["stun"] = 2
         await rotation(update.message.chat.id, context)
     else:
         await update.message.reply_text(f"Úspěšně se ti podařilo omráčit postavu. {society.get_char_by_ID(defender_ID).name_cz} tu teď leží v mrákotách.")
@@ -623,6 +689,14 @@ def main() -> None:
                 ),
                 MessageHandler(
                     filters.TEXT, replace_item
+                )
+            ],
+            "get_quest": [
+                MessageHandler(
+                    filters.Regex("Zpět"), inspect_player
+                ),
+                MessageHandler(
+                    filters.TEXT, get_quest
                 )
             ]
 

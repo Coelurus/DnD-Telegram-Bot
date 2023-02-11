@@ -52,11 +52,13 @@ class ModifiedQuestPhase:
 
         self.item_ID = int(mod_item)
 
+        # The case where final place of phase is specifically defined by phase itself
         if mod_where != "?":
             self.to_place_ID = int(mod_where)
             self.action = "none"
             self.go_to = -1
 
+        # Final phase is based on location of another character
         else:
             go_to_char_ID, action = mod_go_to.split(";")
 

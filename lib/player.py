@@ -1,12 +1,14 @@
 from map import read_map_from_file, Map, Street
-from gui import *
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
 from items import Item, ItemsCollection
+from quest import ModifiedQuestPhase
 
 
 class Player:
-    def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str, relations: list[str], fraction_ID: str = "4", state: str = "alive", duration: str = "", weapons: list[str] = [""]) -> None:
+    def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str,
+                 relations: list[str], fraction_ID: str = "4", state: str = "alive",
+                 duration: str = "", weapons: list[str] = [""], quests: list[str] = []) -> None:
         self.place_ID = int(place_ID)
         self.coins = int(coins)
         self.items = [int(x) for x in items if x != ""]
@@ -24,7 +26,10 @@ class Player:
 
         self.equiped_weapons = [int(x) for x in weapons if x != ""]
 
+        self.quests = quests
+
     def move(self, map=read_map_from_file("data\streets.csv")):
+        """Method that is NOT used. Created only for development and console control"""
         connected_streets = map.get_street_by_ID(
             self.place_ID).get_connected_streets()
 
@@ -35,8 +40,11 @@ class Player:
             output_str += map.get_street_by_ID(possible_street).name_cz + "\n"
             options.append(map.get_street_by_ID(possible_street))
 
-        output(output_str)
-        idx = choose([x.name_cz for x in options])
+        print(output_str)
+        choices = [x.name_cz for x in options]
+        print("U have choices:", ", ".join(choices))
+        choice = input("Write your choice: ")
+        idx = choices.index(choice)
 
         self.place_ID = options[idx].ID
 
@@ -131,5 +139,5 @@ class Player:
 if __name__ == "__main__":
     map = read_map_from_file("data\streets.csv")
     spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4, "alive")
-    for _ in range(10):
+    for _ in range(3):
         spawn_player.move(map)
