@@ -2,7 +2,7 @@ import csv
 
 
 class Item:
-    def __init__(self, ID: str, name_cz: str, legal: str, speed_mod: str, strength_mod: str, price: str, description_cz: str, type: str, usage: str) -> None:
+    def __init__(self, ID: str, name_cz: str, legal: str, speed_mod: str, strength_mod: str, price: str, description_cz: str, type: str, usage: str, duration: str = 0) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.legal = legal
@@ -12,6 +12,7 @@ class Item:
         self.description_cz = description_cz
         self.type = type
         self.usage = usage
+        self.duration = int(duration)
 
     def __str__(self):
         return f"[{self.ID}] - {self.name_cz}. Is legal? {self.legal}. Gives {self.strength_mod} strength and {self.speed_mod} speed. Is worth {self.price} coins. Type is {self.type}. Is used as {self.usage}. Described as: {self.description_cz}"
@@ -29,7 +30,7 @@ class ItemsCollection:
         self.list.append(item)
         self.name_cz_to_ID[item.name_cz] = item.ID
 
-    def get_item_by_ID(self, ID: int) -> Item:
+    def get_item(self, ID: int) -> Item:
         return self.list[ID]
 
     def items_by_type(self, type: str) -> list[Item]:
@@ -47,7 +48,7 @@ def read_items_from_file(path):
     items = ItemsCollection()
     for row in reader:
         items.add_item(
-            Item(row["ID"], row["name_cz"], row["legal"], row["speed_mod"], row["strength_mod"], row["price"], row["description_cz"], row["type"], row["usage"]))
+            Item(row["ID"], row["name_cz"], row["legal"], row["speed_mod"], row["strength_mod"], row["price"], row["description_cz"], row["type"], row["usage"], row["duration"]))
 
     csv_file.close()
     return items

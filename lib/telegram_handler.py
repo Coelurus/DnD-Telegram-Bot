@@ -89,22 +89,9 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return await basic_window(update)
 
 
-async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    """Function that offers player choice of places where he can move."""
-    current_player: player.Player = context.user_data["player"]
-
-    move_options, current_street = current_player.move_possibilities()
-
-    reply_keyboard = [[current_street.name_cz + " (zůstat a přeskočit kolo)"]
-                      ] + [[x.name_cz] for x in move_options] + [["Zpět do menu"]]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
-    await update.message.reply_text("Do jaké ulice se chceš přesunout?", reply_markup=markup)
-
-    return "character_move"
-
-
 async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Function take care of handling movement of NPC, making them follow missions etc. 
+    It also updates questlines progresses and assign phases to NPCs based on it"""
     current_characters: handler.ModifiedPeople = context.user_data["current_people"]
     current_quests_str: str = context.user_data["current_quests_str"]
     current_player: player.Player = context.user_data["player"]
@@ -123,6 +110,8 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     new_player_save = save.player_save_generator(current_player)
 
+    context.user_data["current_quests_str"] = new_quests_str
+
     combined_save = f"{new_player_save}_{new_quests_str}_{current_characters_str}"
 
     save.rewrite_save_file(chat_ID, combined_save)
@@ -130,6 +119,21 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     if current_player.state == "stun" and current_player.duration["stun"] >= 1:
         print("ando nce more")
         await rotation(chat_ID, context)
+
+
+async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """Function that offers player choice of places where he can move."""
+    current_player: player.Player = context.user_data["player"]
+
+    move_options, current_street = current_player.move_possibilities()
+
+    reply_keyboard = [[current_street.name_cz + " (zůstat a přeskočit kolo)"]
+                      ] + [[x.name_cz] for x in move_options] + [["Zpět do menu"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+    await update.message.reply_text("Do jaké ulice se chceš přesunout?", reply_markup=markup)
+
+    return "character_move"
 
 
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -158,9 +162,110 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "data\items.csv")
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
-    player_information = f"Místo, kde se nacházíš, se jmenuje {town_map.get_street_by_ID(current_player.place_ID).name_cz}.\nMomentálně u sebe máš {current_player.coins} peněz a následující předměty: {', '.join([items_collection.get_item_by_ID(x).name_cz for x in current_player.items])}\nTvoje síla je na úrovni {current_player.strength} a rychlost na úrovni {current_player.speed}"
+    player_information = f"Místo, kde se nacházíš, se jmenuje {town_map.get_street_by_ID(current_player.place_ID).name_cz}.\nMomentálně u sebe máš {current_player.coins} peněz a následující předměty: {', '.join([items_collection.get_item(x).name_cz for x in current_player.items])}\nTvoje síla je na úrovni {current_player.strength} a rychlost na úrovni {current_player.speed}"
     await context.bot.send_message(chat_ID, player_information)
 
+    reply_keyboard = [
+        ["Inventář"],
+        ["Úkoly"],
+        ["Zpět"]
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+    await update.message.reply_text("Co víc bys rád?", reply_markup=markup)
+
+    return "inspect_player"
+
+
+async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    i_c: items.ItemsCollection = context.user_data["items"]
+    current_player: player.Player = context.user_data["player"]
+
+    if len(current_player.items) != 0:
+        reply_keyboard = [[i_c.get_item(x).name_cz + (" (spotřebovatelný)" if i_c.get_item(
+            x).usage == "consume" else " (nasaditelný)" if i_c.get_item(x).usage == "equip" else "")] for x in current_player.items]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Který předmět tě zajímá?", reply_markup=markup)
+        return "choose_item"
+
+    else:
+        await update.message.reply_text("Tvůj inventář bohužel zeje prázdnotou.")
+        return await basic_window(update)
+
+
+async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    current_player: player.Player = context.user_data["player"]
+    items_col: items.ItemsCollection = context.user_data["items"]
+    # Get rid of the usage tag
+    chosen_item_name = update.message.text.split(" (")[0]
+    item_ID = items_col.name_cz_to_ID[chosen_item_name]
+    item = items_col.get_item(item_ID)
+
+    if item.usage == "consume":
+        usage_text = "Je pouze na jednou použití."
+        question_text = "Přeješ si ho tedy použít?"
+        reply_keyboard = [["Použít"], ["Návrat"]]
+        context.user_data["item"] = item
+
+    elif item.usage == "equip":
+        usage_text = "Předmět je potřeba si nasadit."
+        question_text = "Přeješ si ho nasadit?"
+        reply_keyboard = [["Nasadit"], ["Návrat"]]
+        context.user_data["item"] = item
+
+    elif item.usage == "none":
+        usage_text = "Předmět nelze momentálně nijak použít."
+        question_text = "Zpět do inventáře?"
+        reply_keyboard = [["Návrat"]]
+
+    await update.message.reply_text(f"{chosen_item_name}\n{item.description_cz}\n{usage_text}\nPoskytuje následující:\n{item.speed_mod} k rychlosti\n{item.strength_mod} k síle")
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text(question_text, reply_markup=markup)
+
+    return "inspect_item"
+
+
+async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    current_player: player.Player = context.user_data["player"]
+    items_col: items.ItemsCollection = context.user_data["items"]
+    # Get rid of the usage tag
+    item: items.Item = context.user_data["item"]
+
+    current_player.use_item(item)
+    # current_player.items.remove(item.ID)
+
+    await update.message.reply_text(f"Použil jsi {item.name_cz}.")
+
+    return await basic_window(update)
+
+
+async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    current_player: player.Player = context.user_data["player"]
+    equip_succes = current_player.equip_weapon(context.user_data["item"])
+    if equip_succes:
+        return await basic_window(update)
+    else:
+        equiped = current_player.get_equiped_weapons(
+            context.user_data["items"])
+        reply_keyboard = [
+            [f"{item.name_cz} ({item.strength_mod} síla) ({item.speed_mod} rychlost)"] for item in equiped]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Bohužel už máš vybavené dva předměty. Proto jeden z nich musíš vyměnit. Který to bude?", reply_markup=markup)
+        return "replace_item"
+
+
+async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    items_col: items.ItemsCollection = context.user_data["items"]
+    item_name = update.message.text.split(" (")[0]
+    item_ID = items_col.name_cz_to_ID[item_name]
+    replace_item = items_col.get_item(item_ID)
+
+    current_player: player.Player = context.user_data["player"]
+    current_player.swap_weapon(replace_item, context.user_data["item"])
+    return await basic_window(update)
+
+
+async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await basic_window(update)
 
 
@@ -263,7 +368,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Get rid of the price tag
     chosen_item_name = update.message.text.split(" (")[0]
     item_ID = items_col.name_cz_to_ID[chosen_item_name]
-    item = items_col.get_item_by_ID(item_ID)
+    item = items_col.get_item(item_ID)
     if item.price > current_player.coins:
         await update.message.reply_text("Předmět je na tebe bohužel moc drahý")
     else:
@@ -365,6 +470,10 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Function that takes care of fight between a player and NPC. 
+    Successful attack knocks the NPC out whereas failed knocks out Player for 2 rounds
+    """
     current_player: player.Player = context.user_data["player"]
     society: character.Society = context.user_data["people"]
     current_chars: handler.ModifiedPeople = context.user_data["current_people"]
@@ -479,6 +588,41 @@ def main() -> None:
             "look_for_person": [
                 MessageHandler(
                     filters.TEXT, path_to_person
+                )
+            ],
+            "inspect_player": [
+                MessageHandler(
+                    filters.Regex("Inventář"), open_inventory
+                ),
+                MessageHandler(
+                    filters.Regex("Úkoly"), open_quests
+                ),
+                MessageHandler(
+                    filters.Regex("Zpět"), basic_window
+                )
+            ],
+            "choose_item": [
+                MessageHandler(
+                    filters.TEXT, choose_item
+                )
+            ],
+            "inspect_item": [
+                MessageHandler(
+                    filters.Regex("Použít"), use_item
+                ),
+                MessageHandler(
+                    filters.Regex("Nasadit"), equip_item
+                ),
+                MessageHandler(
+                    filters.Regex("Návrat"), inspect_player
+                )
+            ],
+            "replace_item": [
+                MessageHandler(
+                    filters.Regex("Zpět"), open_inventory
+                ),
+                MessageHandler(
+                    filters.TEXT, replace_item
                 )
             ]
 

@@ -70,7 +70,7 @@ class ModifiedQuestPhase:
         characters = read_people_from_file(r"data\characters.csv")
         map = read_map_from_file(r"data\streets.csv")
         items = read_items_from_file(r"data\items.csv")
-        return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item_by_ID(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
+        return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
 
     def __str__(self):
         if self.go_to == -1:

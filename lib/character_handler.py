@@ -223,11 +223,11 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
             all_items.append(item)
 
     if type == "str":
-        return sum([items_collection.get_item_by_ID(
+        return sum([items_collection.get_item(
             item_ID).strength_mod for item_ID in all_items])
 
     elif type == "speed":
-        return sum([items_collection.get_item_by_ID(
+        return sum([items_collection.get_item(
             item_ID).speed_mod for item_ID in all_items])
 
 
