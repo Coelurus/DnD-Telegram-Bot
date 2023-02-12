@@ -192,7 +192,7 @@ def generate_new_save(chat_ID) -> None:
     # Player introduce - set his starting position and other stuff
     spawn_player = Player(0, 25, [7, 8, 9], 2, 2,
                           [2, 2, 2, 2, 2, 2, 2], 4, "alive", "", "",
-                          ["0=char12=37=1=32=none", "7=char29=-1=-1=?=31;kill"], ["tostart", "inprogress"])
+                          ["0=char12=37=1=32=none=40%-1", "7=char29=-1=-1=?=31;stun=14%14"], ["tostart", "inprogress"])
     new_player_save = player_save_generator(spawn_player)
 
     # Start quest lines

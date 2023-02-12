@@ -147,22 +147,53 @@ class Player:
         self.speed -= item.speed_mod
         self.strength -= item.strength_mod
 
-    def update_quest_progresses(self, current_characters: ModifiedPeople) -> None:
-        for quest_ID in range(len(self.quests)):
-            quest = str_to_mqp(self.quests[quest_ID])
+    def update_quest_progresses(self, current_characters: ModifiedPeople) -> list[ModifiedQuestPhase]:
+        quests_to_finish: list[ModifiedQuestPhase] = []
+        for quest_idx in range(len(self.quests)):
+            quest = str_to_mqp(self.quests[quest_idx])
 
-            if self.progress[quest_ID] == "tostart" and self.place_ID == quest.from_place_ID:
-                self.progress[quest_ID] = "inprogress"
+            if self.progress[quest_idx] == "tostart" and self.place_ID == quest.from_place_ID:
+                self.progress[quest_idx] = "inprogress"
 
-            elif self.progress[quest_ID] == "inprogress" and quest.go_to != -1 and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID:
-                self.progress[quest_ID] = "infinal"
+            elif self.progress[quest_idx] == "inprogress" and quest.go_to != -1 and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID:
+                self.progress[quest_idx] = "infinal"
 
-            elif self.progress[quest_ID] == "inprogress" and quest.go_to == -1 and self.place_ID == quest.to_place_ID:
-                self.progress[quest_ID] = "infinal"
+            elif self.progress[quest_idx] == "inprogress" and quest.go_to == -1 and self.place_ID == quest.to_place_ID:
+                self.progress[quest_idx] = "infinal"
 
-            if self.progress[quest_ID] == "infinal":
-                print("TODO - quest dokončit úkol")
-                self.progress[quest_ID] = "ended"
+            # if player decides to leave final location without completing the quest
+            elif self.progress[quest_idx] == "infinal" and quest.go_to != -1 and self.place_ID != current_characters.get_NPC(quest.go_to).place_ID:
+                self.progress[quest_idx] = "inprogress"
+
+            elif self.progress[quest_idx] == "infinal" and quest.go_to == -1 and self.place_ID != quest.to_place_ID:
+                self.progress[quest_idx] = "inprogress"
+
+            if self.progress[quest_idx] == "infinal":
+                quests_to_finish.append(quest)
+                #self.progress[quest_idx] = "ended"
+
+        return quests_to_finish
+
+    def check_quest_action_complete(self, current_characters: ModifiedPeople) -> list[str]:
+        ended_quests = []
+        for quest_idx in range(len(self.quests)):
+            quest = str_to_mqp(self.quests[quest_idx])
+            if quest.action == "kill" and current_characters.get_NPC(quest.go_to).state == "dead" and self.progress[quest_idx] == "infinal":
+                self.progress[quest_idx] = "ended"
+            elif quest.action == "stun" and current_characters.get_NPC(quest.go_to).state == "stun" and self.progress[quest_idx] == "infinal":
+                self.progress[quest_idx] = "ended"
+                print(f"completed quest")
+            # The player was supposed to steal certain item. However he if has the item who cares how he got it.
+            elif quest.action == "rob" and (quest.item_ID in self.items or quest.item_ID in self.equiped_weapons):
+                self.progress[quest_idx] = "ended"
+            elif quest.action == "plant" and quest.item_ID in current_characters.get_NPC(quest.go_to).items and self.progress[quest_idx] == "infinal":
+                self.progress[quest_idx] = "ended"
+            elif quest.action == "none" and self.progress[quest_idx] == "infinal":
+                self.progress[quest_idx] = "ended"
+
+            if self.progress[quest_idx] == "ended":
+                ended_quests.append(self.quests[quest_idx])
+        return ended_quests
 
 
 if __name__ == "__main__":

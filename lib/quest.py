@@ -33,7 +33,7 @@ class QuestPhaseList:
 
 
 class ModifiedQuestPhase:
-    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str) -> None:
+    def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, rewards_str: str) -> None:
         characters = read_people_from_file(r"data\characters.csv")
         self.quest_phase_ID = int(qp_ID)
         if mod_who[0:4] == "char":
@@ -72,6 +72,9 @@ class ModifiedQuestPhase:
             self.action = action
             self.go_to = int(go_to_char_ID)
 
+        coins, item = [int(x) for x in rewards_str.split("%")]
+        self.reward: dict[str, int] = {"coins": coins, "item": item}
+
     def __repr__(self):
         phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
         characters = read_people_from_file(r"data\characters.csv")
@@ -81,9 +84,9 @@ class ModifiedQuestPhase:
 
     def __str__(self):
         if self.go_to == -1:
-            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}={self.to_place_ID}={self.action}"
+            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}={self.to_place_ID}={self.action}={self.reward['coins']}%{self.reward['item']}"
         else:
-            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}=?={self.go_to};{self.action}"
+            return f"{self.quest_phase_ID}=char{self.characterID}={self.from_place_ID}={self.item_ID}=?={self.go_to};{self.action}={self.reward['coins']}%{self.reward['item']}"
 
 
 def str_to_mqp(code_str: str) -> ModifiedQuestPhase:

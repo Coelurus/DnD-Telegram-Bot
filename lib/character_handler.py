@@ -169,43 +169,44 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     characters_definition = read_people_from_file("data\characters.csv")
     map = read_map_from_file("data\streets.csv")
     for character in modified_characters.list:
-        # Character has a quest to follow
-        if character.phase != "-1":
-            current_phase = str_to_mqp(character.phase)
-            # Final place is fixed
-            if current_phase.go_to == -1:
-                if character.stage == "tostart":
-                    final_point = current_phase.from_place_ID
+        if character.state == "alive":
+            # Character has a quest to follow
+            if character.phase != "-1":
+                current_phase = str_to_mqp(character.phase)
+                # Final place is fixed
+                if current_phase.go_to == -1:
+                    if character.stage == "tostart":
+                        final_point = current_phase.from_place_ID
+                    else:
+                        final_point = current_phase.to_place_ID
+                # In case character should go to someone else, place is dynamicaly changed each turn
                 else:
-                    final_point = current_phase.to_place_ID
-            # In case character should go to someone else, place is dynamicaly changed each turn
+                    final_point = modified_characters.get_NPC(
+                        current_phase.go_to).place_ID
+
+            # Character has designated end location
+            elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
+                final_point = characters_definition.get_char_by_ID(
+                    character.ID).end_street_ID
+
+            # Character just moves on random
             else:
-                final_point = modified_characters.get_NPC(
-                    current_phase.go_to).place_ID
+                final_point = choice(map.get_street_by_ID(
+                    character.place_ID).connections + [character.place_ID])
 
-        # Character has designated end location
-        elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
-            final_point = characters_definition.get_char_by_ID(
-                character.ID).end_street_ID
+            # TODO add places and characters to avoid
+            path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place_ID)),
+                                          map.get_street_by_ID(final_point))
 
-        # Character just moves on random
-        else:
-            final_point = choice(map.get_street_by_ID(
-                character.place_ID).connections + [character.place_ID])
+            if len(path) == 1:
+                next_place = path[0].ID
+            else:
+                # Idx is 1 because first street in path is starting street
+                next_place = path[1].ID
 
-        # TODO add places and characters to avoid
-        path = map.find_shortest_path(*map.BFS(map.get_street_by_ID(character.place_ID)),
-                                      map.get_street_by_ID(final_point))
-
-        if len(path) == 1:
-            next_place = path[0].ID
-        else:
-            # Idx is 1 because first street in path is starting street
-            next_place = path[1].ID
-
-        if isinstance(next_place, int) is not True:
-            print("ojojooo")
-        character.place_ID = next_place
+            if isinstance(next_place, int) is not True:
+                print("ojojooo")
+            character.place_ID = next_place
 
     return modified_characters
 
@@ -216,7 +217,9 @@ def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_
 
 def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
     items_collection = read_items_from_file("data\items.csv")
-    lists_of_items_IDs = [person.items for person in list_of_people]
+    # TODO Does not look really nice. Should be added more obvious way to take care of player Items
+    lists_of_items_IDs = [person.items if isinstance(
+        person, ModifiedNPC) else person.equiped_weapons for person in list_of_people]
     all_items: list[int] = []
     for list in lists_of_items_IDs:
         for item in list:
