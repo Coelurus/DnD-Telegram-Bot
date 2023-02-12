@@ -253,6 +253,8 @@ Pro operování s daty o průběhu úkolů opět použijeme knihovnu `save.py`. 
 
 
 ### Stavy postav
+
+#### Reprezentace
 Stav každé z postav je v řetězci oddělen `“+“` a jednotlivé části každého stavu `“,“`. Postavy jsou též řazeny dle indexu.
 
 Totožně jako u stavu hráče jsou definovány následující:
@@ -277,6 +279,9 @@ Pro postavy jsou však definovány i vlastnosti, které hráč nemá:
 + Pokud postava žádný úkol neplní, tak bude za všemi klíčovými slovy a dvojtečkou `-1`
   + Úkolová část postavy pak bude vypadat následovně: `“line:-1,phase:-1,stage:-1“`
 
+#### Zpracování dat
+Je pravda, že i zde se využije pár funkcí ze `save.py`, ale hlavní podpora pro práci s těmito daty se nachází v knihovně `character_handler.py`. Zde jsou definovány dvě třídy. První z nich je `ModifiedNPC`, do kterého se každé kolo ukládají všechny stavová data postavy načtené ze save file. Pro přístup ke všem `ModifiedNPC` je zde třída `ModifiedPeople`, která i definuje metody pro přijemnější práci s nimi.
+Mimo třídy je nutno zmínit funkci `get_current_characters`, která se stará o načtení aktuálních dat všech postav. Pak se zde nachází spousta dalších funkcí na práci s postavami, jako například jejich pohyb, souboj a podobně. Vše je podrobně okomentováno v samotném `character_handler.py`
 
 ### Rotace
 1.	Načtení z game save souboru
