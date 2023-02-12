@@ -12,7 +12,34 @@ Problémem, který řeší můj program, je nuda. Jedná se totiž o hru, a to k
 ## Načítaná data ze souborů
 ### Mapa
 Mapa Kritravenu, viz obrázek, sestává ze 40 navštívitelných míst. Jedná se tedy o graf, jehož vrcholy jsou ulice a hrana mezi ulicemi (či ulicí a místem) existuje právě tehdy, když se obě ulice protínají či sbíhají.
-Seznam těchto míst se načítá ze souboru streets.csv. Pro každé jedinečné ID ulice je určeno jméno místa a též seznam indexů, jež jsou spojené s hranou s daným místem
+Seznam těchto míst se načítá ze souboru streets.csv. Pro každé jedinečné ID ulice je určeno jméno místa a též seznam indexů, jež jsou spojené s hranou s daným místem.
+
+!["obrázek mapy"](zzz_other/map/kritraven-with-streets-n-places.png)
+
+Veškerá data o mapě a všech místech na ní jsou uloženy v souboru streets.csv.
+Každé místo v soubotu má momentálně své jedinečné ID, jméno v češtině, popis v češtině, seznam ID míst spojených s tímto místem, možnost speciálních akcí pro toto místo a omezení přístupu 
+
+#### Reprezentace:
++ ID
+    + integer
+    + 3
++ name_cz
+    + string
+    + Perlová
++ connected_ID
+    + seznam integerů oddělených středníkem
+    + 2;8;10;37
++ description_cz
+    + string
+    + Perlová ulice je navzdory svému názvu známá...
++ possibilities
+    + dva stringy odděleny dvojtečkou
+    + shop:food
++ access
+    + string
+    + free
+    + momentálně neimplementovaná vlastnost
+
 
 
 ### Postavy
