@@ -281,7 +281,72 @@ Pro postavy jsou však definovány i vlastnosti, které hráč nemá:
 
 #### Zpracování dat
 Je pravda, že i zde se využije pár funkcí ze `save.py`, ale hlavní podpora pro práci s těmito daty se nachází v knihovně `character_handler.py`. Zde jsou definovány dvě třídy. První z nich je `ModifiedNPC`, do kterého se každé kolo ukládají všechny stavová data postavy načtené ze save file. Pro přístup ke všem `ModifiedNPC` je zde třída `ModifiedPeople`, která i definuje metody pro přijemnější práci s nimi.
-Mimo třídy je nutno zmínit funkci `get_current_characters`, která se stará o načtení aktuálních dat všech postav. Pak se zde nachází spousta dalších funkcí na práci s postavami, jako například jejich pohyb, souboj a podobně. Vše je podrobně okomentováno v samotném `character_handler.py`
+Mimo třídy je nutno zmínit funkci `get_current_characters`, která se stará o načtení aktuálních dat všech postav. Pak se zde nachází spousta dalších funkcí na práci s postavami, jako například jejich pohyb, souboj a podobně. Vše je podrobně okomentováno v samotném `character_handler.py`.
+
+## Průběh hry a herní rozhraní
+
+O řízení hry i herního rozhraní se stará soubor `main.py`. Už jen kvůli množství různých funkcí není v mých silách všechny je zde vypsat, zmíním tak jen ty nejdůležitější, jelikož zbytek je stejně okomontován přímo v kódu.
+
+### Průběh hry
+
+To, co se děje, a jak se to děje řídí hlavně funkce `rotation`. Ta si nejdříve načte všechna aktuální data o postavách a průběhu úkolů. Zkontroluje, zda nějaká postava nesplnila nějaký úkol, aktualizuje postupy a přiřadí nové fáze ostatním. Ve zdrojovém kódu si můžete povšimnout, 
+
+
+```
+async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Update) -> None:
+    """Function take care of handling movement of NPC, making them follow missions etc.
+    It also updates questlines progresses and assign phases to NPCs based on it"""
+
+    # Getting current data that are potentially changed by player inputs from last time
+    current_characters: ModifiedPeople = context.user_data["current_people"]
+    current_quests_str: str = context.user_data["current_quests_str"]
+    player: Player = context.user_data["player"]
+
+    # Updating quest lines for characters. If game ending line has finished, the game ends
+    current_characters, lines_to_update, game_ended, game_ending_str = save.update_phases(
+        current_characters)
+    if game_ended:
+        return await end_game(update, context, game_ending_str)
+
+    new_quests_str = save.update_quests(current_quests_str, lines_to_update)
+
+    current_quests_save = save.get_current_quests(new_quests_str)
+
+    current_characters = save.assign_quests(
+        current_characters, current_quests_save)
+
+    # Make characters follow their quests and then parse to string so the progress can be saved
+    current_characters_str = save.move_characters(current_characters).to_str()
+
+    # Updates progress and gets list of quests completable in this place.
+    quests_to_finish = player.update_quest_progresses(current_characters)
+    context.user_data["additional_actions"] = quests_to_finish
+    if len(quests_to_finish) > 0:
+        await update.message.reply_text("\u2757 Máš zde úkol \u2757")
+
+    new_player_save = save.player_save_generator(player)
+
+    context.user_data["current_quests_str"] = new_quests_str
+
+    combined_save = f"{new_player_save}_{new_quests_str}_{current_characters_str}"
+
+    save.rewrite_save_file(chat_ID, combined_save)
+
+    # When player is not capable of moving proceed to next round and move characters again
+    # TODO change from recursion to loop
+    if player.state == "stun" and player.duration["stun"] >= 1:
+        print("ando nce more")
+        await rotation(chat_ID, context, update)
+```
+
+
+
+
+
+
+
+
+
 
 ### Rotace
 1.	Načtení z game save souboru
