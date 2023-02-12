@@ -148,6 +148,8 @@ class Player:
         self.strength -= item.strength_mod
 
     def update_quest_progresses(self, current_characters: ModifiedPeople) -> list[ModifiedQuestPhase]:
+        """Method looks through player's quests and compares them to his location. If player finished any subpart (moving to designated location) it updates progress he made.
+        Method returns list of ModifieQuestPhase object of quests where player is in final location"""
         quests_to_finish: list[ModifiedQuestPhase] = []
         for quest_idx in range(len(self.quests)):
             quest = str_to_mqp(self.quests[quest_idx])
@@ -170,11 +172,12 @@ class Player:
 
             if self.progress[quest_idx] == "infinal":
                 quests_to_finish.append(quest)
-                #self.progress[quest_idx] = "ended"
 
         return quests_to_finish
 
     def check_quest_action_complete(self, current_characters: ModifiedPeople) -> list[str]:
+        """Goes through all quests player has. If player is in final location and condition of completing 
+        the quest is fulfiled than the progres of quest is set to ended"""
         ended_quests = []
         for quest_idx in range(len(self.quests)):
             quest = str_to_mqp(self.quests[quest_idx])

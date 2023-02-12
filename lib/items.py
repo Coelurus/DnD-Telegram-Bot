@@ -34,6 +34,7 @@ class ItemsCollection:
         return self.list[ID]
 
     def items_by_type(self, type: str) -> list[Item]:
+        "Returns list of all game items of certain type"
         type_list = []
         for item in self.list:
             if item.type == type:
