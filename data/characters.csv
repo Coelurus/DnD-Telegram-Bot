@@ -1,36 +1,37 @@
-ID,name_cz,fraction_ID,quest_line_ID,spawn_street_ID,end_street_ID,speed,strength,coins
-0,kočka,6,-1,32,-1,5,3,20
-1,Strážník Poleno,0,-1,35,14,1,4,15
-2,Desátník Krabička,0,-1,35,35,2,3,16
-3,Desátník Výrosť,0,-1,35,35,2,1,9
-4,Strážný Cílek,0,-1,33,33,5,4,10
-5,Strážný Přívaz,0,-1,34,34,3,2,20
-6,Poslíček Míša,5,-1,17,-1,1,1,1
-7,Rybář Prla,5,-1,1,2,4,1,4
-8,Doktor Krut,5,-1,13,-1,3,1,9
-9,Učedník Tarz,4,-1,23,23,3,1,19
-10,Učednice Potichá,4,-1,23,23,2,2,8
-11,Hrubián Mára,1,-1,37,37,4,1,12
-12,Hrubiánka Elza,1,-1,37,37,2,3,13
-13,Vypočítavej Eda,1,-1,37,37,3,1,3
-14,Děravej Káral,1,-1,37,37,2,3,3
-15,Všivej Sardinka,1,-1,37,37,2,2,4
-16,Tichý Víťa,2,-1,38,38,1,3,15
-17,Pečlivý Alumin,2,-1,38,38,4,1,1
-18,Prostřelený Ucho,2,-1,38,38,1,1,6
-19,Levák Gabriel,2,-1,38,38,1,4,17
-20,Pronikavý Lobek,2,-1,38,38,1,1,16
-21,Pravdou Zaslepený,3,-1,39,39,1,1,6
-22,Lžizřícise,3,-1,39,39,1,1,6
-23,Kněz Jeho Levého malíčku,3,-1,39,39,1,1,8
-24,Zpěvem Vedený,3,-1,39,39,1,1,19
-25,Nejvýše hledící,3,-1,39,39,1,1,18
-26,Biskup Třetího Úsvitu,3,-1,39,39,1,1,3
-27,Jimmy Děravý Koleno,2,-1,7,7,4,1,20
-28,Pedro Wellington,2,-1,7,7,2,2,12
-29,Zesty Bergamot,2,-1,7,7,4,1,7
-30,Tewkesbury,1,-1,1,1,3,1,4
-31,Malý Rhompson,1,-1,1,1,2,3,12
-32,Kradmá Thalastra,3,-1,19,3,5,1,20
-33,Momo Lotter,2,-1,20,2,3,1,13
-34,Tomáš Víčko,1,-1,3,1,2,3,3
+ID,name_cz,fraction_ID,spawn_street_ID,end_street_ID,speed,strength,coins
+0,kočka,6,32,-1,1,1,33
+1,Strážník Poleno,0,35,14,3,1,40,
+2,Desátník Krabička,0,35,35,1,4,13
+3,Desátník Výrosť,0,35,35,3,1,24
+4,Strážný Cílek,0,33,33,2,3,28
+5,Strážný Přívaz,0,34,34,4,1,26
+6,Poslíček Míša,5,17,-1,3,2,25
+7,Rybář Prla,5,1,2,2,1,32
+8,Doktor Krut,5,13,-1,2,1,33
+9,Učedník Tarz,4,23,23,2,1,25
+10,Učednice Potichá,4,23,23,4,1,11
+11,Hrubián Mára,1,37,37,2,1,43
+12,Hrubiánka Elza,1,37,37,1,3,38
+13,Vypočítavej Eda,1,37,37,1,1,40
+14,Děravej Káral,1,37,37,1,3,41
+15,Všivej Sardinka,1,37,37,4,1,22
+16,Tichý Víťa,2,38,38,2,1,35
+17,Pečlivý Alumin,2,38,38,3,2,31
+18,Prostřelený Ucho,2,38,38,2,2,34
+19,Levák Gabriel,2,38,38,1,4,36
+20,Pronikavý Lobek,2,38,38,2,1,37
+21,Pravdou Zaslepený,3,39,39,1,1,15
+22,Lžizřícise,3,39,39,1,1,42
+23,Kněz Jeho Levého malíčku,3,39,39,1,1,60
+24,Zpěvem Vedený,3,39,39,1,1,31
+25,Nejvýše hledící,3,39,39,1,1,30
+26,Biskup Třetího Úsvitu,3,39,39,1,1,21
+27,Jimmy Děravý Koleno,2,7,7,1,1,59
+28,Pedro Wellington,2,7,7,3,1,16
+29,Zesty Bergamot,2,7,7,2,2,23
+30,Tewkesbury,1,1,1,4,1,33
+31,Malý Rhompson,1,1,1,3,1,68
+32,Kradmá Thalastra,3,19,3,4,1,47
+33,Momo Lotter,2,20,2,3,2,30
+34,Tomáš Víčko,1,3,1,1,1,61
+35,Barman Brčko,5,0,0,3,2,33

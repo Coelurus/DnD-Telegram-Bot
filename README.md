@@ -1,6 +1,4 @@
 # DnD-Telegram-Bot
-Still WIP but my deadline is kinda on the 12th of february so RIP i guess or idk
-Made by Filip Vopálenský
 
 ### Anotace
 Problémem, který řeší můj program, je nuda. Jedná se totiž o hru, a to konkrétně o hru výpravnou inspirovanou textovými adventurami a Dračím doupětem. Uživatel, tudíž hráč, se ocitne ve městě zvaném Kritraven a musí se mu podařit schovat či uprchnout dříve, než ho dopadne hlídka. Hra je rozdělena na kola a v každém z nich musí hráč pečlivě volit svá rozhodnutí a uvážit své kroky. Hráč samozřejmě není ve městě sám, ba naopak může potkat několik NPC, se kterými může interagovat, a tak ovlivnit výsledek hry.
@@ -30,6 +28,8 @@ Každé místo v soubotu má momentálně své jedinečné ID, jméno v češtin
     + string - např. `Perlová ulice je navzdory svému názvu známá...`
 + possibilities
     + dva stringy odděleny dvojtečkou - např. `shop:food`
+    + první je vždy typ (`shop` je zatím jediná taková implementace)
+    + druhé je upřesnění (typy pro `shop` se odvozují z parametru `type` v tříde `Items`)
 + access
     + string - např. `free`
     + momentálně neimplementovaná vlastnost
@@ -41,21 +41,70 @@ Za zmínku též stojí funkce `read_map_from_file`, která se stará o načten�
 
 Zbytek funkcí a metod je i s komentáři k naleznutí v `lib/map.py`
 
-
-
+***
 
 ### Postavy
-Seznam všech postav a údaje o nich nalezneme v souboru characters.csv. Každá z nich má svoje jedinečné ID, jméno v češtině, seznam ID úkolů, které musí splnit, ID ulice ve které začíná a ID ulice či místa kam půjde, pokud vše splní. Pokud bude v end_street_ID hodnota -1, znamená to, že postava se bude dále volně a náhodně pohybovat po městě. Dále je pro každou postavu určena její rychlost, síla a počet peněz, jež má u sebe a index frakce, do které patří.
+Ve hře je momentálně 36 různých postav. Každá z nich se pohybuje a koná akce samostatně a když je to potřeba, řídí se úkoly (více viz dále)
+Seznam všech postav a údaje o nich nalezneme v souboru `characters.csv`. Každá z nich má svoje jedinečné ID, jméno v češtině, ID frakce, ke které náleží, ID ulice, kde se při začátku hry ocitnou, ID ulice, kam se uchýlí, když nemají nic na práci, jejich rychlost, síla a počet peněz.
 
+#### Reprezentace
++ ID
+    +  integer
+    +  např. `1`
++ name_cz
+    +  string
+    +  např. `Strážník Poleno`
++ fraction_ID
+    +  integer
+    +  např. `0` 
++ spawn_street_ID
+    +  např. `35` 
++ end_street_ID
+    +  integer
+    +  např. `14` 
++ speed
+    +  integer
+    +  např. `3` 
++ strength
+    +  integer
+    +  např. `1` 
++ coins
+    +  integer
+    +  např. `40`
+    +  momentálně neiplementovaná vlastnost
+
+
+#### Zpracování
+O zpracování těchto dat se stará knihovna `character.py`. Ta definuje třídu `NPC` do jejíchž objektů se ukládají všechny data uvedená v reprezentaci. Dále je zde třída `Society`, která ukládá všechny objekty typu `NPC` a definuje metody pro práce s nimi.
+Nachází se zde též funkce `read_people_from_file`, jež se stará o načtení všech postav, jejich reprezentaci jako `NPC` a jejich uložení do objektu třídy `Society`
 
 ### Frakce
-Další nezanedbatelnou charakteristikou každé postavy je frakce, pro kterou pracuje. Seznam všech lze nalézt v souboru fractions.csv. Mimo ID a jména v češtině zde můžeme nalézt i vztahy mezi frakcemi a ID místa jejich základny.
-Ohodnocení vztahů: 3 = nasadíme za vás svůj život, 2 = nevadíme si, 1 = klidně tě udám, 0 = zabiju tě tady a teď, -1 = nedefinováno (když nemá smysl určovat).
-Výjimky: nikam nepatřící postavy nemají residenci (ID = -1)
+Jak již bylo naznačeno v reprezentaci postav, tak jsou v této hře definovány i takzvané frakce. Seznam všech těchto frakcí je uložen v souboru `fractions.csv`, kde je pro každou z nich definováno jedinečné ID, jméno v češtině, ID místa jejich residence a vztahy s ostatními frakcemi.
 
+#### Reprezentace
++ ID
+    + integer - např. `0`
++ name_cz
+    + string - např. `Hlídka`
++ residence_ID
+    + integer - např. `35`
+    + momentálně neimplementovaná vlastnost
+    + nikam nepatřící postavy nemají residenci `-1`
++ relations
+    + řetězec integerů oddělených středníkem - např. `3;1;1;0;2;3;-1`
+    + význam hodnoty vztahů
+      + ` 3` = nasadíme za vás svůj život
+      + ` 2` = nevadíme si
+      + ` 1` = klidně tě udám
+      + ` 0` = zabiju tě tady a teď
+      + `-1` = nedefinováno (když nemá smysl určovat)
+
+#### Zpracování
+O zpracování těchto dat se stará též knihovna `character.py`, která definuje třídu `Fraction`, do které se ukládají všechny vlastnosti vypsané výše. Jako vždy je definována třída `PoliticalMap`, která v sobě ukládá všechny frakce a definuje metody pro práce s nimi.
+Pro načtení a zpracování všech frakcí je zde `read_fractions_from_file`, která zkonstruuje objekt třídy `PoliticalMap` se všemi frakcemi ve formě `Fraction`.
 
 ### Úkoly
-Seznam všech úkolů a jejich všemožné podrobnosti jsou uloženy v souborech quests-lines.txt a quest-phases. Řekl bych, že se jedná o nejkomplexnější vstupní data ze všech. Lze zde totiž určit mnoho modifikátorů, které přesně určí, jak mají jaké úkoly (a jejich fáze) probíhat a jak se mají postavy tento úkol plnící chovat.
+Úkoly, ruka boží, která řídí chování všech postav v této hře
 
 #### Fáze úkolů
 Každý, jakkoliv komplikovaně dosažitelný cíl se dá rozložit na posloupnost několika fází. A když postupně tyto fáze splníme, dosáhneme určitého vyššího cíle.
