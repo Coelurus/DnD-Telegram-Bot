@@ -16,29 +16,31 @@ Seznam těchto míst se načítá ze souboru streets.csv. Pro každé jedinečn�
 
 !["obrázek mapy"](zzz_other/map/kritraven-with-streets-n-places.png)
 
-Veškerá data o mapě a všech místech na ní jsou uloženy v souboru streets.csv.
+Veškerá data o mapě a všech místech na ní jsou uloženy v souboru `streets.csv`.
 Každé místo v soubotu má momentálně své jedinečné ID, jméno v češtině, popis v češtině, seznam ID míst spojených s tímto místem, možnost speciálních akcí pro toto místo a omezení přístupu 
 
 #### Reprezentace:
 + ID
-    + integer
-    + 3
+    + integer - např. `3`
 + name_cz
-    + string
-    + Perlová
+    + string - např. `Perlová`
 + connected_ID
-    + seznam integerů oddělených středníkem
-    + 2;8;10;37
+    + seznam integerů oddělených středníkem - např. `2;8;10;37`
 + description_cz
-    + string
-    + Perlová ulice je navzdory svému názvu známá...
+    + string - např. `Perlová ulice je navzdory svému názvu známá...`
 + possibilities
-    + dva stringy odděleny dvojtečkou
-    + shop:food
+    + dva stringy odděleny dvojtečkou - např. `shop:food`
 + access
-    + string
-    + free
+    + string - např. `free`
     + momentálně neimplementovaná vlastnost
+
+#### Zpracování:
+O zpracovávání těchto dat se stará knihovna `map.py`, která definuje třídu `Street`, do které se uklídají veškerá data zmíněná výše. Navíc je zde třída `Map`, která v sobě ukládá všechny objekty `Street` a poskytuje metody pro práci s nimi. Mezi ně patří metoda `BFS`, jejímž jediným argumentem je výchozí místo. Metoda provádí průchod do šířky grafem mapy a vrací seznam ulic a seznam vzdáleností ulic na stejném indexu od výchozí ulice. Druhou důležitou metodou je pak `find_shortest_path`, která bere jako argumenty tyto 2 seznamy a k tomu ještě cílové místo a vrací jednu z nejkratších cest z výchozího do cílového místa.
+
+Za zmínku též stojí funkce `read_map_from_file`, která se stará o načtení dat ze souboru a jejich uložení do objektu třídy `Map`
+
+Zbytek funkcí a metod je i s komentáři k naleznutí v `lib/map.py`
+
 
 
 
