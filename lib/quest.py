@@ -4,7 +4,7 @@ from character import Society, PoliticalMap, read_people_from_file, read_fractio
 from map import Map, read_map_from_file
 from items import Item, read_items_from_file
 
-
+"""
 class QuestPhase:
     def __init__(self, ID: str, name_cz: str, legal: str) -> None:
         self.ID = int(ID)
@@ -31,14 +31,20 @@ class QuestPhaseList:
     def get_phase_by_ID(self, ID: int) -> QuestPhase:
         return self.list[ID]
 
+"""
+
 
 class ModifiedQuestPhase:
+    """Class to represent modifiers of phases of Quest Lines"""
+
     def __init__(self, qp_ID: str, mod_who: str, mod_from: str, mod_item: str, mod_where: str, mod_go_to: str, rewards_str: str) -> None:
+        # More on all the modifiers in docs
         characters = read_people_from_file(r"data\characters.csv")
         self.quest_phase_ID = int(qp_ID)
+        # Executor of phase can be defined by ID or fraction
         if mod_who[0:4] == "char":
             character_list = mod_who.lstrip("char").split(";")
-            # TODO add condition that only one character can do one phase + remove random
+            # TODO add condition that only one character can do one phase
         else:
             fraction_ID = int(mod_who.lstrip("frac"))
             character_list = characters.get_characters_by_fraction(fraction_ID)
@@ -76,11 +82,10 @@ class ModifiedQuestPhase:
         self.reward: dict[str, int] = {"coins": coins, "item": item}
 
     def __repr__(self):
-        phases_list = read_quest_phases_from_file(r"data\quest-phases.csv")
         characters = read_people_from_file(r"data\characters.csv")
         map = read_map_from_file(r"data\streets.csv")
         items = read_items_from_file(r"data\items.csv")
-        return f"{phases_list.get_phase_by_ID(self.quest_phase_ID).name_cz} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
+        return f"{self.quest_phase_ID} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
 
     def __str__(self):
         if self.go_to == -1:
@@ -90,17 +95,22 @@ class ModifiedQuestPhase:
 
 
 def str_to_mqp(code_str: str) -> ModifiedQuestPhase:
+    """Function to create ModifiedQuestPhase object based on save string"""
     modifiers_list = code_str.split("=")
     return ModifiedQuestPhase(*modifiers_list)
 
 
 def mqp_to_str(mqp_object: ModifiedQuestPhase) -> str:
+    """Function to get string based on data from ModifiedQuestPhase"""
     return str(mqp_object)
 
 
 class Node:
+    """Class to save each phase of quest line"""
+
     def __init__(self, value: list[str], succes=None, failure=None):
         self.value = value
+        """value = list of string represantations of modified quest phases"""
         self.succes = succes
         self.failure = failure
 
@@ -109,9 +119,13 @@ class Node:
 
 
 class QuestLineTrees:
+    """Class to save phases of quest line and how they follow each other"""
+
     def __init__(self) -> None:
         self.ID_to_name: dict[int, str] = dict()
+        """Get name of quest line based on ID"""
         self.ID_to_tree: dict[int, Node] = dict()
+        """Get the root Node of Tree based on ID"""
 
     def add_tree(self, ID: int, name: str, tree: Node) -> None:
         self.ID_to_name[ID] = name
@@ -119,12 +133,15 @@ class QuestLineTrees:
 
 
 def read_quest_lines_from_file(path: str) -> QuestLineTrees:
+    """Function to read data about Trees from txt file.
+    Function returns QuestLineTrees object where all modified quest phases are saved"""
     file = open(path, "r", encoding="utf-8")
     lines = file.readlines()
     number_of_line_quests = int(lines[0])
 
     quest_lines = QuestLineTrees()
 
+    # Goes through all lines in quest-lines.txt and get the ID, name and string representation of a Quest tree
     for line_idx in range(1, number_of_line_quests*2, 2):
         quest_line_ID, quest_line_name = lines[line_idx].split("=")
         quest_line_ID = int(quest_line_ID)
@@ -138,6 +155,7 @@ def read_quest_lines_from_file(path: str) -> QuestLineTrees:
 
 
 def print_tree(node: Node) -> None:
+    """Visualize tree"""
     if node != None:
         print(node.value, end="")
 
@@ -152,6 +170,7 @@ def print_tree(node: Node) -> None:
     print(")", end="")
 
 
+"""
 def read_quest_phases_from_file(path):
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
@@ -163,9 +182,11 @@ def read_quest_phases_from_file(path):
 
     csv_file.close()
     return quest_phase_list
+"""
 
 
-def create_tree_from_str(quest_line_str: str):
+def create_tree_from_str(quest_line_str: str) -> Node:
+    """Reads string representation of tree and returns root Node of this tree"""
     # separating modified quest part from sons
     root_quest = quest_line_str[0:quest_line_str.index("(")]
     strip_len = len(root_quest + "(")

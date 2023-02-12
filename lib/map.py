@@ -3,6 +3,8 @@ import csv
 
 
 class Map:
+    """Class to store all Streets objects"""
+
     def __init__(self) -> None:
         self.streets: list[Street] = []
         # Since player defines place where he wanna move,
@@ -12,7 +14,7 @@ class Map:
     def add_street(self, street: Street) -> None:
         self.streets.append(street)
         self.name_cz_to_ID[street.name_cz] = street.ID
-        # TODO unordered csv file
+        """Dict to easily get Street's ID based on its name"""
 
     def print_streets_and_connections(self) -> None:
         """
@@ -27,6 +29,9 @@ class Map:
         return [x.ID for x in self.find_shortest_path(*self.BFS(self.get_street_by_ID(from_ID)), self.get_street_by_ID(to_ID))]
 
     def find_shortest_path(self, BFS_streets: list[Street], BFS_depths: list[int], to_street: Street) -> list[Street]:
+        """Method takes list of Streets in order of distane from the first street in list 
+        and list of depths = distances of other streets from the first 
+        and final street and returns list of Streets on path to the to_street"""
         STREET = 0
         DEPTH = 1
         BFS_combined = list(zip(BFS_streets, BFS_depths))
@@ -82,7 +87,7 @@ class Map:
 
 
 class Street:
-    """Haha"""
+    """Class to store static data about each place on map"""
 
     def __init__(self, ID: str, name_cz: str, connections: str, description_cz: str, possibilites: str, access: str) -> None:
         self.ID = int(ID)
@@ -103,6 +108,8 @@ class Street:
 
 
 def read_map_from_file(path: str) -> Map:
+    """Function to read data about streets from csv file.
+    Function returns Map object where all Streets are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",", quotechar='"')
 
@@ -120,10 +127,3 @@ if __name__ == "__main__":
 
     for place in map.streets:
         print(place.to_str())
-
-        # streetList, depth = map.BFS(map.streets[37])
-        # for routeIdx in range(len(streetList)):
-        #    print(depth[routeIdx], streetList[routeIdx].get_name_cz())
-
-        # for i in map.find_shortest_path(streetList, depth, map.streets[36]):
-        #    print(i.get_name_cz())

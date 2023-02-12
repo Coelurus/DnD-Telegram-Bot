@@ -6,6 +6,8 @@ from quest import ModifiedQuestPhase, str_to_mqp
 
 
 class Player:
+    """Class to store current data about Player"""
+
     def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str,
                  relations: list[str], fraction_ID: str = "4", state: str = "alive",
                  duration: str = "", weapons: list[str] = [""], quests: list[str] = [], progress: list[str] = []) -> None:
