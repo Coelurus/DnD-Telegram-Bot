@@ -2,6 +2,8 @@ import csv
 
 
 class Item:
+    """Class to store specific static data about Item"""
+
     def __init__(self, ID: str, name_cz: str, legal: str, speed_mod: str, strength_mod: str, price: str, description_cz: str, type: str, usage: str, duration: str = 0) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
@@ -19,9 +21,12 @@ class Item:
 
 
 class ItemsCollection:
+    """Class to store all Item objects"""
+
     def __init__(self) -> None:
         self.list: list[Item] = []
         self.name_cz_to_ID: dict[str, int] = dict()
+        """Dict to easily get Item's ID based on his name"""
 
     def __repr__(self):
         return "\n".join([str(x) for x in self.list])
@@ -42,7 +47,9 @@ class ItemsCollection:
         return type_list
 
 
-def read_items_from_file(path):
+def read_items_from_file(path: str) -> ItemsCollection:
+    """Function to read data about items from csv file.
+    Function returns ItemsCollection object where all Items are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 

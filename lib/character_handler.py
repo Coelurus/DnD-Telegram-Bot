@@ -8,6 +8,8 @@ from random import choice
 
 
 class ModifiedNPC:
+    """Class to store data about current state of a character"""
+
     def __init__(self, ID: str, place: str, coins: str, items: str, str: str, speed: str, line: str, phase: str, stage: str, state: str) -> None:
         self.ID = int(ID)
         self.place_ID = int(place)
@@ -20,7 +22,7 @@ class ModifiedNPC:
         self.items = [int(x) for x in items.split(";") if x != ""]
         self.state = state
 
-    def __repr__(self):  # changed it from str might break smth else
+    def __repr__(self):
         characters_definition = read_people_from_file("data\characters.csv")
         line_part = ""
         if self.phase != "-1":
@@ -32,6 +34,8 @@ class ModifiedNPC:
 
 
 class ModifiedPeople:
+    """Class to store all current characters as ModifiedNPCs"""
+
     def __init__(self) -> None:
         self.list: list[ModifiedNPC] = []
 
@@ -49,6 +53,7 @@ class ModifiedPeople:
         return "\n".join([str(x) for x in self.list])
 
     def to_str(self) -> str:
+        """Parse object to string thus it can be saved"""
         list_to_link = []
         for NPC in self.list:
             items = ";".join([str(x) for x in NPC.items])
@@ -57,9 +62,11 @@ class ModifiedPeople:
         return "+".join(list_to_link)
 
     def get_NPC(self, ID: int) -> ModifiedNPC:
+        """Get a ModifiedNPC object based on its ID"""
         return self.list[ID]
 
     def get_people_in_place(self, place_ID: int) -> list[ModifiedNPC]:
+        """Get list of characters as ModifiedNPCs in defined place"""
         found_people = []
         for char in self.list:
             if char.place_ID == place_ID:
@@ -225,12 +232,15 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
 
 
 def how_char1_loves_char2(char1: NPC, char2: NPC, fractions=read_fractions_from_file(r"data\fractions.csv")) -> int:
+    """get on which level is relationship of char 1 with char 2"""
     return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
 
 
 def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
+    """Return modifier defined by argument type. Function looks through items of all Modified NPCs and returns sum of their modifiers"""
     items_collection = read_items_from_file("data\items.csv")
     # TODO Does not look really nice. Should be added more obvious way to take care of player Items
+    # In list can be an object of type Player. In this case we have to get modifiers from his equiped weapons
     lists_of_items_IDs = [person.items if isinstance(
         person, ModifiedNPC) else person.equiped_weapons for person in list_of_people]
     all_items: list[int] = []
@@ -248,9 +258,15 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
 
 
 def fight(attacker, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople, attacker_bonus: int = 0) -> tuple[ModifiedPeople, bool]:
+    """Function takes care of an fight between multiple characters
+    might include Player as an attacker -> in that case is attacker: Player
+    otherwise attacker: ModifiedNPC
+    Function returns 2 values, first is list of newly modified people and second is falure/success of an attack
+    """
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
 
+    # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
         attacker_NPC = people.get_char_by_ID(attacker.ID)
         attacker_fraction = attacker_NPC.fraction_ID
@@ -265,12 +281,15 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
     if attacker.speed > defender.speed + 1 or attacker_fraction == defender_NPC.fraction_ID or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_fraction] >= 2:
         attacker_bonus = 1
 
+    # Player would not be added to the attacker list automatically since it goes only through characters in place
     if isinstance(attacker, ModifiedNPC):
         attacker_side: list[ModifiedNPC] = []
     else:
         attacker_side: list[ModifiedNPC] = [attacker]
     defender_side: list[ModifiedNPC] = []
 
+    # Other characters might be added to the fight as well.
+    # They must be in the same place and their relationship to one of the fighting sides must be on the highest level
     for character in current_characters.list:
         if character.place_ID == attacker.place_ID:
             character_NPC = people.get_char_by_ID(character.ID)
@@ -290,6 +309,7 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
             if character_NPC.fraction_ID == defender_NPC.fraction_ID or likes_defender >= 3:
                 defender_side.append(character)
 
+    # When there is more people on either side it gives an advantage to this side
     attacker_bonus += (len(attacker_side) - len(defender_side)) * 2
 
     items_attacker_mod = get_items_attributes(attacker_side, "str")
@@ -303,6 +323,7 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
     dead_list: list[ModifiedNPC] = []
     stun_list: list[ModifiedNPC] = []
 
+    # Goes through all possible outcomes of strength comparisons and based on that and the type it determines final states of characters in combat
     if total_attack_power > total_defend_power+1:
         if action == "kill":
             for char in defender_side:
@@ -349,10 +370,14 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
     return current_characters, phase_failed
 
 
-def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
+def steal(attacker, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
+    """Function takes care of an action where attacker tries to steal (or plant) items from defender
+    Function returns updated ModifiedPeople and information about success/failure
+    Similarly to fight, attacker might be a Player object"""
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
 
+    # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
         attacker_NPC = people.get_char_by_ID(attacker.ID)
         attacker_fraction = attacker_NPC.fraction_ID
@@ -365,6 +390,8 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
     phase_failed = False
     attacker_bonus = 0
+
+    # Get relations based on attacker type
     if isinstance(attacker, ModifiedNPC):
         if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
             attacker_bonus += 1
@@ -376,9 +403,11 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
     items_defender_mod = get_items_attributes([defender], "speed")
 
     attacker_speed = attacker.speed + attacker_bonus + items_attacker_mod
+    # if defender is stunned or dead, he automatically loses
     defender_speed = (-69 if defender.state !=
                       "alive" else defender.speed) + items_defender_mod
 
+    # outcomes of an encounter are defined by total speed level comparison
     if attacker_speed > defender_speed:
         if action == "rob":
             stolen_items = defender.items

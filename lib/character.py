@@ -2,6 +2,8 @@ import csv
 
 
 class Fraction:
+    """Class to store static data about Fractions"""
+
     def __init__(self, ID: str, name_cz: str, residence_ID: str, relations: str) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
@@ -19,6 +21,8 @@ class Fraction:
 
 
 class PoliticalMap:
+    """Class to store all Fractions objects"""
+
     def __init__(self) -> None:
         self.fractions = []
 
@@ -33,6 +37,8 @@ class PoliticalMap:
 
 
 class NPC:
+    """Class to store static data about characters"""
+
     def __init__(self, ID: str, name_cz: str, fraction_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
@@ -55,9 +61,12 @@ class NPC:
 
 
 class Society:
+    """Class to store all NPC objects"""
+
     def __init__(self) -> None:
         self.people_list: list[NPC] = []
         self.name_cz_to_ID: dict[str, int] = dict()
+        """Dict to easily get NPC's ID based on his name"""
 
     def add_person(self, person: NPC) -> None:
         self.people_list.append(person)
@@ -91,7 +100,9 @@ class Society:
         return character_IDs_by_fraction
 
 
-def read_people_from_file(path):
+def read_people_from_file(path: str) -> Society:
+    """Function to read data about characters from csv file.
+    Function returns Society object where all NPCs are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
@@ -104,7 +115,9 @@ def read_people_from_file(path):
     return society
 
 
-def read_fractions_from_file(path):
+def read_fractions_from_file(path: str) -> PoliticalMap:
+    """Function to read data about fractions from csv file.
+    Function returns PoliticalMap object where all fractions are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
