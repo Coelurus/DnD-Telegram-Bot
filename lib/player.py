@@ -187,7 +187,6 @@ class Player:
                 self.progress[quest_idx] = "ended"
             elif quest.action == "stun" and current_characters.get_NPC(quest.go_to).state == "stun" and self.progress[quest_idx] == "infinal":
                 self.progress[quest_idx] = "ended"
-                print(f"completed quest")
             # The player was supposed to steal certain item. However he if has the item who cares how he got it.
             elif quest.action == "rob" and (quest.item_ID in self.items or quest.item_ID in self.equiped_weapons):
                 self.progress[quest_idx] = "ended"

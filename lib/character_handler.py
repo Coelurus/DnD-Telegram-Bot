@@ -115,17 +115,14 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
             # Character gets to starting location
             if character.stage == "tostart" and current_phase.from_place_ID == character.place_ID:
                 character.stage = "inprogress"
-                print(character.ID, "is now working on", character.phase)
 
             # Character whose phases is dynamically generated got in the location with his target
             elif character.stage == "inprogress" and current_phase.go_to != -1 and modified_characters.get_NPC(current_phase.go_to).place_ID == character.place_ID:
                 character.stage = "ended"
-                print(character.ID, "just ended", character.phase)
 
             # Character got in the given fixed location
             elif character.stage == "inprogress" and current_phase.to_place_ID == character.place_ID:
                 character.stage = "ended"
-                print(character.ID, "just ended", character.phase)
 
             # Resolving additional actions performed by characters
             if character.stage == "ended":
@@ -136,13 +133,12 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                             current_phase.go_to)
                         # So characters can not kill already dead characters
                         if defender.state == "dead":
-                            print(defender.ID, "is already dead")
+                            pass
                         elif defender.state == "stun":
                             if current_phase.action == "kill":
                                 defender.state = "dead"
-                                print(defender.ID, "was stunned and now is dead")
                             elif current_phase.action == "stun":
-                                print(defender.ID, "is already stunned")
+                                pass
                         else:
                             modified_characters, stage_failed = fight(
                                 character, defender, current_phase.action, modified_characters)
@@ -224,8 +220,6 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                 # Idx is 1 because first street in path is starting street
                 next_place = path[1].ID
 
-            if isinstance(next_place, int) is not True:
-                print("ojojooo")
             character.place_ID = next_place
 
     return modified_characters
@@ -360,12 +354,12 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
     for char in dead_list:
         char.stage = "ended"
 
-    if len(dead_list) > 0:
+    """if len(dead_list) > 0:
         print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
               else "hráč" for char in dead_list]), "fought and died")
     if len(stun_list) > 0:
         print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
-              else "hráč" for char in stun_list]), "fought and got stunned")
+              else "hráč" for char in stun_list]), "fought and got stunned")"""
 
     return current_characters, phase_failed
 
@@ -414,8 +408,8 @@ def steal(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
             defender.items = []
             attacker.items += stolen_items
 
-            print(attacker_name, "stole:",
-                  stolen_items, "from", defender_NPC.name_cz)
+            """print(attacker_name, "stole:",
+                  stolen_items, "from", defender_NPC.name_cz)"""
 
         elif action == "plant":
             # TODO plant only the quest item and not all
@@ -423,17 +417,17 @@ def steal(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
             attacker.items = []
             defender.items += planted_items
 
-            print(attacker_name, "planted:",
-                  planted_items, "into pockets of", defender_NPC.name_cz)
+            """print(attacker_name, "planted:",
+                  planted_items, "into pockets of", defender_NPC.name_cz)"""
 
     elif attacker_speed == defender_speed:
-        print(attacker_name, "failed", action)
+        #print(attacker_name, "failed", action)
         phase_failed = True
         current_characters, _ = fight(
             attacker, defender, "stun", current_characters)
 
     else:
-        print(attacker_name, "failed", action)
+        #print(attacker_name, "failed", action)
         phase_failed = True
         current_characters, _ = fight(
             attacker, defender, "stun", current_characters, -1)

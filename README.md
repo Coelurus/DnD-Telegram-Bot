@@ -1,10 +1,34 @@
 # DnD-Telegram-Bot
 
+## Jak hru spustit?
+Je to velice jednoduché!
+1. Jelikož se jedná o `bota` na Telegramu, tak si budete muset založit účet na Telegramu.
+2. Najděte si na Telegramu uživatele `@dnd_zapocet_bot` (https://t.me/dnd_zapocet_bot)
+3. Napište první zprávu ve tvaru `/start`
+4. Užijte si to!
+
+## Jak sám spustit bota?
+1. Opět na to budete potřebovat Telegram.
+2. Napište uživateli `@BotFather` (https://t.me/BotFather)
+3. Nechte si vytvořit `bota`.
+4. Zkopírujte si jeho `HTTP API`.
+5. Najděte ve složce `data` soubor `token.txt` a vložte do něj token.
+6. Dále budete potřebovat Python, pokud ho nemáte, stáhněte zde: https://www.python.org/downloads/
+7. Otevřete příkazovou řádku a napište:
+   `pip install python-telegram-bot --upgrade`
+8. Pokud vám příkazová řádka hlásí, že nemáte pip, naistaujte si ho, dle postupu zde: https://pypi.org/project/pip/
+   - Znovu napište `pip install python-telegram-bot --upgrade`
+9. V příkazové řádce si otevřete složku s tímto botem.
+
+***
+
+## Vlastní dokumentace
+
 ### Anotace
 Problémem, který řeší můj program, je nuda. Jedná se totiž o hru, a to konkrétně o hru výpravnou inspirovanou textovými adventurami a Dračím doupětem. Uživatel, tudíž hráč, se ocitne ve městě zvaném Kritraven a musí se mu podařit schovat či uprchnout dříve, než ho dopadne hlídka. Hra je rozdělena na kola a v každém z nich musí hráč pečlivě volit svá rozhodnutí a uvážit své kroky. Hráč samozřejmě není ve městě sám, ba naopak může potkat několik NPC, se kterými může interagovat, a tak ovlivnit výsledek hry.
 
 ### Přesné zadání
-
+Cílem programu je vytvořit hru, kterou bude zprostředkovávat bot na Telegramu. Hra je inspirovaná jak Dračím doupětem, tak textovými adventurami. Hlavní myšlenkou je, že je zde minimum naskriptovaných věcí. Hráč sám se ocitne ve městě, kde je několik dalších postav, kterým sice někdo zadal, co mají dělat. Ale co když jim v tom někdo zabrání? V tom případě budou muset podniknout něco jiného? Co když postava uvidí, jak někdo útočí na jeho kamaráda. No pomůžeme, ale co když při tom náhodou zemře, její vlastní povinnosti pak už nikdo nesplní.
 
 
 ## Statická data
@@ -15,27 +39,27 @@ Seznam těchto míst se načítá ze souboru streets.csv. Pro každé jedinečn�
 !["obrázek mapy"](zzz_other/map/kritraven-with-streets-n-places.png)
 
 Veškerá data o mapě a všech místech na ní jsou uloženy v souboru `streets.csv`.
-Každé místo v soubotu má momentálně své jedinečné ID, jméno v češtině, popis v češtině, seznam ID míst spojených s tímto místem, možnost speciálních akcí pro toto místo a omezení přístupu 
+Každé místo v souboru má momentálně své jedinečné ID, jméno v češtině, popis v češtině, seznam ID míst spojených s tímto místem, možnost speciálních akcí pro toto místo a omezení přístupu 
 
 #### Reprezentace:
 + ID
-    + integer - např. `3`
+    + `integer` - např. `3`
 + name_cz
-    + string - např. `Perlová`
+    + `string` - např. `Perlová`
 + connected_ID
-    + seznam integerů oddělených středníkem - např. `2;8;10;37`
+    + `seznam integerů oddělených ";"` - např. `2;8;10;37`
 + description_cz
-    + string - např. `Perlová ulice je navzdory svému názvu známá...`
+    + `string` - např. `Perlová ulice je navzdory svému názvu známá...`
 + possibilities
-    + dva stringy odděleny dvojtečkou - např. `shop:food`
+    + `dva stringy odděleny ":"` - např. `shop:food`
     + první je vždy typ (`shop` je zatím jediná taková implementace)
     + druhé je upřesnění (typy pro `shop` se odvozují z parametru `type` v tříde `Items`)
 + access
-    + string - např. `free`
+    + `string` - např. `free`
     + momentálně neimplementovaná vlastnost
 
 #### Zpracování:
-O zpracovávání těchto dat se stará knihovna `map.py`, která definuje třídu `Street`, do které se uklídají veškerá data zmíněná výše. Navíc je zde třída `Map`, která v sobě ukládá všechny objekty `Street` a poskytuje metody pro práci s nimi. Mezi ně patří metoda `BFS`, jejímž jediným argumentem je výchozí místo. Metoda provádí průchod do šířky grafem mapy a vrací seznam ulic a seznam vzdáleností ulic na stejném indexu od výchozí ulice. Druhou důležitou metodou je pak `find_shortest_path`, která bere jako argumenty tyto 2 seznamy a k tomu ještě cílové místo a vrací jednu z nejkratších cest z výchozího do cílového místa.
+O zpracovávání těchto dat se stará knihovna `map.py`, která definuje třídu `Street`, do které se ukládají veškerá data zmíněná výše. Navíc je zde třída `Map`, která v sobě ukládá všechny objekty `Street` a poskytuje metody pro práci s nimi. Mezi ně patří metoda `BFS`, jejímž jediným argumentem je výchozí místo. Metoda provádí průchod do šířky grafem mapy a vrací seznam ulic a seznam vzdáleností ulic na stejném indexu od výchozí ulice. Druhou důležitou metodou je pak `find_shortest_path`, která bere jako argumenty tyto 2 seznamy a k tomu ještě cílové místo a vrací jednu z nejkratších cest z výchozího do cílového místa.
 
 Za zmínku též stojí funkce `read_map_from_file`, která se stará o načtení dat ze souboru a jejich uložení do objektu třídy `Map`
 
@@ -49,28 +73,21 @@ Seznam všech postav a údaje o nich nalezneme v souboru `characters.csv`. Každ
 
 #### Reprezentace
 + ID
-    +  integer
-    +  např. `1`
+    +  `integer` - např. `1`
 + name_cz
-    +  string
-    +  např. `Strážník Poleno`
+    +  `string` - např. `Strážník Poleno`
 + fraction_ID
-    +  integer
-    +  např. `0` 
-+ spawn_street_ID
-    +  např. `35` 
+    +  `integer` - např. `0` 
++ spawn_street_ID 
+    +  `integer` - např. `35` 
 + end_street_ID
-    +  integer
-    +  např. `14` 
+    +  `integer` - např. `14` 
 + speed
-    +  integer
-    +  např. `3` 
+    +  `integer` - např. `3` 
 + strength
-    +  integer
-    +  např. `1` 
+    +  `integer` - např. `1` 
 + coins
-    +  integer
-    +  např. `40`
+    +  `integer`- např. `40`
     +  momentálně neiplementovaná vlastnost
 
 
@@ -110,7 +127,7 @@ Pro načtení a zpracování všech frakcí je zde `read_fractions_from_file`, k
 ### Úkoly
 Úkoly, ruka boží, která řídí chování všech postav v této hře. Pod pojmem úkol se zde rozumí spíše úkolová linie. Ta se dělí na části, které se nazývají fáze. Linie zde však není definována jako posloupnost fázi, ale jako binární strom. Jeden syn vždy reprezentuje úspěšné splnění fáze a druhý neúspěšné. Takto uložené linie jsou k nalezení v souboru `quest-lines.txt` v následujícím formátu:
 1. Na prvním řádku je počet linií zde uložených
-2. Dalé jsou data k jedné linii uloženy vždy ve dvou řádcích
+2. Dále jsou data k jedné linii uloženy vždy ve dvou řádcích
    1. `ID linie + "=" + jméno v češtině` 
          - Např. `5=Lov na kočku`
    2. Strom fází reprezentován jako string
@@ -177,7 +194,7 @@ Ta je definována:
 
 #### Reprezentace stromu fází
 Strom je reprezentován pomocí závorek, které vždy ohraničují syny. První syn je větev, který následuje po úspěšném splnění předchozí fáze, druhý reprezentuje neúspěch.
-Pokud již  nemá být žádný další syn, neboli jeho hodnota je `None`, tak to bude zaznačeno prádznými závorkami `()`.
+Pokud již  nemá být žádný další syn, neboli jeho hodnota je `None`, tak to bude zaznačeno prázdnými závorkami `()`.
 Např: `Fáze(Úspěch()())(Neúspěch()())`
 
 #### Zpracování úkolů a fází
@@ -195,7 +212,7 @@ Samozřejmě zde máme i funkci `read_quest_lines_from_file`, jež načte všech
 
 
 ## Dynamicky generovaná data
-Jelikož se jedná o hru, tak chceme, abychom se jak my, tak ostatní postavy, mohli nějakým způsobem pohybovat po mapě a interagovat s ostatními. Abychom toho ale docílili, tak musíme vědět, kdo v každou chvíli je. Z tohoto důvodu existuje soubor `game_saves.csv`, ve kterém je uložen aktuální stav jak hráče, tak všech postav a i progres úkolových linií.
+Jelikož se jedná o hru, tak chceme, abychom se jak my, tak ostatní postavy, mohli nějakým způsobem pohybovat po mapě a interagovat s ostatními. Abychom toho ale docílili, tak musíme vědět, kdo v každou chvíli je. Z tohoto důvodu existuje soubor `game_saves.csv`, ve kterém je uložen aktuální stav jak hráče, tak všech postav, a i progres úkolových linií.
 
 Jelikož hru zprostředkovává bot na telegramu, tak by mohla nastat situace, kdy by hru chtělo hrát více uživatelů najednou. Pro každého z nich musí tedy existovat právě jedno uložení postupu. Který postup patří jakému uživateli se určí dle konkrétního ID chatu, které lze získat přes bota.
 Data k jedné hře tedy budou vždy uloženy ve dvou řádcích. Na prvním bude ID chatu a na druhém řetězec znaků obsahující veškeré potřebné informace, viz dále, jehož segmenty od sebe budou odděleny znakem `"_"`.
@@ -249,7 +266,7 @@ Jelikož je každý linie úkolů implementována jako binární strom, kdy jede
 Pokud je řetězec prázdný, znamená to, že je aktivní stále první fáze, tedy kořen stromu. 
 
 #### Zpracování dat
-Pro operování s daty o průběhu úkolů opět použijeme knihovnu `save.py`. Je zde pro to několik funkcí, ale za zmínku stojí hlavně `get_current_quests`, která dle řetězců progresu složených z `"F"` a `"S"` prochází úkolové stromy a nakonec vrátí aktuální fázi, jež probíhá. Další funkce je `assign_quests`, která prochází aktuální fáze získané předchozí fází a přiřazuje je postavám, které je pak budou vykonávat.
+Pro operování s daty o průběhu úkolů opět použijeme knihovnu `save.py`. Je zde pro to několik funkcí, ale za zmínku stojí hlavně `get_current_quests`, která dle řetězců progresu složených z `"F"` a `"S"` prochází úkolové stromy, a nakonec vrátí aktuální fázi, jež probíhá. Další funkce je `assign_quests`, která prochází aktuální fáze získané předchozí fází a přiřazuje je postavám, které je pak budou vykonávat.
 
 
 ### Stavy postav
@@ -336,7 +353,6 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     # When player is not capable of moving proceed to next round and move characters again
     # TODO change from recursion to loop
     if player.state == "stun" and player.duration["stun"] >= 1:
-        print("ando nce more")
         await rotation(chat_ID, context, update)
 ```
 
@@ -346,7 +362,7 @@ Když doběhne funkce `rotation`, tak je opět na řadě hráč.
 
 ### Herní rozhraní 
 
-Zaměřili jsme se na vše, co se děje v pozadí a teď se pojďmě zaměřit na to, jak může hráč ovládat svou postavu.
+Zaměřili jsme se na vše, co se děje v pozadí a teď se pojďme zaměřit na to, jak může hráč ovládat svou postavu.
 Nejprve je nutno zmínit, že mimo všechny mou napsané knihovny, jež jsem zde zmiňoval, hra též používá externí knihovnu `python-telegram-bot`.
 Vše začíná funkcí `main` z `main.py`
 První se pomocí tokenu program spojí s botem na telegramu, a tak může komunikovat přes Telegram místo konzole.
@@ -399,3 +415,8 @@ conversation_handler = ConversationHandler(
 ```
 5. Funkce `start` nám ve skutečnosti vrací stav `"starting_new_game"`.
 6. V závislosti na tom, jaká zpráva byla poslána, se zavolá určitá funkce.
+
+
+## Závěrem
+Určitě je toho spousta, co jsem nestihl dokončit. Moje plány byly velké. Už jen z komntářů a všemožných TODO je vidět, kde všude by to ještě chtělo vylepšit. Na druhou stranu si myslím, že aktuální stav pěkně ilustruje, že herní svět nefunguje zas tak špatně. Momentální největší slabinu vidím v tom, že hráč nemůže dostat úkoly od postav ve městě a také to, že když hráč někomu nastražuje předmět, tak mu odevzdá všechno co má u sebe. Interakce s postavami by také mohly být trošku lepší, aby nebyly tak holé a stejné.
+Na druhou stranu si říkám, že tvoření této malé hříčky mě velmi bavilo a pokusím se ji dále vylepšovat.

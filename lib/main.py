@@ -153,7 +153,6 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     # When player is not capable of moving proceed to next round and move characters again
     # TODO change from recursion to loop
     if player.state == "stun" and player.duration["stun"] >= 1:
-        print("ando nce more")
         await rotation(chat_ID, context, update)
 
 
@@ -828,11 +827,18 @@ async def generate_quest_finishes(context: ContextTypes.DEFAULT_TYPE, completed_
                 ["Shrábnout odměnu", "quest_reward"])
 
 
+def get_token():
+    """Read token from file"""
+    file = open(r"data\token.txt")
+    token = file.readlines()[0].rstrip("\n")
+    return token
+
+
 def main() -> None:
     """Run the bot"""
     # Used to connect to the bot and and start communication with this program
-    application = Application.builder().token(
-        "5825497496:AAHWw228oPxR4Ybc4pV0PwTayjQ7ywUfA_I").build()
+    api_key = get_token()
+    application = Application.builder().token(api_key).build()
 
     # Creates conversation handler that is used to take care of player's inputs and reacting on them
     # It defines condition to start conversation and fallback
