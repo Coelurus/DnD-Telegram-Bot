@@ -106,7 +106,8 @@ def get_current_quests(previous_save: str) -> list[str]:
     return current_phase_for_line
 
 
-def update_quests(current_quests_str: str, lines_to_update: dict[int, str]):
+def update_quests(current_quests_str: str, lines_to_update: dict[int, str]) -> str:
+    """Creates updated string that tracks progression of all quest line"""
     quest_lines = current_quests_str.split(",")
     for quest_line_idx in range(len(quest_lines)):
         if quest_line_idx in lines_to_update:
@@ -116,6 +117,7 @@ def update_quests(current_quests_str: str, lines_to_update: dict[int, str]):
 
 
 def assign_quests(current_characters: ModifiedPeople, current_quests_save: list[list[str]]):
+    """Looks through all current quest phases and assign them to specified characters if they are not currently doing anything"""
     char_ID_to_quest: dict[int, list[list[ModifiedQuestPhase], int]] = dict()
     for quest_save_idx in range(len(current_quests_save)):
         # TODO unfinished feature. Quest phases are in fact saves as a list of strings,
@@ -223,7 +225,8 @@ def rotation(chat_ID=get_chat_ID()):
         # 5
         current_characters = get_current_characters(current_characters_str)
         # 6
-        current_characters, lines_to_update = update_phases(current_characters)
+        current_characters, lines_to_update, game_ended, game_ending_str = update_phases(
+            current_characters)
         # 7 TODO updating quest line saves
         new_quests_str = update_quests(current_quests_str, lines_to_update)
         # 8

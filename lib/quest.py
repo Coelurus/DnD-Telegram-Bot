@@ -203,17 +203,6 @@ def create_tree_from_str(quest_line_str: str):
 
 
 if __name__ == "__main__":
-    """testMQP = str_to_mqp("2=frac1=*=9=?=12;bring")
-    testSTR = mqp_to_str(testMQP)
-    print(repr(testMQP))
-    print(testMQP)"""
-
-    #selling_snuff = Node(["0=char12;11=36=0=37=none"], Node(["0=frac1=37=1=0=none", "0=frac1=37=1=32=none", "0=frac1=37=1=33=none"]), Node(["2=frac1=*=9=?=12;bring"]))
-
-    # print(selling_snuff)
-    # print_tree(selling_snuff)
-    # create_tree_from_str("0=char12;11=36=0=37=none(0=frac1=37=1=0=none,0=frac1=37=1=32=none,0=frac1=37=1=33=none()())(2=frac1=*=9=?=12;bring()())")
-
     forest = read_quest_lines_from_file("data\quest-lines.txt")
     for treeID in forest.ID_to_name:
         print(treeID)

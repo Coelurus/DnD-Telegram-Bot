@@ -103,10 +103,10 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return await basic_window(update, context)
 
 
-async def end_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def end_game(update: Update, context: ContextTypes.DEFAULT_TYPE, end_text: str = "Snad se ještě někdy potkáme\.\.\."):
     reply_keyboard = [["Začít znovu"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Snad se ještě někdy potkáme...", reply_markup=markup)
+    await update.message.reply_text(end_text, reply_markup=markup, parse_mode="MarkdownV2")
     return "starting_new_game"
 
 
@@ -117,8 +117,10 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     current_quests_str: str = context.user_data["current_quests_str"]
     player: Player = context.user_data["player"]
 
-    current_characters, lines_to_update = save.update_phases(
+    current_characters, lines_to_update, game_ended, game_ending_str = save.update_phases(
         current_characters)
+    if game_ended:
+        return await end_game(update, context, game_ending_str)
 
     new_quests_str = save.update_quests(current_quests_str, lines_to_update)
 
@@ -179,8 +181,11 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Svět se hnul, ale tys zůstal na místě.")
 
-    await rotation(update.message.chat.id, context, update)
-
+    # Since rotation is in recursion we have to backtrack to be able to return ending string
+    # TODO I believe there might a better way to do this.
+    game_end = await rotation(update.message.chat.id, context, update)
+    if game_end == "starting_new_game":
+        return "starting_new_game"
     return await basic_window(update, context)
 
 
@@ -192,7 +197,7 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "data\items.csv")
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
-    player_information = f"Místo, kde se nacházíš, se jmenuje *{town_map.get_street_by_ID(player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{player.coins}` peněz\n{', '.join([items_collection.get_item(x).name_cz for x in player.items])}\n\n`Úroveň rychlosti: {player.speed}\nÚroveň síly: {player.strength}`"
+    player_information = f"Místo, kde se nacházíš, se jmenuje *{town_map.get_street_by_ID(player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{player.coins}` peněz\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in player.items])}\n\n`Úroveň rychlosti: {player.speed}\nÚroveň síly: {player.strength}`\n\nMomentálně máš vybavené tyto zbraně:\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in player.equiped_weapons])}"
     await context.bot.send_message(chat_ID, player_information, parse_mode="MarkdownV2")
 
     reply_keyboard = [
@@ -463,7 +468,8 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [
         ["Zeptat se na cestu"],
         ["Zeptat se na postavu"],
-        ["Zabít postavu", "Omráčit postavu"]
+        ["Zabít postavu", "Omráčit postavu"],
+        ["Okrást postavu", "Nastražit předmět"]
     ] + added_possibility
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
@@ -633,6 +639,60 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await basic_window(update, context)
 
 
+async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # TODO solve through some argument not like this
+    if update.message.text == "Okrást postavu":
+        action = "rob"
+    elif update.message.text == "Nastražit předmět":
+        action = "plant"
+
+    player: Player = context.user_data["player"]
+    society: Society = context.user_data["people"]
+    current_chars: ModifiedPeople = context.user_data["current_people"]
+    defender_ID = context.user_data["char_ID"]
+    defender = current_chars.get_NPC(defender_ID)
+
+    if action == "plant":
+        print("wut")
+        await choose_item_to_plant(
+            update, context, player.items + player.equiped_weapons)
+
+    current_characters, failed = handler.steal(
+        player, defender, action, current_chars)
+
+    context.user_data["current_people"] = current_characters
+
+    if failed:
+        if player.state == "stun":
+            await update.message.reply_text("Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.", parse_mode="MarkdownV2")
+            player.duration["stun"] = 2
+            await rotation(update.message.chat.id, context, update)
+
+    else:
+        await update.message.reply_text(f"lesgo crim")
+
+    return await basic_window(update, context)
+
+# TODO currently the biggest flaw. On planting, player puts ALL of his items into defender's inventory
+# To solve issue (make choice possibilites) I believe I would neeed to open a new dialogue window to not break the flow of code in steal action.
+
+
+async def choose_item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE, items: list[int]):
+    i_c: ItemsCollection = context.user_data["items"]
+
+    await update.message.reply_text("Který předmět nastražíš?", reply_markup=markup)
+
+    reply_keyboard = [[i_c.get_item(item).name_cz] for item in items]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    return "item_to_plant"
+
+
+async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items_col: ItemsCollection = context.user_data["items"]
+    print("hmmm")
+    return items_col.name_cz_to_ID[update.message.text]
+
+
 async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     player: Player = context.user_data["player"]
     char_ID: int = context.user_data["char_ID"]
@@ -643,9 +703,9 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
             action = specific_action[1]
             break
 
-    # This is actually end of a game.
+    # This is actually end of a game./s
     if action == "meow":
-        await update.message.reply_text("Vyhráls gratulace kámo")
+        await update.message.reply_text("\U0001F63BNAŠEL JSI KOČKU\U0001F63B")
 
         reply_keyboard = [["Začít znovu"], ["Ukončit"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -660,7 +720,8 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if quest_mqp.characterID == char_ID:
                 await update.message.reply_text(f"Úspěšně sis vyzvedl odměnu.")
                 player.coins += quest_mqp.reward["coins"]
-                player.items.append(quest_mqp.reward["item"])
+                if quest_mqp.reward["item"] != -1:
+                    player.items.append(quest_mqp.reward["item"])
                 player.quests.pop(quest_idx)
                 player.progress.pop(quest_idx)
                 character_specific_actions.remove(
@@ -767,18 +828,23 @@ def main() -> None:
                 ),
                 MessageHandler(
                     filters.Regex("na postavu") & ~(filters.Regex(
-                        "Zabít|Omrač")), ask_for_person
+                        "Zabít|Omráčit")), ask_for_person
                 ),
                 MessageHandler(
-                    filters.Regex("Zabít"), attack_on_person
+                    filters.Regex("Zabít|Omráčit"), attack_on_person
                 ),
                 MessageHandler(
-                    filters.Regex("Omráčit"), attack_on_person
+                    filters.Regex("Okrást|Nastražit"), steal_from_person
                 ),
                 MessageHandler(
                     filters.TEXT, specific_opration
                 )
 
+            ],
+            "item_to_plant": [
+                MessageHandler(
+                    filters.TEXT, item_to_plant
+                )
             ],
             "look_for_path": [
                 MessageHandler(

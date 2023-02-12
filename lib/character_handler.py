@@ -51,7 +51,7 @@ class ModifiedPeople:
     def to_str(self) -> str:
         list_to_link = []
         for NPC in self.list:
-            items = ",".join([str(x) for x in NPC.items])
+            items = ";".join([str(x) for x in NPC.items])
             list_to_link.append(
                 f"place:{NPC.place_ID},coins:{NPC.coins},items:{items},str:{NPC.strength},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}")
         return "+".join(list_to_link)
@@ -88,11 +88,14 @@ def get_current_characters(old_character_save: str) -> ModifiedPeople:
     return current_characters
 
 
-def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, dict[int, str]]:
+def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, dict[int, str], bool]:
     """
     Function takes characters as Modified People object and update stages based on their location and actions and returns this modified object.
-    It also returns dictionary where key is ID of a quest line of which phase was just finished.
+    It also returns dictionary where key is ID of a quest line of which phase was just finished and bool if one of characters finished mission that is game ending.
     """
+    game_ended = False
+    game_ending_str = ""
+
     lines_to_update: dict[int, str] = dict()
     for character in modified_characters.list:
         if character.phase != "-1":
@@ -159,7 +162,14 @@ def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, 
                     character.line = -1
                     character.phase = "-1"
 
-    return modified_characters, lines_to_update
+                # Special case for ending game since one
+                if current_phase.quest_phase_ID == 666 and stage_failed == False:
+                    game_ended = True
+                    # TODO ending string should be based on the quest line that it came from
+                    # However since game supports only one game ending condition at the moment it works
+                    game_ending_str = u"Kultisti ti *zabili* kočku\.\nSvět upadl do *chaos*u\.\nVíce štěstí příště \U0001F5A4"
+
+    return modified_characters, lines_to_update, game_ended, game_ending_str
 
 
 def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
@@ -181,8 +191,11 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                         final_point = current_phase.to_place_ID
                 # In case character should go to someone else, place is dynamicaly changed each turn
                 else:
-                    final_point = modified_characters.get_NPC(
-                        current_phase.go_to).place_ID
+                    if character.stage == "tostart":
+                        final_point = current_phase.from_place_ID
+                    else:
+                        final_point = modified_characters.get_NPC(
+                            current_phase.go_to).place_ID
 
             # Character has designated end location
             elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
@@ -339,20 +352,32 @@ def fight(attacker, defender: ModifiedNPC, action: str, current_characters: Modi
 def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople) -> tuple[ModifiedPeople, bool]:
     people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
-    attacker_NPC = people.get_char_by_ID(attacker.ID)
+
+    if isinstance(attacker, ModifiedNPC):
+        attacker_NPC = people.get_char_by_ID(attacker.ID)
+        attacker_fraction = attacker_NPC.fraction_ID
+        attacker_name = attacker_NPC.name_cz
+    else:
+        attacker_fraction = attacker.fraction_ID
+        attacker_name = "Player"
+
     defender_NPC = people.get_char_by_ID(defender.ID)
 
     phase_failed = False
     attacker_bonus = 0
-
-    if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
-        attacker_bonus += 1
+    if isinstance(attacker, ModifiedNPC):
+        if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
+            attacker_bonus += 1
+    else:
+        if attacker_fraction == defender_NPC.fraction_ID or attacker.get_relationships([defender], people)[defender.ID] >= 3:
+            attacker_bonus += 1
 
     items_attacker_mod = get_items_attributes([attacker], "speed")
     items_defender_mod = get_items_attributes([defender], "speed")
 
-    attacker_speed = attacker.speed + attacker_bonus
-    defender_speed = 0 if defender.state != "alive" else defender.speed
+    attacker_speed = attacker.speed + attacker_bonus + items_attacker_mod
+    defender_speed = (-69 if defender.state !=
+                      "alive" else defender.speed) + items_defender_mod
 
     if attacker_speed > defender_speed:
         if action == "rob":
@@ -360,7 +385,7 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
             defender.items = []
             attacker.items += stolen_items
 
-            print(attacker_NPC.name_cz, "stole:",
+            print(attacker_name, "stole:",
                   stolen_items, "from", defender_NPC.name_cz)
 
         elif action == "plant":
@@ -369,16 +394,18 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
             attacker.items = []
             defender.items += planted_items
 
-            print(attacker_NPC.name_cz, "planted:",
+            print(attacker_name, "planted:",
                   planted_items, "into pockets of", defender_NPC.name_cz)
 
     elif attacker_speed == defender_speed:
-        print(attacker_NPC.name_cz, "failed", action)
+        print(attacker_name, "failed", action)
+        phase_failed = True
         current_characters, _ = fight(
             attacker, defender, "stun", current_characters)
 
     else:
-        print(attacker_NPC.name_cz, "failed", action)
+        print(attacker_name, "failed", action)
+        phase_failed = True
         current_characters, _ = fight(
             attacker, defender, "stun", current_characters, -1)
 
@@ -386,11 +413,12 @@ def steal(attacker: ModifiedNPC, defender: ModifiedNPC, action: str, current_cha
 
 
 if __name__ == "__main__":
-    character_save = "place:32,state:alive,coins:11,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:10,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:2,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:35,state:alive,coins:14,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:33,state:alive,coins:0,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:34,state:alive,coins:18,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:17,state:alive,coins:20,items:,str:1,speed:1,line:-1,phase:-1,stage:-1+place:1,state:alive,coins:16,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:13,state:alive,coins:13,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:23,state:alive,coins:15,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:23,state:alive,coins:12,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:6,items:,str:1,speed:4,line:0,phase:0=char11=-1=0=37=none,stage:inprogress+place:37,state:alive,coins:0,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:17,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:12,items:,str:2,speed:2,line:-1,phase:-1,stage:-1+place:37,state:alive,coins:19,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:5,items:,str:1,speed:2,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:17,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:18,items:,str:3,speed:1,line:-1,phase:-1,stage:-1+place:38,state:alive,coins:5,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:14,items:,str:3,speed:2,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:11,items:,str:4,speed:1,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:9,items:,str:2,speed:3,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:18,items:,str:1,speed:4,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:18,items:,str:1,speed:3,line:-1,phase:-1,stage:-1+place:39,state:alive,coins:16,items:,str:2,speed:3,line:-1,phase:-1,stage:-1"
+    character_save = "place:32,coins:20,items:,str:3,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:15,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:16,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:9,items:,str:1,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:33,coins:10,items:,str:4,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:34,coins:20,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:17,coins:1,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:4,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:13,coins:9,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:19,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:8,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:12,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:13,items:,str:3,speed:2,line:0,phase:0=char12=36=0=37=none=40%-1,stage:tostart,state:alive+place:37,coins:3,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:4,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:15,items:,str:3,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:1,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:6,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:17,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:16,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:6,items:,str:1,speed:4,line:5,phase:0=char21=-1=-1=0=none=25%-1,stage:inprogress,state:alive+place:39,coins:6,items:,str:2,speed:3,line:6,phase:0=char22=-1=-1=6=none=25%-1,stage:inprogress,state:alive+place:39,coins:8,items:,str:4,speed:1,line:7,phase:0=char23=-1=-1=12=none=25%-1,stage:inprogress,state:alive+place:39,coins:19,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:18,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:3,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:7,coins:20,items:,str:1,speed:4,line:1,phase:7=char27=-1=9=?=30;kill=30%-1,stage:inprogress,state:alive+place:7,coins:12,items:,str:2,speed:2,line:2,phase:7=char28=-1=8=?=31;kill=30%-1,stage:inprogress,state:alive+place:7,coins:7,items:,str:1,speed:4,line:3,phase:7=char29=-1=-1=?=31;kill=30%-1,stage:inprogress,state:alive+place:1,coins:4,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:12,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:19,coins:20,items:,str:1,speed:5,line:4,phase:9=char32=-1=7=?=33;plant=20%-1,stage:inprogress,state:alive+place:20,coins:13,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:3,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive"
     modified_people = get_current_characters(character_save)
 
     # checking if someone finished quest or is final location
-    modified_people, lines_to_update = update_phases(modified_people)
+    modified_people, lines_to_update, game_ended, game_ending_str = update_phases(
+        modified_people)
 
     # move characters to quest
     modified_people = move_characters(modified_people)
