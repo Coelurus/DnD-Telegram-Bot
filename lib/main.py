@@ -1,4 +1,3 @@
-import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -22,11 +21,6 @@ import character_handler as handler
 from character_handler import ModifiedPeople
 import quest
 from quest import ModifiedQuestPhase
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -87,6 +81,9 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     current_save = save.read_current_save(chat_ID)
     load_static_data(context)
     load_dynamic_data(context, current_save)
+
+    await update.message.reply_text("Probudil ses...u...U Oplého poníka? Co tu dělám?......Sakra už vím! Utekla nám kočka. Ale ne, musím ji jít najít.")
+    await update.message.reply_text('V tom ti však někdo zaklepe na rameno: "Nezapomeň, o co ses vsadil s těmi kultisty. Že prý kočku najdeš dřív než oni...a teď tu vyspáváš v hospodě. No tak utíkej. DĚLEJ!"')
 
     return await basic_window(update, context)
 

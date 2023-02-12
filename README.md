@@ -344,24 +344,58 @@ Ve zdrojovém kódu si můžete povšimnout, že využívá metod a funkcí z os
 Když doběhne funkce `rotation`, tak je opět na řadě hráč.
 
 
+### Herní rozhraní 
 
+Zaměřili jsme se na vše, co se děje v pozadí a teď se pojďmě zaměřit na to, jak může hráč ovládat svou postavu.
+Nejprve je nutno zmínit, že mimo všechny mou napsané knihovny, jež jsem zde zmiňoval, hra též používá externí knihovnu `python-telegram-bot`.
+Vše začíná funkcí `main` z `main.py`
+První se pomocí tokenu program spojí s botem na telegramu, a tak může komunikovat přes Telegram místo konzole.
+Dalším krokem je vytvoření objektu `ConversationHadler`. Díky tomuto je vytvořena komunikace mezi hráčem a programem.
+Ve výsledku to funguje tak, že program dá hráči vždy na výběr z několik možností a v závislosti na tom, jakou možnost hráč vybere, se zavolá nějaká funkce. V tom spočívá krása zmiňovaného `ConversationHandleru`, neboť řeší hráčovy vstupy v různých situacích.
+Zmíním zde alespoň jednu funkci, a to `start`.
 
+```python
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """When user send /start it sends welcome message and choices"""
+    reply_keyboard = [
+        ["Začít novou hru (přemaže starou)"], [
+            "Nezačínat novou hru (návrat k předchozí pokud existuje)"]
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
+    await update.message.reply_text(
+        "Zdravíčko, přeješ si začít novou epickou kampaň?",
+        reply_markup=markup,
+    )
+    return "starting_new_game"
 
+```
+Podobně vypadá většina dialogových oken generovaných v tomto souboru.
+1. `reply_keyboard` ukládá po řádcích možnosti, které pak bude mít hráč na výběr.
+2. Poté se zavolá konstruktor třídy `ReplyKeyboardMarkup`, aby se vytvořila tato klávesnice.
+3. Pošle se zpráva s přiloženou klávesnicí.
+4. Návratová hodnota se přiřadí na hodnotu, kterou poté zpracuje `ConversationHandler`
 
+```python
+conversation_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            "starting_new_game": [
+                MessageHandler(
+                    filters.Regex("Začít"), start_new_game
+                ),
+                MessageHandler(
+                    filters.Regex("Nezačínat"), read_old_game
+                ),
+                MessageHandler(
+                    filters.Regex("Ukončit"), end_game
+                )
+            ]
 
+        },
+        fallbacks=[CommandHandler("start", start)]
+    )
 
-
-### Rotace
-1.	Načtení z game save souboru
-2.	Zjištění hráčova stavu + výpis na GUI
-3.	Zadání akcí uživatelem
-4.	Reakce na dané akce
-5.	Zjištění dat o postavách
-6.	Kontrola, zda někdo z nich splnil úkol
-7.	Aktualizace stavu průběhu úkolů na základě dat od postav
-8.	Průchod nových dat úkolů 
-9.	Přiřazení fází postavám
-10.	Pohyb postav
-11.	Akce postav
-12.	Uložení stavu hráče a postav
+```
+5. Funkce `start` nám ve skutečnosti vrací stav `"starting_new_game"`.
+6. V závislosti na tom, jaká zpráva byla poslána, se zavolá určitá funkce.
