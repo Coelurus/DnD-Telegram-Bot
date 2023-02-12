@@ -6,6 +6,8 @@ Je to velice jednoduché!
 2. Najděte si na Telegramu uživatele `@dnd_zapocet_bot` (https://t.me/dnd_zapocet_bot)
 3. Napište první zprávu ve tvaru `/start`
 4. Užijte si to!
+   
+- Pokud se stane, že bot najednou nereaguje, zkuste zadat `/start`. Je možné, že se ve vaší nepřítomnosti restartoval.
 
 ## Jak sám spustit bota?
 1. Opět na to budete potřebovat Telegram.
@@ -22,8 +24,9 @@ Je to velice jednoduché!
 10. Dekomprimujte složku
 11. V příkazové řádce si otevřete dekomprimovanou složku `DnD-Telegram-Bot-master`, ve které jsou přímo všechny další složky jako `data` a `lib`.
 12. Zadejte `python lib\main.py`, čímž spustíte program.
-13. Váš bot teď běží a můžete se řídit postupem v `Jak hru spustit?`
-14. Bot bude reagovat a odpovídat na vaše zprávy, dokud budete mít zaplý program. Pokud ho ukončíte, přestane vám v chatu odpovídat.
+13. Váš `bot` teď běží a můžete se řídit postupem v `Jak hru spustit?` Jediný rozdíl bude, že musíte napsat svému botovi, kterého jste si vytvořili.
+14. `Bot` bude reagovat a odpovídat na vaše zprávy, dokud budete mít zaplý program. Pokud ho ukončíte, přestane vám v chatu odpovídat.
+15. Pokud chcete `bota` ukončit stiskněte Ctrl-C
 
 ***
 
