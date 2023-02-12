@@ -289,10 +289,11 @@ O řízení hry i herního rozhraní se stará soubor `main.py`. Už jen kvůli 
 
 ### Průběh hry
 
-To, co se děje, a jak se to děje řídí hlavně funkce `rotation`. Ta si nejdříve načte všechna aktuální data o postavách a průběhu úkolů. Zkontroluje, zda nějaká postava nesplnila nějaký úkol, aktualizuje postupy a přiřadí nové fáze ostatním. Ve zdrojovém kódu si můžete povšimnout, 
+Stejně jako `Dračí Doupě`, tato hra funguje na kola. Začíná hráč. Každé kolo je ukončeno hráčovým pohybem na jiné místo. Avšak během svého kola může udělat kolik akcí jen chce. Může si měnit předměty, nakupovat, pokud zrocna stojí u obchodu, bavit se s postavami, pokud tam jsou, nebo s nimi bojovat. Avšak, když se hráč pohne, tak jsou na řadě postavy.
+To, co se poté děje, a jak se to děje, řídí hlavně funkce `rotation`. Ta si nejdříve načte všechna aktuální data o postavách a průběhu úkolů. Zkontroluje, zda nějaká postava nesplnila nějaký úkol, aktualizuje postupy a přiřadí nové fáze ostatním.
 
 
-```
+```python
 async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Update) -> None:
     """Function take care of handling movement of NPC, making them follow missions etc.
     It also updates questlines progresses and assign phases to NPCs based on it"""
@@ -338,6 +339,9 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
         print("ando nce more")
         await rotation(chat_ID, context, update)
 ```
+
+Ve zdrojovém kódu si můžete povšimnout, že využívá metod a funkcí z ostatních knihoven, jež jsem již zmiňoval dříve.
+Když doběhne funkce `rotation`, tak je opět na řadě hráč.
 
 
 
