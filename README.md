@@ -7,7 +7,7 @@ Problémem, který řeší můj program, je nuda. Jedná se totiž o hru, a to k
 
 
 
-## Načítaná data ze souborů
+## Statická data
 ### Mapa
 Mapa Kritravenu, viz obrázek, sestává ze 40 navštívitelných míst. Jedná se tedy o graf, jehož vrcholy jsou ulice a hrana mezi ulicemi (či ulicí a místem) existuje právě tehdy, když se obě ulice protínají či sbíhají.
 Seznam těchto míst se načítá ze souboru streets.csv. Pro každé jedinečné ID ulice je určeno jméno místa a též seznam indexů, jež jsou spojené s hranou s daným místem.
@@ -93,71 +93,101 @@ Jak již bylo naznačeno v reprezentaci postav, tak jsou v této hře definován
 + relations
     + řetězec integerů oddělených středníkem - např. `3;1;1;0;2;3;-1`
     + význam hodnoty vztahů
-      + ` 3` = nasadíme za vás svůj život
-      + ` 2` = nevadíme si
-      + ` 1` = klidně tě udám
-      + ` 0` = zabiju tě tady a teď
-      + `-1` = nedefinováno (když nemá smysl určovat)
+      + ` 3 ` = nasadíme za vás svůj život
+      + ` 2 ` = nevadíme si
+      + ` 1 ` = klidně tě udám
+      + ` 0 ` = zabiju tě tady a teď
+      + `-1 ` = nedefinováno (když nemá smysl určovat)
 
 #### Zpracování
 O zpracování těchto dat se stará též knihovna `character.py`, která definuje třídu `Fraction`, do které se ukládají všechny vlastnosti vypsané výše. Jako vždy je definována třída `PoliticalMap`, která v sobě ukládá všechny frakce a definuje metody pro práce s nimi.
 Pro načtení a zpracování všech frakcí je zde `read_fractions_from_file`, která zkonstruuje objekt třídy `PoliticalMap` se všemi frakcemi ve formě `Fraction`.
 
 ### Úkoly
-Úkoly, ruka boží, která řídí chování všech postav v této hře
+Úkoly, ruka boží, která řídí chování všech postav v této hře. Pod pojmem úkol se zde rozumí spíše úkolová linie. Ta se dělí na části, které se nazývají fáze. Linie zde však není definována jako posloupnost fázi, ale jako binární strom. Jeden syn vždy reprezentuje úspěšné splnění fáze a druhý neúspěšné. Takto uložené linie jsou k nalezení v souboru `quest-lines.txt` v následujícím formátu:
+1. Na prvním řádku je počet linií zde uložených
+2. Dalé jsou data k jedné linii uloženy vždy ve dvou řádcích
+   1. `ID linie + "=" + jméno v češtině` 
+         - Např. `5=Lov na kočku`
+   2. Strom fází reprezentován jako string
+         - Více informací za chvíli
 
-#### Fáze úkolů
-Každý, jakkoliv komplikovaně dosažitelný cíl se dá rozložit na posloupnost několika fází. A když postupně tyto fáze splníme, dosáhneme určitého vyššího cíle.
+#### Reprezentace - Fáze úkolů
+Každá fáze je reprezentována řetězcem jako posloupnost několika modifikátorů, jež jsou od sebe odděleny znakem rovná se. Např: `0=char12=36=0=37=none=40%-1`
 
-#### Linie úkolů
-Když dáme dohromady více fází vzejde nám schéma nějakého většího plánu. Avšak každá fáze může mít výsledek buď pozitivní či negativní. Řekněme, že poslíček dostane předmět, aby ho doručil na určené místo. Pokud tak udělá, dostane výměnou za to jiný předmět, který má donést zpět. Pokud by mu však něco zabránilo v doručení tohoto balíčku, tak rozhodně nedostane nový balíček, ale nejspíš i někdo začne řešit, kam se balíček či poslíček poděl.
-Linie úkolů jsou tedy implementovány jako stromy, kdy každý prvek má dva syny, z nichž jeden zastupuje další krok v případě úspěšného provedení fáze a druhý zastupuje následující krok při neúspěchu jeho rodiče.
-Mějme tedy strom, jehož každý vrchol sestává z fáze úkolu, ke které je přidruženo několik modifikátorů, které specifikují například kdo, co a jak má provést danou fázi.
+##### Kódové označení fáze
+Hned první modifikátor měl původně jasný význam, avšak s průběhem vývoje se ukázal být nepotřebný a nahradila ho kombinace jiných modifikátorů.
+První modifikátor však našel jiné využití a to označení speciálních fází. Momentálně je definována pouze jedna speciální fáze, a to terminální fáze. Pokud se postavě podaří splnit takovou tu fázi, tak končí hra a hráč prohrává. Její kód je symbolicky `666`. 
 
-##### Modifikátory
-Všechny modifikátory jsou reprezentovány řetězcem znaků. 
-
-###### Kdo
+##### Kdo
 Zde můžou nastat 2 varianty:
 + Fáze je určena pro určitou postavu
-    + Modifikátor := “char“ + ID všech postav oddělené středníky
+    + `Modifikátor := “char“ + ID všech postav oddělené středníky`
 + Fáze je pro kohokoliv z určité frakce
-    + Modifikátor := “frac“ + ID určené frakce
+    + `Modifikátor := “frac“ + ID určené frakce`
 + Momentálně nedotažená funkce. Tento způsob sice funguje, ale když mise probíhá a má ji zadaná určitá náhodná postava, tak může být v dalším kole přidělena jiné postavě, musí se tedy implementovat jakési sledování, že někdo danou fázi plní. Podobně se zadáním více určitých postav.
 
-###### Odkud
+##### Odkud
 + Pokud je určené místo, kde musí fáze započít: 
-    + Modifikátor := ID místa
+    + `Modifikátor := ID místa`
 + Pokud místo určeno není: 
-    + Modifikátor := “-1“
+    + `Modifikátor := -1`
 
-###### Předmět
-+ Pro určité fáze může být potřeba, aby u sebe postava, která jej vykonává, měla nějaký předmět. Ten jí bude do inventáře přidělen až se dostane na místo, kde jeho fáze začíná a když fázi splní, tak bude zase odebrán.
+##### Předmět
+Pro určité fáze může být potřeba, aby u sebe postava, která jej vykonává, měla nějaký předmět. Ten jí bude do inventáře přidělen až se dostane na místo, kde jeho fáze začíná a když fázi splní, tak bude zase odebrán.
 + Pokud by mělo nastat, že stejný předmět bude potřeba pro více fází za sebou, tak stejně bude po každé fázi odebrán a poté přidán zpět.
 + Pokud by měla postava o přidělený předmět během mise přijít, tak je to bráno jako neúspěch.
-+ Modifikátor := ID předmětu
-+ Modifikátor := “-1“ (pokud není určen předmět)
+    + Tato funkce bohužel také ještě není implementována.
++ `Modifikátor := ID předmětu`
++ `Modifikátor := -1` (pokud není určen předmět)
 
-###### Kam
+##### Kam
 + Pokud je přesně definováno místo, pak: 
-    + Modifikátor := ID cílového místa. 
+    + `Modifikátor := ID cílového místa`
 + Může však nastat situace, že výsledné místo není přesně známo anebo se průběžně mění. V tom případě bude:
-    + Modifikátor := “?“ a výsledné místo se určí dle typu fáze jiným modifikátorem.
+    + `Modifikátor := “?“` a výsledné místo se určí dle typu fáze jiným modifikátorem.
 
-###### Jdi za
+##### Jdi za
 + Pokud není pevně určeno výsledné ID místa, je možné, že je zapotřebí, aby postava došla za nějakou jinou. V tom případě: 
-    + Modifikátor := ID hledané postavy + “;“ + parametr akce. 
+    + `Modifikátor := ID hledané postavy + “;“ + parametr akce`
 + Pokud bude výsledné místo určeno jinak: 
-    + Modifikátor := “none“
+    + `Modifikátor := “none“`
 + Když postava zastihne jinou, tak existuje několik možností, co bude dělat dál.
-    + Mluv – parametr akce := „talk“, často používané jako spouštěč další fáze
-    + Zab – parametr akce := “kill“ (o porovnávání schopností více později)
-    + Omrač – parametr akce := “stun“
-    + Okraď – parametr akce := “rob“
-    + Podstrč – parametr akce := "plant" 
-    + Nic – parametr akce := “none“
-    + Přiveď – parametr akce := “bring“
+    + Zab – `parametr akce := “kill“`
+    + Omrač – `parametr akce := “stun“`
+    + Okraď – `parametr akce := “rob“`
+    + Podstrč – `parametr akce := "plant"` 
+    + Nic – `parametr akce := “none“`
+    + Mluv – `parametr akce := „talk“`
+        + Zatím bohužel není implementována
+    + Přiveď – `parametr akce := “bring“`
+        + Zatím bohužel též není implementována
 + Momentálně nedotažená mechanika. Jak postava ví, kde se nachází někdo jiný? Pokud hledaná postava někam půjde, tak pro ostatní bude velmi těžké ji zastihnout.
+
+##### Odměna
+Pokud postava úspěšně dokončí fázi, tak za to dostane odměnu. Forma může být formou peněz, předmětu či obojího najednou
+Ta je definována:
++ `Modifikátor := počet peněz + "%" +  ID předmětu`
+    + Pokud by neměly být za fázi předány žádné peníze, tak zde bude `počet peněz = 0`
+    + Pokud by neměl být předán žádný předmět, tak bude `ID předmětu = -1`
+
+#### Reprezentace stromu fází
+Strom je reprezentován pomocí závorek, které vždy ohraničují syny. První syn je větev, který následuje po úspěšném splnění předchozí fáze, druhý reprezentuje neúspěch.
+Pokud již  nemá být žádný další syn, neboli jeho hodnota je `None`, tak to bude zaznačeno prádznými závorkami `()`.
+Např: `Fáze(Úspěch()())(Neúspěch()())`
+
+#### Zpracování úkolů a fází
+O načtení a zpracování úkolových dat se stará knihovna `quest.py`. Ta definuje tři zásadní třídy `ModifiedQuestPhase`, `Node` a `QuestLineTrees`.
+- Instance třídy `ModifiedQuestPhase` ve svých atributech ukládá veškeré údaje o fázi, jak byly popsány výše. Je na ni též reprezentována funkce `__str__`, která ji převede zpět do textové reprezentace.
+- Třída `Node` je poté základní páteří úkolových stromů. Každý `Node` má svou `value`, ve které je uložen seznam řetězcových vyjádření fází.
+    - Pozn. `value` je definována jako seznam, protože původní idea byla, že by fáze mohla spustit více dalších podfází, avšak to bude vyžadovat komplexnější řešení úspěchu či selhání této skupiny a její vyhodnocení pro další syny. Proto, i když se jedná o seznam, tak program vždy bere pouze první fázi a ostatní prozatím ignoruje.
+- Poslední je `QuestLineTrees`, které do slovníků ukládá indexy, jména a kořeny všech úkolových stromů.
+Důležité funkce této knivny jsou pak `str_to_mqp` a `mqp_to_str`, které převádějí `string` na `ModifiedQuestPhase`.
+Za povšimnutí též stojí funkce `create_tree_from_str`, která rekurzivním procházením tvoří ze `stringu` strom složený z `Nodes`. Funkce pracuje tak, že řetězec vždy rozdělí dle závorek na hodnotu svojí a další syny. Podívá se na syny a pokud nějaký z nich není `None`, tak se funkce zavolá rekurzivně na něj. To pokračuje tak dlouho, dokud nejsou oba synové `None`. Poté se `Nodes` vrací až se vytvoří celý strom.
+Funkce `print_tree` je poté funkcí inverzní ke `create_tree_from_str` a tvoří `string` ze stromu. Jediný rozdíl je, že výsledek pouze vytiskne, funkce tak slouží hlavně na ladění programu.
+Samozřejmě zde máme i funkci `read_quest_lines_from_file`, jež načte všechny úkolové stromy a uloží je do instance třídy `QuestLineTrees`
+
+
 
 
 ## Dynamicky generovaná data
