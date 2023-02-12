@@ -106,6 +106,8 @@ def get_current_quests(previous_save: str) -> list[str]:
 
 def update_quests(current_quests_str: str, lines_to_update: dict[int, str]) -> str:
     """Creates updated string that tracks progression of all quest line"""
+    # If there was progress in any of the quest lines it will be in lines_to_update dict
+    # and added to current quest progress
     quest_lines = current_quests_str.split(",")
     for quest_line_idx in range(len(quest_lines)):
         if quest_line_idx in lines_to_update:

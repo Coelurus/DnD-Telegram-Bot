@@ -78,6 +78,8 @@ Seznam všech postav a údaje o nich nalezneme v souboru `characters.csv`. Každ
 O zpracování těchto dat se stará knihovna `character.py`. Ta definuje třídu `NPC` do jejíchž objektů se ukládají všechny data uvedená v reprezentaci. Dále je zde třída `Society`, která ukládá všechny objekty typu `NPC` a definuje metody pro práce s nimi.
 Nachází se zde též funkce `read_people_from_file`, jež se stará o načtení všech postav, jejich reprezentaci jako `NPC` a jejich uložení do objektu třídy `Society`
 
+***
+
 ### Frakce
 Jak již bylo naznačeno v reprezentaci postav, tak jsou v této hře definovány i takzvané frakce. Seznam všech těchto frakcí je uložen v souboru `fractions.csv`, kde je pro každou z nich definováno jedinečné ID, jméno v češtině, ID místa jejich residence a vztahy s ostatními frakcemi.
 
@@ -93,15 +95,17 @@ Jak již bylo naznačeno v reprezentaci postav, tak jsou v této hře definován
 + relations
     + řetězec integerů oddělených středníkem - např. `3;1;1;0;2;3;-1`
     + význam hodnoty vztahů
-      + ` 3 ` = nasadíme za vás svůj život
-      + ` 2 ` = nevadíme si
-      + ` 1 ` = klidně tě udám
-      + ` 0 ` = zabiju tě tady a teď
-      + `-1 ` = nedefinováno (když nemá smysl určovat)
+      + `3`  = nasadíme za vás svůj život
+      + `2`  = nevadíme si
+      + `1`  = klidně tě udám
+      + `0`  = zabiju tě tady a teď
+      + `-1` = nedefinováno (když nemá smysl určovat)
 
 #### Zpracování
 O zpracování těchto dat se stará též knihovna `character.py`, která definuje třídu `Fraction`, do které se ukládají všechny vlastnosti vypsané výše. Jako vždy je definována třída `PoliticalMap`, která v sobě ukládá všechny frakce a definuje metody pro práce s nimi.
 Pro načtení a zpracování všech frakcí je zde `read_fractions_from_file`, která zkonstruuje objekt třídy `PoliticalMap` se všemi frakcemi ve formě `Fraction`.
+
+***
 
 ### Úkoly
 Úkoly, ruka boží, která řídí chování všech postav v této hře. Pod pojmem úkol se zde rozumí spíše úkolová linie. Ta se dělí na části, které se nazývají fáze. Linie zde však není definována jako posloupnost fázi, ale jako binární strom. Jeden syn vždy reprezentuje úspěšné splnění fáze a druhý neúspěšné. Takto uložené linie jsou k nalezení v souboru `quest-lines.txt` v následujícím formátu:
@@ -191,52 +195,88 @@ Samozřejmě zde máme i funkci `read_quest_lines_from_file`, jež načte všech
 
 
 ## Dynamicky generovaná data
-Jelikož se jedná o hru, tak chceme, abychom se jak my, tak ostatní postavy, mohli nějakým způsobem pohybovat po mapě a interagovat s ostatními. Abychom toho ale docílili, tak musíme vědět, kdo v každou chvíli je, proto je potřeba soubor (game_saves.txt), do kterého se bude průběžně ukládat, co se ve světě hry děje.
+Jelikož se jedná o hru, tak chceme, abychom se jak my, tak ostatní postavy, mohli nějakým způsobem pohybovat po mapě a interagovat s ostatními. Abychom toho ale docílili, tak musíme vědět, kdo v každou chvíli je. Z tohoto důvodu existuje soubor `game_saves.csv`, ve kterém je uložen aktuální stav jak hráče, tak všech postav a i progres úkolových linií.
 
 Jelikož hru zprostředkovává bot na telegramu, tak by mohla nastat situace, kdy by hru chtělo hrát více uživatelů najednou. Pro každého z nich musí tedy existovat právě jedno uložení postupu. Který postup patří jakému uživateli se určí dle konkrétního ID chatu, které lze získat přes bota.
-Data k jedné hře tedy budou vždy uloženy ve dvou řádcích. Na prvním bude ID chatu a na druhém řetězec znaků obsahující veškeré potřebné informace, viz dále, jehož segmenty od sebe budou odděleny znakem _ (podtržítko).
+Data k jedné hře tedy budou vždy uloženy ve dvou řádcích. Na prvním bude ID chatu a na druhém řetězec znaků obsahující veškeré potřebné informace, viz dále, jehož segmenty od sebe budou odděleny znakem `"_"`.
+
+O programové zpracování všech těchto dat se stará knihovna `save.py` jež využívá i některé další knihovny (viz dále).
+Nutno je zmínit funkci `read_current_save`, která na základě ID chatu vrátí celý `string` se všemi uloženými daty.
 
 ### Stav hráče
-Stav hráče je definován řetězcem znaků složených z více částí, jež jsou odděleny “,“ (čárkou).
-+ Místo, kde se hráč nachází := “place:“ + ID místa
-+ Počet peněz, jenž má := “coins:“ + počet peněz
-+ Předměty := “items:“ + ID předmětů oddělené středníky (např.: “items:1;3“)
-+ Síla := “str:“ + číselná hodnota síly hráče
-+ Rychlost := “speed:“ + hodnota rychlosti
-+ Vztah ke frakcím := “relations:“ + hodnoty(definovány stejně jako ve Frakcích) pro každou frakci oddělené ; (středníky). Hodnoty jsou ve stejném pořadí jako indexy frakcí.
-+ Při spuštění nové hry se nastaví výchozí pozice na index 0 (U opilého poníka), počet peněz na 25, hráč je bez předmětů, jeho síla i rychlost je 2 a vztah se všemi frakcemi je 2.
 
+#### Reprezentace
+Stav hráče je definován řetězcem znaků složených z více částí, jež jsou odděleny `“,“`.
++ Místo, kde se hráč nachází `:= “place:“ + ID místa`
++ Počet peněz, jenž má `:= “coins:“ + počet peněz`
++ Předměty `:= “items:“ + ID předmětů oddělené středníky` 
+    + Např.: `“items:1;3“`
++ Síla := `“str:“ + hodnota síly hráče`
++ Rychlost `:= “speed:“ + hodnota rychlosti`
++ Vztah ke frakcím `:= “relations:“ + hodnoty`
+    + Definovány stejně jako ve Frakcích.
+    + Pro každou frakci oddělené `";"`
+    + Hodnoty jsou ve stejném pořadí jako indexy frakcí.
++ Frakce hráče `:= "fraction:" + ID frakce`
++ Stav hráče `:= "state:" + určitý stav`
+  + Stavy jsou následující:
+    + `alive` - hráč může bez problému hrát
+    + `stun` - hráč na několik kol po dobu tohoto efektu nehraje
+    + `dead` - hráč prohrál
++ Trvání efektů `:= "duration:" + typ stavu + "/" + doba trvání`
+    + Stavy mohou být následovné:
+        + `stun`
+        + `"str" + hodnota bonusové síly`
+        + `"speed" + hodnota bonusové síly`
++ Zbraně jež má hráč vybavené `:= "weapons:" + ID 1. zbraně + ";" + ID 2. zbraně`
++ Úkol zadaný postavě `:= "quests:" + stringové vyjádření ModifiedQuestPhase objektů oddělené "/"`
++ Progres úkolů `:= fáze úkolů oddělené "/"`
++ Při spuštění nové hry se nastaví výchozí nastavení následovně:
+    + `"place:0,coins:25,items:7;8;9,str:2,speed:2,relations:2;2;2;2;2;2;2,fraction:4,state:alive,duration:,weapons:,quests:0=char12=37=1=32=none=40%-1/7=char29=-1=-1=?=31;stun=14%14,progress:tostart/inprogress"`
+
+#### Zpracování dat
+Na uložení všech těchto dat je v knihovně `player.py` definována třída `Player`. Pro tuto třídu je zde poté definováno plno metod (jako například pohyb, používání předmětů), díky kterým může hráč hru hrát. Než je tady všechny vypisovat, tak doporučím podívat se do `player.py`.
+V knihovně `save.py` jsou poté funkce, jež zpracují vstupní save data a vytvoří z nich instanci objektu `Player`. Na tuto specifickou akci je zde funkce `get_current_player`, která rozdělí řetězec dle `","` a tyto části pak na `key` a `val` dle `:` a už je jen přiřadí správným atributům. 
+Opačnou funkci plní funkce `player_save_generator`, která objekt `Player` přetvoří na `string`.
 
 ### Stavy úkolových linií
-Stavy jednotlivých linií v řetězci jsou opět rozděleny “,“ (čárkami). Stavy linií jsou uloženy postupně dle rostoucích indexů. 
 
-Jelikož je každý linie úkolů implementována jako binární strom, kdy jeden syn značí úspěch a druhý neúspěch, tak můžeme cestu do konkrétního uzlu stromu definovat jako posloupnost písmen F a S, kdy F znamená, že v daném bodě nastal neúspěch a máme se posunout na takového syna. Naopak S pak znamená úspěšné splnění mise. 
+#### Reprezentace
+Stavy jednotlivých linií v řetězci jsou opět rozděleny čárkami `“,“` . Stavy linií jsou uloženy postupně dle rostoucích indexů. 
+
+Jelikož je každý linie úkolů implementována jako binární strom, kdy jeden syn značí úspěch a druhý neúspěch, tak můžeme cestu do konkrétního uzlu stromu definovat jako posloupnost písmen `"F"` a `"S"`, kdy `"F"` znamená, že v daném bodě nastal neúspěch a máme se posunout na takového syna. Naopak `"S"` pak znamená úspěšné splnění mise. 
 
 Pokud je řetězec prázdný, znamená to, že je aktivní stále první fáze, tedy kořen stromu. 
-Naopak pokud linie dospěje svého konce, tak se řetězec přepíše na znak “E“, aby se již příště nemusel zbytečně procházet.
+
+#### Zpracování dat
+Pro operování s daty o průběhu úkolů opět použijeme knihovnu `save.py`. Je zde pro to několik funkcí, ale za zmínku stojí hlavně `get_current_quests`, která dle řetězců progresu složených z `"F"` a `"S"` prochází úkolové stromy a nakonec vrátí aktuální fázi, jež probíhá. Další funkce je `assign_quests`, která prochází aktuální fáze získané předchozí fází a přiřazuje je postavám, které je pak budou vykonávat.
 
 
 ### Stavy postav
-Stav každé z postav je v řetězci oddělen “+“ (plus) a jednotlivé části každého stavu “,“ (čárkou). Postavy jsou též řazeny dle indexu.
+Stav každé z postav je v řetězci oddělen `“+“` a jednotlivé části každého stavu `“,“`. Postavy jsou též řazeny dle indexu.
 
-Podobně jako u stavu hráče bude pro každou postavu definováno místo, počet peněz, předměty, které má momentálně u sebe, síla a rychlost. Vztahy pro postavy určeny nejsou, neboť se definují dle jejich příslušnosti k frakcím.
+Totožně jako u stavu hráče jsou definovány následující:
++ Místo
++ Počet peněz
++ Předměty
+    + Změna oproti postavě je ta, že předměty, jež má postava u sebe jsou automaticky brané jako vybavené
++ Síla
++ Rychlost
++ Stav
 
-Další důležitá vlastnost každé postavy je, jaký úkol zrovna plní, jež bude uloženo následovně:
-+ Linie := “line:“ + ID úkolové linie, kterou plní
-+ Fáze := “phase:“ + určená modifikovaná fáze, kterou právě plní, uložená ve stejném formátu, jako bylo definováno v Liniích úkolů pro fáze definované modifikátory.
-K tomu se váži možné stavy, ve kterých se tyto fáze nachází. 
-+ Stav fáze := “stage:“ + konkrétní stav (viz níže)
+Pro postavy jsou však definovány i vlastnosti, které hráč nemá:
++ Úkolová linie `:= “line:“ + ID úkolové linie, kterou plní`
++ Fáze `:= “phase:“ + určená modifikovaná fáze, kterou právě plní`
+    + Uložená ve stejném formátu, jako bylo definováno v Liniích úkolů pro fáze definované modifikátory.
++ Stav plnění fáze `:= “stage:“ + konkrétní stav` 
 + Rozlišujeme 3 různé stavy:
-    + Fáze ještě nezačala = postava teprve musí dojít do výchozího místa (“tostart“)
-    + Fáze právě probíhá = postava se musí dostavit na určené místo (“inprogress“)
-    + Fáze právě skončila = postava se dostavila na určené místo a provede zadanou akci (“ended“)
-        + Ta by prakticky neměla nikdy nastat, neboť se rovnou vyhodnotí konec fáze a pokračuje se s druhou
-+ Pokud postava žádný úkol neplní, tak bude za všemi klíčovými slovy a dvojtečkou -1 (úkolová část postavy pak bude vypadat následovně: “line:-1,phase:-1,stage:-1“)
+    + Fáze ještě nezačala = postava teprve musí dojít do výchozího místa `“tostart“`
+    + Fáze právě probíhá = postava se musí dostavit na určené místo `“inprogress“`
+    + Fáze právě skončila = postava se dostavila na určené místo a provede zadanou akci `“ended“`
 
-Další podstatnou vlastní každé postavy je, jaký je jeho zdravotní stav: “state:“ + konkrétní stav
-+ Postava je plně při vědomí = “alive“
-+ Postava je omráčená, ale žije = “stun“
-+ Postava je mrtvá = “dead“
++ Pokud postava žádný úkol neplní, tak bude za všemi klíčovými slovy a dvojtečkou `-1`
+  + Úkolová část postavy pak bude vypadat následovně: `“line:-1,phase:-1,stage:-1“`
+
 
 ### Rotace
 1.	Načtení z game save souboru
