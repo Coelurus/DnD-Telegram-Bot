@@ -839,7 +839,7 @@ def main() -> None:
     # Used to connect to the bot and and start communication with this program
     api_key = get_token()
     application = Application.builder().token(api_key).build()
-
+    print("Starting bot...")
     # Creates conversation handler that is used to take care of player's inputs and reacting on them
     # It defines condition to start conversation and fallback
     # Then defines reactions on different player messages in different contexts
@@ -985,8 +985,11 @@ def main() -> None:
     application.add_handler(conversation_handler)
 
     # Run the bot until the user kills it (Ctrl-C)
+    print("Bot is running!")
+    print("To end him press Ctrl-C")
     application.run_polling()
 
 
 if __name__ == "__main__":
+    print("Starting...")
     main()

@@ -18,7 +18,12 @@ Je to velice jednoduché!
    `pip install python-telegram-bot --upgrade`
 8. Pokud vám příkazová řádka hlásí, že nemáte pip, naistaujte si ho, dle postupu zde: https://pypi.org/project/pip/
    - Znovu napište `pip install python-telegram-bot --upgrade`
-9. V příkazové řádce si otevřete složku s tímto botem.
+9. Stáhněte si kód z githubu
+10. Dekomprimujte složku
+11. V příkazové řádce si otevřete dekomprimovanou složku `DnD-Telegram-Bot-master`, ve které jsou přímo všechny další složky jako `data` a `lib`.
+12. Zadejte `python lib\main.py`, čímž spustíte program.
+13. Váš bot teď běží a můžete se řídit postupem v `Jak hru spustit?`
+14. Bot bude reagovat a odpovídat na vaše zprávy, dokud budete mít zaplý program. Pokud ho ukončíte, přestane vám v chatu odpovídat.
 
 ***
 
