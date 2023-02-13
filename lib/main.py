@@ -82,7 +82,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     load_static_data(context)
     load_dynamic_data(context, current_save)
 
-    await update.message.reply_text("Probudil ses...u...U Oplého poníka? Co tu dělám?......Sakra už vím! Utekla nám kočka. Ale ne, musím ji jít najít.")
+    await update.message.reply_text("Probudil ses...u...U Opilého poníka? Co tu dělám?......Sakra už vím! Utekla nám kočka. Ale ne, musím ji jít najít.")
     await update.message.reply_text('V tom ti však někdo zaklepe na rameno: "Nezapomeň, o co ses vsadil s těmi kultisty. Že prý kočku najdeš dřív než oni...a teď tu vyspáváš v hospodě. No tak utíkej. DĚLEJ!"')
 
     return await basic_window(update, context)
