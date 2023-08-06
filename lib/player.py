@@ -8,9 +8,21 @@ from quest import ModifiedQuestPhase, str_to_mqp
 class Player:
     """Class to store current data about Player"""
 
-    def __init__(self, place_ID: str, coins: str, items: list[str], strength: str, speed: str,
-                 relations: list[str], fraction_ID: str = "4", state: str = "alive",
-                 duration: str = "", weapons: list[str] = [""], quests: list[str] = [], progress: list[str] = []) -> None:
+    def __init__(
+        self,
+        place_ID: str,
+        coins: str,
+        items: list[str],
+        strength: str,
+        speed: str,
+        relations: list[str],
+        fraction_ID: str = "4",
+        state: str = "alive",
+        duration: str = "",
+        weapons: list[str] = [""],
+        quests: list[str] = [],
+        progress: list[str] = [],
+    ) -> None:
         self.place_ID = int(place_ID)
         self.coins = int(coins)
         self.items = [int(x) for x in items if x != ""]
@@ -21,7 +33,7 @@ class Player:
         self.state = state
 
         self.duration: dict[str, int] = dict()
-        if duration != "":
+        if duration != []:
             for effects in duration.split(";"):
                 key, val = effects.split("/")
                 self.duration[key] = int(val)
@@ -33,8 +45,7 @@ class Player:
 
     def move(self, map=read_map_from_file("data\streets.csv")):
         """Method that is NOT used. Created only for development and console control"""
-        connected_streets = map.get_street_by_ID(
-            self.place_ID).get_connected_streets()
+        connected_streets = map.get_street_by_ID(self.place_ID).get_connected_streets()
 
         output_str = ""
         output_str += "You can go to: \n"
@@ -51,18 +62,23 @@ class Player:
 
         self.place_ID = options[idx].ID
 
-    def move_possibilities(self, map=read_map_from_file("data\streets.csv")) -> tuple[list[Street], Street]:
-        """Method returns list of Streets objects where Player can move based on his current location 
+    def move_possibilities(
+        self, map=read_map_from_file("data\streets.csv")
+    ) -> tuple[list[Street], Street]:
+        """Method returns list of Streets objects where Player can move based on his current location
         and also returns Street object of place where is currently character"""
-        current_street = map.get_street_by_ID(
-            self.place_ID)
+        current_street = map.get_street_by_ID(self.place_ID)
         connected_streets = current_street.get_connected_streets()
         options = []
         for possible_street in connected_streets:
             options.append(map.get_street_by_ID(possible_street))
         return options, current_street
 
-    def get_actions(self, current_characters: ModifiedPeople, map=read_map_from_file("data\streets.csv")) -> tuple[dict[str, str], list[ModifiedNPC]]:
+    def get_actions(
+        self,
+        current_characters: ModifiedPeople,
+        map=read_map_from_file("data\streets.csv"),
+    ) -> tuple[dict[str, str], list[ModifiedNPC]]:
         """
         Method takes current state of NPCs and returns 2 values:
         1. dictionary where key is possible action and value is modifier
@@ -77,17 +93,21 @@ class Player:
                 action_dict[key] = val
         return action_dict, people_here
 
-    def get_relationships(self, people_here: list[ModifiedNPC], society: Society) -> dict[int, int]:
+    def get_relationships(
+        self, people_here: list[ModifiedNPC], society: Society
+    ) -> dict[int, int]:
         """Method takes list of people in same location as player and static data about all characters.
-        Returns dictionary where keys are IDs of people in the same location and values are their relationship to player"""
+        Returns dictionary where keys are IDs of people in the same location and values are their relationship to player
+        """
         char_ID_to_realtion: dict[int, int] = dict()
         for person in people_here:
-            char_ID_to_realtion[person.ID] = self.relations[society.get_char_by_ID(
-                person.ID).fraction_ID]
+            char_ID_to_realtion[person.ID] = self.relations[
+                society.get_char_by_ID(person.ID).fraction_ID
+            ]
         return char_ID_to_realtion
 
     def use_item(self, item: Item) -> None:
-        """Takes statistics of consumable item and adds them to player's base stats. 
+        """Takes statistics of consumable item and adds them to player's base stats.
         It also saves duration of these effects and removes item from inventory"""
         str_modifier = f"str{item.strength_mod}"
         speed_modifier = f"speed{item.speed_mod}"
@@ -99,7 +119,8 @@ class Player:
 
     def decrease_durations(self) -> None:
         """Method goes through all temporary effects and reduced their duration by 1
-        If the effect has duration 0 it removes him from effects list (duration) and removes effects from player"""
+        If the effect has duration 0 it removes him from effects list (duration) and removes effects from player
+        """
         to_pop = []
         for key in self.duration:
             self.duration[key] -= 1
@@ -115,7 +136,7 @@ class Player:
             self.duration.pop(key)
 
     def equip_weapon(self, item: Item) -> bool:
-        """Method tries to add item ID to weapon list. If it is possible it returns true and removes newly equiped item from items. 
+        """Method tries to add item ID to weapon list. If it is possible it returns true and removes newly equiped item from items.
         If player has already 2 weapons equiped it returns False"""
         if len(self.equiped_weapons) < 2:
             self.equiped_weapons.append(item.ID)
@@ -149,27 +170,49 @@ class Player:
         self.speed -= item.speed_mod
         self.strength -= item.strength_mod
 
-    def update_quest_progresses(self, current_characters: ModifiedPeople) -> list[ModifiedQuestPhase]:
+    def update_quest_progresses(
+        self, current_characters: ModifiedPeople
+    ) -> list[ModifiedQuestPhase]:
         """Method looks through player's quests and compares them to his location. If player finished any subpart (moving to designated location) it updates progress he made.
-        Method returns list of ModifieQuestPhase object of quests where player is in final location"""
+        Method returns list of ModifieQuestPhase object of quests where player is in final location
+        """
         quests_to_finish: list[ModifiedQuestPhase] = []
         for quest_idx in range(len(self.quests)):
             quest = str_to_mqp(self.quests[quest_idx])
 
-            if self.progress[quest_idx] == "tostart" and self.place_ID == quest.from_place_ID:
+            if (
+                self.progress[quest_idx] == "tostart"
+                and self.place_ID == quest.from_place_ID
+            ):
                 self.progress[quest_idx] = "inprogress"
 
-            elif self.progress[quest_idx] == "inprogress" and quest.go_to != -1 and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID:
+            elif (
+                self.progress[quest_idx] == "inprogress"
+                and quest.go_to != -1
+                and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID
+            ):
                 self.progress[quest_idx] = "infinal"
 
-            elif self.progress[quest_idx] == "inprogress" and quest.go_to == -1 and self.place_ID == quest.to_place_ID:
+            elif (
+                self.progress[quest_idx] == "inprogress"
+                and quest.go_to == -1
+                and self.place_ID == quest.to_place_ID
+            ):
                 self.progress[quest_idx] = "infinal"
 
             # if player decides to leave final location without completing the quest
-            elif self.progress[quest_idx] == "infinal" and quest.go_to != -1 and self.place_ID != current_characters.get_NPC(quest.go_to).place_ID:
+            elif (
+                self.progress[quest_idx] == "infinal"
+                and quest.go_to != -1
+                and self.place_ID != current_characters.get_NPC(quest.go_to).place_ID
+            ):
                 self.progress[quest_idx] = "inprogress"
 
-            elif self.progress[quest_idx] == "infinal" and quest.go_to == -1 and self.place_ID != quest.to_place_ID:
+            elif (
+                self.progress[quest_idx] == "infinal"
+                and quest.go_to == -1
+                and self.place_ID != quest.to_place_ID
+            ):
                 self.progress[quest_idx] = "inprogress"
 
             if self.progress[quest_idx] == "infinal":
@@ -177,20 +220,36 @@ class Player:
 
         return quests_to_finish
 
-    def check_quest_action_complete(self, current_characters: ModifiedPeople) -> list[str]:
-        """Goes through all quests player has. If player is in final location and condition of completing 
+    def check_quest_action_complete(
+        self, current_characters: ModifiedPeople
+    ) -> list[str]:
+        """Goes through all quests player has. If player is in final location and condition of completing
         the quest is fulfiled than the progres of quest is set to ended"""
         ended_quests = []
         for quest_idx in range(len(self.quests)):
             quest = str_to_mqp(self.quests[quest_idx])
-            if quest.action == "kill" and current_characters.get_NPC(quest.go_to).state == "dead" and self.progress[quest_idx] == "infinal":
+            if (
+                quest.action == "kill"
+                and current_characters.get_NPC(quest.go_to).state == "dead"
+                and self.progress[quest_idx] == "infinal"
+            ):
                 self.progress[quest_idx] = "ended"
-            elif quest.action == "stun" and current_characters.get_NPC(quest.go_to).state == "stun" and self.progress[quest_idx] == "infinal":
+            elif (
+                quest.action == "stun"
+                and current_characters.get_NPC(quest.go_to).state == "stun"
+                and self.progress[quest_idx] == "infinal"
+            ):
                 self.progress[quest_idx] = "ended"
             # The player was supposed to steal certain item. However he if has the item who cares how he got it.
-            elif quest.action == "rob" and (quest.item_ID in self.items or quest.item_ID in self.equiped_weapons):
+            elif quest.action == "rob" and (
+                quest.item_ID in self.items or quest.item_ID in self.equiped_weapons
+            ):
                 self.progress[quest_idx] = "ended"
-            elif quest.action == "plant" and quest.item_ID in current_characters.get_NPC(quest.go_to).items and self.progress[quest_idx] == "infinal":
+            elif (
+                quest.action == "plant"
+                and quest.item_ID in current_characters.get_NPC(quest.go_to).items
+                and self.progress[quest_idx] == "infinal"
+            ):
                 self.progress[quest_idx] = "ended"
             elif quest.action == "none" and self.progress[quest_idx] == "infinal":
                 self.progress[quest_idx] = "ended"
