@@ -2,5 +2,9 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    // "python.formatting.provider": "none",
+    "workbench.colorCustomizations": {
+        "editorUnnecessaryCode.border": "#dd7aab"
+    },
+    "python.analysis.typeCheckingMode": "off",
 }

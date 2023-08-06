@@ -5,7 +5,6 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
-import numpy
 
 from telegram.ext import (
     Application,
@@ -29,6 +28,7 @@ import character_handler as handler
 from character_handler import ModifiedPeople
 import quest
 from quest import ModifiedQuestPhase
+import json
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -147,6 +147,8 @@ async def rotation(
 
     # Getting current data that are potentially changed by player inputs from last time
     current_characters: ModifiedPeople = context.user_data["current_people"]
+
+    # TODO funi nacitani
     current_quests_list: list[str] = context.user_data["current_quests_list"]
     player: Player = context.user_data["player"]
 
@@ -160,11 +162,9 @@ async def rotation(
     if game_ended:
         return await end_game(update, context, game_ending_str)
 
-    new_quests_str, new_quests_json = save.update_quests(
-        current_quests_list, lines_to_update
-    )
+    new_quests = save.update_quests(current_quests_list, lines_to_update)
 
-    current_quests_save = save.get_current_quests(new_quests_str)
+    current_quests_save = save.get_current_quests(new_quests)
 
     current_characters = save.assign_quests(current_characters, current_quests_save)
 
@@ -177,15 +177,13 @@ async def rotation(
     if len(quests_to_finish) > 0:
         await update.message.reply_text("\u2757 Máš zde úkol \u2757")
 
-    # TODO delete one of them
-    new_player_save, json_dict_player = save.player_save_generator(player)
+    json_dict_player = save.player_save_generator(player)
 
-    context.user_data["current_quests_str"] = new_quests_str
+    context.user_data["current_quests_list"] = new_quests
 
-    combined_save = f"{new_player_save}_{new_quests_str}_{current_characters_str[0]}"
-    combined_save_json = f'{{ "player": {json_dict_player}, "quests": {new_quests_json}, "characters": {current_characters_str[1]} }}'
+    combined_save_json = f'{{ "player": {json_dict_player}, "quests": {json.dumps(new_quests)}, "characters": {current_characters_str[1]} }}'
 
-    save.rewrite_save_file(chat_ID, combined_save, combined_save_json)
+    save.rewrite_save_file(chat_ID, combined_save_json)
 
     # When player is not capable of moving proceed to next round and move characters again
     # TODO change from recursion to loop

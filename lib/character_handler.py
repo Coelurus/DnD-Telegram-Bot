@@ -72,7 +72,7 @@ class ModifiedPeople:
 
     def to_str(self) -> str:
         """Parse object to string thus it can be saved"""
-        character_json: list[dict[string]] = list()
+        character_json: list[dict[str]] = list()
 
         list_to_link = []
         for NPC in self.list:

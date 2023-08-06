@@ -53,22 +53,13 @@ def get_current_player(current_save: dict[str]) -> Player:
     )
 
 
-def player_save_generator(player: Player) -> tuple[str]:
+def player_save_generator(player: Player) -> str:
     """
     Takes current state of player as Player object and returns his representation as string in needed format.
     LS: returns JSON representation
     """
     player_dict = dict()
-
-    items_str = ";".join([str(x) for x in player.items])
-    relations_str = ";".join([str(x) for x in player.relations])
-    equiped_weapons_str = ";".join([str(x) for x in player.equiped_weapons])
-    quests_str = "/".join(player.quests)
-    progress_str = "/".join(player.progress)
     player.decrease_durations()
-    duration = ";".join(
-        [key + "/" + str(player.duration[key]) for key in player.duration]
-    )
 
     player_dict["place"] = player.place_ID
     player_dict["coins"] = player.coins
@@ -85,13 +76,10 @@ def player_save_generator(player: Player) -> tuple[str]:
     player_dict["quests"] = player.quests
     player_dict["progress"] = player.progress
 
-    return (
-        f"place:{player.place_ID},coins:{player.coins},items:{items_str},str:{player.strength},speed:{player.speed},relations:{relations_str},fraction:{player.fraction_ID},state:{player.state},duration:{duration},weapons:{equiped_weapons_str},quests:{quests_str},progress:{progress_str}",
-        json.dumps(player_dict),
-    )
+    return json.dumps(player_dict)
 
 
-def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
+def first_quests_save() -> tuple[dict[int, ModifiedQuestPhase], str]:
     """
     Firstly generates default saves for all quest lines which is empty strings
     Secondly creates dictionary that based on quest line ID returns root modified quest phase of this quest line
@@ -106,20 +94,18 @@ def first_quests_save() -> tuple[str, dict[int, ModifiedQuestPhase]]:
 
         ID_to_root_quest[quest_ID] = str_to_mqp(
             quest_lines.ID_to_tree[quest_ID].value[0]
-        )  # TODO only taking the first possible phase...
-    quest_save_line = ",".join(quest_states)
+        )
 
-    return quest_save_line, ID_to_root_quest, json.dumps(quest_states)
+    return ID_to_root_quest, json.dumps(quest_states)
 
 
-def get_current_quests(previous_save: str) -> list[str]:
+def get_current_quests(lines_states: list[str]) -> list[str]:
     """
     Takes quest line string save and compares with trees to generate concrete phases for each line.
     Returns list of phases as string
     """
     # TODO read in some main function and then just pass as argument
     quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
-    lines_states = previous_save.split(",")
     current_phase_for_line: list[str] = []
 
     # Goes through tree and quest line progress. When there is S it goes to succes son. Repeat until no more progress or end of the tree
@@ -149,7 +135,7 @@ def update_quests(quest_lines: list[str], lines_to_update: dict[int, str]) -> st
         if quest_line_idx in lines_to_update:
             quest_lines[quest_line_idx] += lines_to_update[quest_line_idx]
 
-    return ",".join(quest_lines), json.dumps(quest_lines)
+    return quest_lines
 
 
 def assign_quests(
@@ -202,7 +188,6 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
         character_ID_to_line_ID[character_ID_to_do_quest] = quest_line_ID
 
     characters = read_people_from_file(r"data\characters.csv")
-    characters_str_save = ""
     # Goes through all characters in existence and if there is a quest that should be assigned to them
     # needed attributes are set to identify the phase and line and progress
     for character in characters.people_list:
@@ -220,9 +205,6 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
                 stage = "tostart"
         else:
             line = phase = stage = "-1"
-        items_str = ";".join([str(x) for x in character.items])
-
-        characters_str_save += f"place:{character.spawn_street_ID},coins:{character.coins},items:{items_str},str:{character.strength},speed:{character.speed},line:{line},phase:{phase},stage:{stage},state:alive+"
 
         character_json[-1]["place"] = character.spawn_street_ID
         character_json[-1]["coins"] = character.coins
@@ -234,31 +216,17 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
         character_json[-1]["stage"] = stage
         character_json[-1]["state"] = "alive"
 
-    return characters_str_save.rstrip("+"), json.dumps(character_json)
+    return json.dumps(character_json)
 
 
-def rewrite_save_file(
-    change_line_ID: int, new_save_str: str, new_save_json: str
-) -> None:
+def rewrite_save_file(change_line_ID: int, new_save_json: str) -> None:
     """Reads all rows and saves current saves. That rewrites string specified by ID and save new file"""
-    # with open("data\game_saves.csv", "r", newline="") as save_file:
-    #     reader = csv.DictReader(save_file)
-    #     temp_dict = {}
-    #     for row in reader:
-    #         temp_dict[int(row["ID"])] = row["save"]
-    #     temp_dict[change_line_ID] = new_save_str
 
     with open("data\game_saves.json", "r", newline="") as save_file:
         line_saves = save_file.readline()
         temp_dict_json = json.loads(line_saves)
 
         temp_dict_json[str(change_line_ID)] = new_save_json
-
-    # with open("data\game_saves.csv", "w", newline="") as save_file:
-    #     writer = csv.DictWriter(save_file, ["ID", "save"])
-    #     writer.writeheader()
-    #     for ID in temp_dict:
-    #         writer.writerow({"ID": ID, "save": temp_dict[ID]})
 
     with open("data\game_saves.json", "w", newline="") as save_file:
         save_file.write("{")
@@ -288,28 +256,19 @@ def generate_new_save(chat_ID) -> None:
     new_player_save = player_save_generator(spawn_player)
 
     # Start quest lines
-    new_quest_lines_save, root_quests_dict, new_quests_json = first_quests_save()
+    root_quests_dict, new_quests_json = first_quests_save()
 
     # Rewrite characters to save
     new_characters_save = first_characters_save(root_quests_dict)
 
-    first_save_line = (
-        new_player_save[0] + "_" + new_quest_lines_save + "_" + new_characters_save[0]
-    )
-
     first_json_save = (
         '{ "player": '
-        + new_player_save[1]
+        + new_player_save
         + ', "quests": '
         + new_quests_json
         + ', "characters": '
-        + new_characters_save[1]
+        + new_characters_save
         + " }"
     )
 
-    # TODO delete csv thingie
-    rewrite_save_file(
-        chat_ID,
-        first_save_line,
-        first_json_save,
-    )
+    rewrite_save_file(chat_ID, first_json_save)
