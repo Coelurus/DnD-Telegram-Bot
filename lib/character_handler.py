@@ -70,17 +70,13 @@ class ModifiedPeople:
     def __repr__(self) -> str:
         return "\n".join([str(x) for x in self.list])
 
-    def to_str(self) -> str:
-        """Parse object to string thus it can be saved"""
+    def to_json(self) -> str:
+        """Parse object to JSON string thus it can be saved"""
         character_json: list[dict[str]] = list()
 
-        list_to_link = []
         for NPC in self.list:
             character_json.append(dict())
-            items = ";".join([str(x) for x in NPC.items])
-            list_to_link.append(
-                f"place:{NPC.place_ID},coins:{NPC.coins},items:{items},str:{NPC.strength},speed:{NPC.speed},line:{NPC.line},phase:{NPC.phase},stage:{NPC.stage},state:{NPC.state}"
-            )
+
             character_json[-1]["place"] = NPC.place_ID
             character_json[-1]["coins"] = NPC.coins
             character_json[-1]["items"] = NPC.items
@@ -91,7 +87,7 @@ class ModifiedPeople:
             character_json[-1]["stage"] = NPC.stage
             character_json[-1]["state"] = NPC.state
 
-        return "+".join(list_to_link), json.dumps(character_json)
+        return json.dumps(character_json)
 
     def get_NPC(self, ID: int) -> ModifiedNPC:
         """Get a ModifiedNPC object based on its ID"""

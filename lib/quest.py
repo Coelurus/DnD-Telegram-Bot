@@ -124,6 +124,9 @@ class ModifiedQuestPhase:
 
 
 def dict_to_mqp(dict_quest: dict[str]) -> ModifiedQuestPhase:
+    if isinstance(dict_quest, list):
+        dict_quest = dict_quest[0]
+
     return ModifiedQuestPhase(
         dict_quest["ID"],
         dict_quest["char"],
@@ -159,10 +162,8 @@ class Node:
         self.succes = succes
         self.failure = failure
 
-    def __repr__(self):
-        return (
-            f" My {self.value}: (on succes = {self.succes}), (on fail = {self.failure})"
-        )
+    # def __repr__(self):
+    #     return f"{self.value}: (on succes = {self.succes}), (on fail = {self.failure})"
 
 
 class QuestLineTrees:
@@ -182,21 +183,18 @@ class QuestLineTrees:
 def read_quest_lines_from_file(path: str) -> QuestLineTrees:
     """Function to read data about Trees from txt file.
     Function returns QuestLineTrees object where all modified quest phases are saved"""
-    file = open(path, "r", encoding="utf-8")
-    lines = file.readlines()
-    number_of_line_quests = int(lines[0])
 
     quest_lines = QuestLineTrees()
+    # Reading from JSON
+    with open(path, "r", encoding="utf-8") as file:
+        json_data = file.read()
+        dict_data: list[dict[str]] = json.loads(json_data)
+        for quest_ID in range(len(dict_data)):
+            quest_name: str = dict_data[quest_ID]["name"]
+            quest_tree_dict: dict[str] = dict_data[quest_ID]["root_quest"]
+            root_node = create_tree_from_dict(quest_tree_dict)
 
-    # Goes through all lines in quest-lines.txt and get the ID, name and string representation of a Quest tree
-    for line_idx in range(1, number_of_line_quests * 2, 2):
-        quest_line_ID, quest_line_name = lines[line_idx].split("=")
-        quest_line_ID = int(quest_line_ID)
-        quest_line_name = quest_line_name.rstrip("\n")
-        quest_line_code_str = lines[line_idx + 1].rstrip("\n")
-        quest_line_tree = create_tree_from_str(quest_line_code_str)
-
-        quest_lines.add_tree(quest_line_ID, quest_line_name, quest_line_tree)
+            quest_lines.add_tree(quest_ID, quest_name, root_node)
 
     return quest_lines
 
@@ -215,6 +213,24 @@ def print_tree(node: Node) -> None:
     if node.failure != "None":
         print_tree(node.failure)
     print(")", end="")
+
+
+def create_tree_from_dict(quest_dict: dict[str]) -> Node:
+    if len(quest_dict["on_success"]) == 0:
+        success_son = "None"
+    else:
+        success_son = []
+        for son in quest_dict["on_success"]:
+            success_son.append(create_tree_from_dict(son))
+
+    if len(quest_dict["on_fail"]) == 0:
+        fail_son = "None"
+    else:
+        fail_son = []
+        for son in quest_dict["on_fail"]:
+            fail_son.append(create_tree_from_dict(son))
+
+    return Node([quest_dict], success_son, fail_son)
 
 
 def create_tree_from_str(quest_line_str: str) -> Node:
@@ -256,11 +272,6 @@ def create_tree_from_str(quest_line_str: str) -> Node:
 
 
 if __name__ == "__main__":
-    # forest = read_quest_lines_from_file("data\quest-lines.txt")
-    # for treeID in forest.ID_to_name:
-    #     print(treeID)
-    #     print(forest.ID_to_name[treeID])
-    #     print_tree(forest.ID_to_tree[treeID])
     str_quest = "9=char34=-1=-1=?=33;rob=25%-1"
     mqp_quest = str_to_mqp(str_quest)
     json_quest = mqp_to_json(mqp_quest)

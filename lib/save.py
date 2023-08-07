@@ -92,16 +92,13 @@ def first_quests_save() -> tuple[dict[int, ModifiedQuestPhase], str]:
     Secondly creates dictionary that based on quest line ID returns root modified quest phase of this quest line
     """
 
-    quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
-    # quest_lines = read_quest_lines_from_file(r"data\quest-lines.json")
+    quest_lines = read_quest_lines_from_file(r"data\quest-lines.json")
     quest_states = []
     ID_to_root_quest = dict()
     for quest_ID in quest_lines.ID_to_tree:
         quest_states.append("")
 
-        ID_to_root_quest[quest_ID] = dict_to_mqp(
-            json.loads(quest_lines.ID_to_tree[quest_ID].value[0])
-        )
+        ID_to_root_quest[quest_ID] = dict_to_mqp(quest_lines.ID_to_tree[quest_ID].value)
 
     return ID_to_root_quest, json.dumps(quest_states)
 
@@ -112,7 +109,7 @@ def get_current_quests(lines_states: list[str]) -> list[str]:
     Returns list of phases as string
     """
     # TODO read in some main function and then just pass as argument
-    quest_lines = read_quest_lines_from_file(r"data\quest-lines.txt")
+    quest_lines = read_quest_lines_from_file(r"data\quest-lines.json")
     current_phase_for_line: list[str] = []
 
     # Goes through tree and quest line progress. When there is S it goes to succes son. Repeat until no more progress or end of the tree
@@ -127,10 +124,13 @@ def get_current_quests(lines_states: list[str]) -> list[str]:
             if node == "None":  # the quest line ends here
                 current_phase_for_line.append("None")
                 break
+            else:
+                node = node[0]
+            # TODO check if it nedělá bordel
         else:
-            current_phase_for_line.append(
-                [str(dict_to_mqp(json.loads(x))) for x in node.value]
-            )
+            for phase_node in node.value:
+                # for phase_node in node.value:
+                current_phase_for_line.append(str(dict_to_mqp(phase_node)))
 
     return current_phase_for_line
 
@@ -160,7 +160,7 @@ def assign_quests(
         # If a line has not finished yet, look in current phase and save it to a dict where key
         # is assigned character to this phase and value is the save and its index
         if current_quests_save[quest_save_idx] != "None":
-            quest_save = str_to_mqp(current_quests_save[quest_save_idx][0])
+            quest_save = str_to_mqp(current_quests_save[quest_save_idx])
             if quest_save != "None":
                 char_ID_to_quest[quest_save.characterID] = [quest_save, quest_save_idx]
 

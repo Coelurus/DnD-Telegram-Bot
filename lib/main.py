@@ -99,7 +99,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     load_dynamic_data(context, current_save)
 
     await update.message.reply_text(
-        "Probudil ses...u...U Oplého poníka? Co tu dělám?......Sakra už vím! Utekla nám kočka. Ale ne, musím ji jít najít."
+        "Probudil ses...u...U Opilého poníka? Co tu dělám?......Sakra už vím! Utekla nám kočka. Ale ne, musím ji jít najít."
     )
     await update.message.reply_text(
         'V tom ti však někdo zaklepe na rameno: "Nezapomeň, o co ses vsadil s těmi kultisty. Že prý kočku najdeš dřív než oni...a teď tu vyspáváš v hospodě. No tak utíkej. DĚLEJ!"'
@@ -169,7 +169,7 @@ async def rotation(
     current_characters = save.assign_quests(current_characters, current_quests_save)
 
     # Make characters follow their quests and then parse to string so the progress can be saved
-    current_characters_str = save.move_characters(current_characters).to_str()
+    current_characters_json = save.move_characters(current_characters).to_json()
 
     # Updates progress and gets list of quests completable in this place.
     quests_to_finish = player.update_quest_progresses(current_characters)
@@ -181,7 +181,7 @@ async def rotation(
 
     context.user_data["current_quests_list"] = new_quests
 
-    combined_save_json = f'{{ "player": {json_dict_player}, "quests": {json.dumps(new_quests)}, "characters": {current_characters_str[1]} }}'
+    combined_save_json = f'{{ "player": {json_dict_player}, "quests": {json.dumps(new_quests)}, "characters": {current_characters_json} }}'
 
     save.rewrite_save_file(chat_ID, combined_save_json)
 

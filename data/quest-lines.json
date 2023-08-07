@@ -12,7 +12,7 @@
             "to_place": 37,
             "action": "None",
             "go_to": "None",
-            "on_succes": [
+            "on_success": [
                 {
                     "ID": 0,
                     "char": 11,
@@ -24,7 +24,7 @@
                     "to_place": 0,
                     "action": "None",
                     "go_to": "None",
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 },
                 {
@@ -38,7 +38,7 @@
                     "to_place": 32,
                     "action": "None",
                     "go_to": "None",
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 },
                 {
@@ -52,7 +52,7 @@
                     "to_place": 33,
                     "action": "None",
                     "go_to": "None",
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 }
             ],
@@ -68,7 +68,7 @@
                     "to_place": "?",
                     "action": "12;bring",
                     "go_to": 12,
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 }
             ]
@@ -87,7 +87,7 @@
             "to_place": "?",
             "action": "30;kill",
             "go_to": 30,
-            "on_succes": [],
+            "on_success": [],
             "on_fail": []
         }
     },
@@ -104,7 +104,7 @@
             "to_place": "?",
             "action": "31;kill",
             "go_to": 31,
-            "on_succes": [],
+            "on_success": [],
             "on_fail": []
         }
     },
@@ -121,7 +121,7 @@
             "to_place": "?",
             "action": "31;kill",
             "go_to": 31,
-            "on_succes": [],
+            "on_success": [],
             "on_fail": []
         }
     },
@@ -138,7 +138,7 @@
             "to_place": "?",
             "action": "33;plant",
             "go_to": 33,
-            "on_succes": [
+            "on_success": [
                 {
                     "ID": 9,
                     "char": 34,
@@ -150,7 +150,7 @@
                     "to_place": "?",
                     "action": "33;rob",
                     "go_to": 33,
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 }
             ],
@@ -166,7 +166,7 @@
                     "to_place": "?",
                     "action": "32;rob",
                     "go_to": 32,
-                    "on_succes": [],
+                    "on_success": [],
                     "on_fail": []
                 }
             ]
@@ -185,7 +185,7 @@
             "to_place": 6,
             "action": "None",
             "go_to": "None",
-            "on_succes": [
+            "on_success": [
                 {
                     "ID": 666,
                     "char": 22,
@@ -196,7 +196,9 @@
                     "item_reward": 9,
                     "to_place": "?",
                     "action": "0;kill",
-                    "go_to": 0
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
                 }
             ],
             "on_fail": []
@@ -215,7 +217,7 @@
             "to_place": 0,
             "action": "None",
             "go_to": "None",
-            "on_succes": [
+            "on_success": [
                 {
                     "ID": 666,
                     "char": 21,
@@ -226,7 +228,9 @@
                     "item_reward": 9,
                     "to_place": "?",
                     "action": "0;kill",
-                    "go_to": 0
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
                 }
             ],
             "on_fail": []
@@ -245,7 +249,7 @@
             "to_place": 12,
             "action": "None",
             "go_to": "None",
-            "on_succes": [
+            "on_success": [
                 {
                     "ID": 666,
                     "char": 23,
@@ -256,7 +260,9 @@
                     "item_reward": 9,
                     "to_place": "?",
                     "action": "0;kill",
-                    "go_to": 0
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
                 }
             ],
             "on_fail": []
