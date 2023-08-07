@@ -1,5 +1,5 @@
 from character import read_people_from_file, read_fractions_from_file, NPC, Society
-from quest import str_to_mqp
+from quest import str_to_mqp, dict_to_mqp
 from map import read_map_from_file, Street
 from items import read_items_from_file, ItemsCollection
 from random import choice
@@ -60,7 +60,7 @@ class ModifiedPeople:
     def add_NPC(self, character: ModifiedNPC) -> None:
         # When character has a quest, then there is a modifier for an item
         if character.line != -1:
-            item_ID = str_to_mqp(character.phase).item_ID
+            item_ID = dict_to_mqp(character.phase).item_ID
             # Modifier -1 stands for nothing but any other whole number is index of an item
             if item_ID != -1:
                 if item_ID not in character.items:
@@ -153,7 +153,12 @@ def update_phases(
     lines_to_update: dict[int, str] = dict()
     for character in modified_characters.list:
         if character.phase != "-1":
-            current_phase = str_to_mqp(character.phase)
+            # TODO delete str csv stupid save
+            if isinstance(character.phase, str):
+                current_phase = str_to_mqp(character.phase)
+            else:
+                current_phase = dict_to_mqp(character.phase)
+
             # If there is a character who has a quest and is dead it is labeled
             # as ended and afterwards will yield in failure of this phase
             if character.state == "dead":
@@ -251,7 +256,11 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
         if character.state == "alive":
             # Character has a quest to follow
             if character.phase != "-1":
-                current_phase = str_to_mqp(character.phase)
+                # TODO delete the string possibility
+                if isinstance(character.phase, str):
+                    current_phase = str_to_mqp(character.phase)
+                else:
+                    current_phase = dict_to_mqp(character.phase)
                 # Final place is fixed
                 if current_phase.go_to == -1:
                     if character.stage == "tostart":
@@ -534,7 +543,7 @@ def steal(
 
 
 if __name__ == "__main__":
-    character_save = "place:32,coins:20,items:,str:3,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:15,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:16,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:9,items:,str:1,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:33,coins:10,items:,str:4,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:34,coins:20,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:17,coins:1,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:4,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:13,coins:9,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:19,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:8,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:12,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:13,items:,str:3,speed:2,line:0,phase:0=char12=36=0=37=none=40%-1,stage:tostart,state:alive+place:37,coins:3,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:4,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:15,items:,str:3,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:1,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:6,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:17,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:16,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:6,items:,str:1,speed:4,line:5,phase:0=char21=-1=-1=0=none=25%-1,stage:inprogress,state:alive+place:39,coins:6,items:,str:2,speed:3,line:6,phase:0=char22=-1=-1=6=none=25%-1,stage:inprogress,state:alive+place:39,coins:8,items:,str:4,speed:1,line:7,phase:0=char23=-1=-1=12=none=25%-1,stage:inprogress,state:alive+place:39,coins:19,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:18,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:3,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:7,coins:20,items:,str:1,speed:4,line:1,phase:7=char27=-1=9=?=30;kill=30%-1,stage:inprogress,state:alive+place:7,coins:12,items:,str:2,speed:2,line:2,phase:7=char28=-1=8=?=31;kill=30%-1,stage:inprogress,state:alive+place:7,coins:7,items:,str:1,speed:4,line:3,phase:7=char29=-1=-1=?=31;kill=30%-1,stage:inprogress,state:alive+place:1,coins:4,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:12,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:19,coins:20,items:,str:1,speed:5,line:4,phase:9=char32=-1=7=?=33;plant=20%-1,stage:inprogress,state:alive+place:20,coins:13,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:3,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive"
+    character_save = "place:32,coins:20,items:,str:3,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:15,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:16,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:9,items:,str:1,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:33,coins:10,items:,str:4,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:34,coins:20,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:17,coins:1,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:4,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:13,coins:9,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:19,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:8,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:12,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:13,items:,str:3,speed:2,line:0,phase:0=char12=36=0=37=None=40%-1,stage:tostart,state:alive+place:37,coins:3,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:4,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:15,items:,str:3,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:1,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:6,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:17,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:16,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:6,items:,str:1,speed:4,line:5,phase:0=char21=-1=-1=0=None=25%-1,stage:inprogress,state:alive+place:39,coins:6,items:,str:2,speed:3,line:6,phase:0=char22=-1=-1=6=None=25%-1,stage:inprogress,state:alive+place:39,coins:8,items:,str:4,speed:1,line:7,phase:0=char23=-1=-1=12=None=25%-1,stage:inprogress,state:alive+place:39,coins:19,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:18,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:3,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:7,coins:20,items:,str:1,speed:4,line:1,phase:7=char27=-1=9=?=30;kill=30%-1,stage:inprogress,state:alive+place:7,coins:12,items:,str:2,speed:2,line:2,phase:7=char28=-1=8=?=31;kill=30%-1,stage:inprogress,state:alive+place:7,coins:7,items:,str:1,speed:4,line:3,phase:7=char29=-1=-1=?=31;kill=30%-1,stage:inprogress,state:alive+place:1,coins:4,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:12,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:19,coins:20,items:,str:1,speed:5,line:4,phase:9=char32=-1=7=?=33;plant=20%-1,stage:inprogress,state:alive+place:20,coins:13,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:3,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive"
     modified_people = get_current_characters(character_save)
 
     # checking if someone finished quest or is final location

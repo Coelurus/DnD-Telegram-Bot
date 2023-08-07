@@ -320,7 +320,7 @@ async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_keyboard = [["Nasadit"], ["Návrat"]]
         context.user_data["item"] = item
 
-    elif item.usage == "none":
+    elif item.usage == "None":
         usage_text = "Předmět nelze momentálně nijak použít\."
         question_text = "Zpět do inventáře?"
         reply_keyboard = [["Návrat"]]
@@ -411,7 +411,7 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_keyboard = []
         for quest_str_idx in range(len(player.quests)):
             quest_str = player.quests[quest_str_idx]
-            mqp = quest.str_to_mqp(quest_str)
+            mqp = quest.dict_to_mqp(quest_str)
             # Final place is static
             if mqp.go_to == -1:
                 reply_keyboard += [
@@ -452,7 +452,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Get a quest definition string based on ordinal number before quest
     visual_quest_ID = int(update.message.text.split(". ")[0])
     quest_str = quest_ID_to_str[visual_quest_ID]
-    quest_mqp = quest.str_to_mqp(quest_str)
+    quest_mqp = quest.dict_to_mqp(quest_str)
 
     progress = player.progress[visual_quest_ID - 1]
 
@@ -497,7 +497,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     action_txt = (
         ""
-        if quest_mqp.action == "none"
+        if quest_mqp.action == "None"
         else "\u2705 "
         if progress == "ended"
         else "\u2716 "
@@ -505,7 +505,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     action_txt += (
         ""
-        if quest_mqp.action == "none"
+        if quest_mqp.action == "None"
         else "Zab cíl"
         if quest_mqp.action == "kill"
         else "Omrač cíl"
@@ -664,7 +664,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
         player.coins -= item.price
         player.items.append(item_ID)
         await update.message.reply_text(
-            f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak ho najdeš v inventáři."
+            f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak na tebe bude čekat v inventáři."
         )
 
     return await basic_window(update, context)
@@ -946,7 +946,7 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Quest and progress is then removed
     elif action == "quest_reward":
         for quest_idx in range(len(player.quests)):
-            quest_mqp = quest.str_to_mqp(player.quests[quest_idx])
+            quest_mqp = quest.dict_to_mqp(player.quests[quest_idx])
             if quest_mqp.characterID == char_ID:
                 await update.message.reply_text(f"Úspěšně sis vyzvedl odměnu.")
                 player.coins += quest_mqp.reward["coins"]
@@ -982,7 +982,7 @@ async def generate_quest_finishes(
         "character_specific_actions"
     ]
     for quest_str in completed_quests:
-        cur_quest = quest.str_to_mqp(quest_str)
+        cur_quest = quest.dict_to_mqp(quest_str)
         # If character has no other specific action
         if cur_quest.characterID not in character_specific_actions:
             character_specific_actions[cur_quest.characterID] = [

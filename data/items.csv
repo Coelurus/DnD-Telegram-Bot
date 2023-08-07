@@ -1,11 +1,11 @@
 ID,name_cz,description_cz,legal,speed_mod,strength_mod,price,type,usage,duration
-0,Zásilka šňupce,Toto jmění ve formě prášku má větší cenu než místní hrad a životy všech lidí ve městě dohromady.,no,-2,0,2000,drugs,none,0
-1,Balíček šňupce,"Nejpopulárnější droga na trhu, ale nebezpečně návyková. Pokud teda slovo návyková používáte ve smyslu: prodám sebe i celou svou rodinu do otroctví, abych si mohl dovolit ještě jednu dávku.",no,-1,0,500,drugs,none,0
+0,Zásilka šňupce,Toto jmění ve formě prášku má větší cenu než místní hrad a životy všech lidí ve městě dohromady.,no,-2,0,2000,drugs,None,0
+1,Balíček šňupce,"Nejpopulárnější droga na trhu, ale nebezpečně návyková. Pokud teda slovo návyková používáte ve smyslu: prodám sebe i celou svou rodinu do otroctví, abych si mohl dovolit ještě jednu dávku.",no,-1,0,500,drugs,None,0
 2,Dávka šňupce,"Nejpopulárnější droga na trhu, ale nebezpečně návyková. Pokud teda slovo návyková používáte ve smyslu: prodám sebe i celou svou rodinu do otroctví, abych si mohl dovolit ještě jednu dávku.",no,-3,3,50,drugs,consume,10
-3,Sirky,Sirky značky Dobrého nepálí,yes,0,0,2,misc,none,0
+3,Sirky,Sirky značky Dobrého nepálí,yes,0,0,2,misc,None,0
 4,Obřadní dýka,"Je to smutné pomyšlení, že kdysi byla používaná na vyvrhávání obětin a  tu s ní teď jen tak máváš.",yes,0,2,40,weapon,equip,0
-5,Soška očistce,"Je tohle osud, který pro nás bohové přichystali? 13 ohařů, jež budou zasévat nekonečné bolesti. ",yes,-1,-1,60,unique,none,0
-6,Potřísněné roucho,"Bylo bíle. Teď není. Bývalo čisté. Teď je potřísněné. Čím? Lepší nevědět, ale hlavně k němu nečichej.",yes,-1,0,69,unique,none,0
+5,Soška očistce,"Je tohle osud, který pro nás bohové přichystali? 13 ohařů, jež budou zasévat nekonečné bolesti. ",yes,-1,-1,60,unique,None,0
+6,Potřísněné roucho,"Bylo bíle. Teď není. Bývalo čisté. Teď je potřísněné. Čím? Lepší nevědět, ale hlavně k němu nečichej.",yes,-1,0,69,unique,None,0
 7,Obušek hlídky,"I když kód hlídky káže, že by zaměstnanci měli udržovat svoje zbraně čisté, tak původní majitel se toho moc nedržel. Kovovými plátky vyztužené dřevo totiž pokrývají zaschlé cákance krve.",no,-1,2,35,weapon,equip,0
 8,Mečoun,"I tahle ryba kdysi nejspíš měla rodinu, ale zbraň taky dobrá.",yes,-1,1,15,weapon,equip,0
 9,Krátký meč,Krátký ale ostrý. Neřízni se,yes,-1,2,20,weapon,equip,0
@@ -13,5 +13,5 @@ ID,name_cz,description_cz,legal,speed_mod,strength_mod,price,type,usage,duration
 11,Černá břečka,Je to černé a alkoholické. Co víc potřebuje člověk vědět.,yes,1,-1,15,food,consume,12
 12,Rybí voda,"Původně sis myslel, že jde o polévku, ale opravdu je to nejspíš jen mořská voda, která možná někdy rybu viděla.",yes,1,0,15,food,consume,15
 13,Chleba,"Trochu ztvrdlý, ale jinak poctivý pecen.",yes,0,0,10,food,consume,12
-14,Tajné heslo,Tento zažloutlý cár papíru podivně zapáchá rybinou. Navíc na něj někdo roztřesenou rukou napsal: Smrad nebo smrt? Raději oboje.,no,0,0,100,unique,none,0
-15,Tajná formulka,"V ruce držíš malý ušmudlaný papírek, který se vlivem času skoro rozpadl. Je na něm napsáno pár slůvek: Ty mě zub, já tobě oko. Ty mě oko já tobě duši.",no,0,0,100,unique,none,0
+14,Tajné heslo,Tento zažloutlý cár papíru podivně zapáchá rybinou. Navíc na něj někdo roztřesenou rukou napsal: Smrad nebo smrt? Raději oboje.,no,0,0,100,unique,None,0
+15,Tajná formulka,"V ruce držíš malý ušmudlaný papírek, který se vlivem času skoro rozpadl. Je na něm napsáno pár slůvek: Ty mě zub, já tobě oko. Ty mě oko já tobě duši.",no,0,0,100,unique,None,0

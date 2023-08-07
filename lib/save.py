@@ -1,6 +1,13 @@
 from player import Player
 from character import read_people_from_file
-from quest import read_quest_lines_from_file, str_to_mqp, mqp_to_str, ModifiedQuestPhase
+from quest import (
+    read_quest_lines_from_file,
+    str_to_mqp,
+    mqp_to_str,
+    dict_to_mqp,
+    mqp_to_json,
+    ModifiedQuestPhase,
+)
 from character_handler import (
     update_phases,
     get_current_characters,
@@ -92,8 +99,8 @@ def first_quests_save() -> tuple[dict[int, ModifiedQuestPhase], str]:
     for quest_ID in quest_lines.ID_to_tree:
         quest_states.append("")
 
-        ID_to_root_quest[quest_ID] = str_to_mqp(
-            quest_lines.ID_to_tree[quest_ID].value[0]
+        ID_to_root_quest[quest_ID] = dict_to_mqp(
+            json.loads(quest_lines.ID_to_tree[quest_ID].value[0])
         )
 
     return ID_to_root_quest, json.dumps(quest_states)
@@ -112,16 +119,18 @@ def get_current_quests(lines_states: list[str]) -> list[str]:
     for quest_line_ID in quest_lines.ID_to_tree:
         node = quest_lines.ID_to_tree[quest_line_ID]
         for line_progres in lines_states[quest_line_ID]:
-            if node != None:
+            if node != "None":
                 if line_progres == "S":
                     node = node.succes
                 elif line_progres == "F":
                     node = node.failure
-            if node == None:  # the quest line ends here
-                current_phase_for_line.append(None)
+            if node == "None":  # the quest line ends here
+                current_phase_for_line.append("None")
                 break
         else:
-            current_phase_for_line.append([str(str_to_mqp(x)) for x in node.value])
+            current_phase_for_line.append(
+                [str(dict_to_mqp(json.loads(x))) for x in node.value]
+            )
 
     return current_phase_for_line
 
@@ -150,9 +159,9 @@ def assign_quests(
 
         # If a line has not finished yet, look in current phase and save it to a dict where key
         # is assigned character to this phase and value is the save and its index
-        if current_quests_save[quest_save_idx] is not None:
+        if current_quests_save[quest_save_idx] != "None":
             quest_save = str_to_mqp(current_quests_save[quest_save_idx][0])
-            if quest_save is not None:
+            if quest_save != "None":
                 char_ID_to_quest[quest_save.characterID] = [quest_save, quest_save_idx]
 
     # Goes through all characters that can get new assigned phase
@@ -160,7 +169,11 @@ def assign_quests(
         # If they are not doing another phase currently
         if current_characters.list[char_ID].line == -1:
             current_characters.list[char_ID].line = char_ID_to_quest[char_ID][1]
-            current_characters.list[char_ID].phase = mqp_to_str(
+            # current_characters.list[char_ID].phase = mqp_to_str(
+            #     char_ID_to_quest[char_ID][0]
+            # )
+
+            current_characters.list[char_ID].phase = mqp_to_json(
                 char_ID_to_quest[char_ID][0]
             )
 
@@ -195,7 +208,8 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> str
 
         if character.ID in character_ID_to_line_ID:
             line = character_ID_to_line_ID[character.ID]
-            phase = str(quest_ID_to_MQP[line])
+            phase = mqp_to_json(quest_ID_to_MQP[line])
+            # phase = str(quest_ID_to_MQP[line])
             if (
                 quest_ID_to_MQP[line].from_place_ID == -1
                 or quest_ID_to_MQP[line].from_place_ID == character.spawn_street_ID
@@ -250,7 +264,32 @@ def generate_new_save(chat_ID) -> None:
         "alive",
         [],
         "",
-        ["0=char12=37=1=32=none=40%-1", "7=char29=-1=-1=?=31;stun=14%14"],
+        [
+            {
+                "ID": 0,
+                "char": 12,
+                "from": 37,
+                "item": 1,
+                "to_place": 32,
+                "action": "None",
+                "go_to": -1,
+                "reward": "40%-1",
+                "coin_reward": 40,
+                "item_reward": -1,
+            },
+            {
+                "ID": 7,
+                "char": 29,
+                "from": -1,
+                "item": -1,
+                "to_place": "?",
+                "action": "31;stun",
+                "go_to": 31,
+                "reward": "14%14",
+                "coin_reward": 14,
+                "item_reward": 14,
+            },
+        ],
         ["tostart", "inprogress"],
     )
     new_player_save = player_save_generator(spawn_player)

@@ -2,7 +2,7 @@ from map import read_map_from_file, Map, Street
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
 from items import Item, ItemsCollection
-from quest import ModifiedQuestPhase, str_to_mqp
+from quest import ModifiedQuestPhase, str_to_mqp, dict_to_mqp
 
 
 class Player:
@@ -178,7 +178,8 @@ class Player:
         """
         quests_to_finish: list[ModifiedQuestPhase] = []
         for quest_idx in range(len(self.quests)):
-            quest = str_to_mqp(self.quests[quest_idx])
+            # quest = str_to_mqp(self.quests[quest_idx])
+            quest = dict_to_mqp(self.quests[quest_idx])
 
             if (
                 self.progress[quest_idx] == "tostart"
@@ -227,7 +228,7 @@ class Player:
         the quest is fulfiled than the progres of quest is set to ended"""
         ended_quests = []
         for quest_idx in range(len(self.quests)):
-            quest = str_to_mqp(self.quests[quest_idx])
+            quest = dict_to_mqp(self.quests[quest_idx])
             if (
                 quest.action == "kill"
                 and current_characters.get_NPC(quest.go_to).state == "dead"
@@ -251,7 +252,7 @@ class Player:
                 and self.progress[quest_idx] == "infinal"
             ):
                 self.progress[quest_idx] = "ended"
-            elif quest.action == "none" and self.progress[quest_idx] == "infinal":
+            elif quest.action == "None" and self.progress[quest_idx] == "infinal":
                 self.progress[quest_idx] = "ended"
 
             if self.progress[quest_idx] == "ended":
