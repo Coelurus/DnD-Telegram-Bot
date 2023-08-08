@@ -1,0 +1,507 @@
+{
+    "800221482": {
+        "player": {
+            "place": 0,
+            "coins": 25,
+            "items": [
+                7,
+                8,
+                9
+            ],
+            "str": 2,
+            "speed": 2,
+            "relations": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+            ],
+            "fraction": 4,
+            "state": "alive",
+            "duration": [],
+            "weapons": [],
+            "quests": [
+                {
+                    "ID": 0,
+                    "char": 12,
+                    "from": 37,
+                    "item": 1,
+                    "to_place": 32,
+                    "action": "None",
+                    "go_to": -1,
+                    "reward": "40%-1",
+                    "coin_reward": 40,
+                    "item_reward": -1
+                },
+                {
+                    "ID": 7,
+                    "char": 29,
+                    "from": -1,
+                    "item": -1,
+                    "to_place": "?",
+                    "action": "31;stun",
+                    "go_to": 31,
+                    "reward": "14%14",
+                    "coin_reward": 14,
+                    "item_reward": 14
+                }
+            ],
+            "progress": [
+                "tostart",
+                "inprogress"
+            ]
+        },
+        "quests": [
+            "S",
+            "S",
+            "S",
+            "S",
+            "FF",
+            "SF",
+            "S",
+            "S"
+        ],
+        "characters": [
+            {
+                "place": 19,
+                "coins": 33,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "stun"
+            },
+            {
+                "place": 14,
+                "coins": 40,
+                "items": [],
+                "str": 1,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 35,
+                "coins": 13,
+                "items": [],
+                "str": 4,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 35,
+                "coins": 24,
+                "items": [],
+                "str": 1,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 33,
+                "coins": 28,
+                "items": [],
+                "str": 3,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 34,
+                "coins": 26,
+                "items": [],
+                "str": 1,
+                "speed": 4,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 12,
+                "coins": 25,
+                "items": [],
+                "str": 2,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 2,
+                "coins": 32,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 9,
+                "coins": 33,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 23,
+                "coins": 25,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 23,
+                "coins": 11,
+                "items": [],
+                "str": 1,
+                "speed": 4,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 0,
+                "coins": 43,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": 0,
+                "phase": {
+                    "ID": 0,
+                    "char": 11,
+                    "from": 37,
+                    "item": 1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": 0,
+                    "action": "None",
+                    "go_to": "None"
+                },
+                "stage": "inprogress",
+                "state": "alive"
+            },
+            {
+                "place": 37,
+                "coins": 38,
+                "items": [
+                    0
+                ],
+                "str": 3,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 37,
+                "coins": 40,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 37,
+                "coins": 41,
+                "items": [],
+                "str": 3,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 37,
+                "coins": 22,
+                "items": [],
+                "str": 1,
+                "speed": 4,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 38,
+                "coins": 35,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 38,
+                "coins": 31,
+                "items": [],
+                "str": 2,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 38,
+                "coins": 34,
+                "items": [],
+                "str": 2,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 38,
+                "coins": 36,
+                "items": [],
+                "str": 4,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 38,
+                "coins": 37,
+                "items": [],
+                "str": 1,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 22,
+                "coins": 15,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": 6,
+                "phase": {
+                    "ID": 666,
+                    "char": 21,
+                    "from": 0,
+                    "item": -1,
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0
+                },
+                "stage": "inprogress",
+                "state": "alive"
+            },
+            {
+                "place": 19,
+                "coins": 42,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "stun"
+            },
+            {
+                "place": 22,
+                "coins": 60,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": 7,
+                "phase": {
+                    "ID": 666,
+                    "char": 23,
+                    "from": 32,
+                    "item": -1,
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0
+                },
+                "stage": "inprogress",
+                "state": "alive"
+            },
+            {
+                "place": 39,
+                "coins": 31,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 39,
+                "coins": 30,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 39,
+                "coins": 21,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 7,
+                "coins": 59,
+                "items": [
+                    9
+                ],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 7,
+                "coins": 16,
+                "items": [
+                    8
+                ],
+                "str": 1,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 7,
+                "coins": 23,
+                "items": [],
+                "str": 2,
+                "speed": 2,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 1,
+                "coins": 33,
+                "items": [],
+                "str": 1,
+                "speed": 4,
+                "line": -1,
+                "phase": "-1",
+                "stage": "ended",
+                "state": "dead"
+            },
+            {
+                "place": 1,
+                "coins": 68,
+                "items": [],
+                "str": 1,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "ended",
+                "state": "dead"
+            },
+            {
+                "place": 3,
+                "coins": 47,
+                "items": [
+                    7
+                ],
+                "str": 1,
+                "speed": 4,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            },
+            {
+                "place": 2,
+                "coins": 30,
+                "items": [],
+                "str": 2,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "stun"
+            },
+            {
+                "place": 1,
+                "coins": 61,
+                "items": [],
+                "str": 1,
+                "speed": 1,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "dead"
+            },
+            {
+                "place": 0,
+                "coins": 33,
+                "items": [],
+                "str": 2,
+                "speed": 3,
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
+                "state": "alive"
+            }
+        ]
+    }
+}

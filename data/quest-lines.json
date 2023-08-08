@@ -1,0 +1,271 @@
+[
+    {
+        "name": "Prodávání šňupce",
+        "root_quest": {
+            "ID": 0,
+            "char": 12,
+            "from": 36,
+            "item": 0,
+            "reward": "40%-1",
+            "coin_reward": 40,
+            "item_reward": -1,
+            "to_place": 37,
+            "action": "None",
+            "go_to": "None",
+            "on_success": [
+                {
+                    "ID": 0,
+                    "char": 11,
+                    "from": 37,
+                    "item": 1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": 0,
+                    "action": "None",
+                    "go_to": "None",
+                    "on_success": [],
+                    "on_fail": []
+                },
+                {
+                    "ID": 0,
+                    "char": 12,
+                    "from": 37,
+                    "item": 1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": 32,
+                    "action": "None",
+                    "go_to": "None",
+                    "on_success": [],
+                    "on_fail": []
+                },
+                {
+                    "ID": 0,
+                    "char": 13,
+                    "from": 37,
+                    "item": 1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": 33,
+                    "action": "None",
+                    "go_to": "None",
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ],
+            "on_fail": [
+                {
+                    "ID": 2,
+                    "char": 14,
+                    "from": -1,
+                    "item": 9,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": "?",
+                    "action": "12;bring",
+                    "go_to": 12,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ]
+        }
+    },
+    {
+        "name": "Všechny",
+        "root_quest": {
+            "ID": 7,
+            "char": 27,
+            "from": -1,
+            "item": 9,
+            "reward": "30%-1",
+            "coin_reward": 30,
+            "item_reward": -1,
+            "to_place": "?",
+            "action": "30;kill",
+            "go_to": 30,
+            "on_success": [],
+            "on_fail": []
+        }
+    },
+    {
+        "name": "Je",
+        "root_quest": {
+            "ID": 7,
+            "char": 28,
+            "from": -1,
+            "item": 8,
+            "reward": "30%-1",
+            "coin_reward": 30,
+            "item_reward": -1,
+            "to_place": "?",
+            "action": "31;kill",
+            "go_to": 31,
+            "on_success": [],
+            "on_fail": []
+        }
+    },
+    {
+        "name": "Zabte",
+        "root_quest": {
+            "ID": 7,
+            "char": 29,
+            "from": -1,
+            "item": -1,
+            "reward": "30%-1",
+            "coin_reward": 30,
+            "item_reward": -1,
+            "to_place": "?",
+            "action": "31;kill",
+            "go_to": 31,
+            "on_success": [],
+            "on_fail": []
+        }
+    },
+    {
+        "name": "Okraď a vrať",
+        "root_quest": {
+            "ID": 9,
+            "char": 32,
+            "from": -1,
+            "item": 7,
+            "reward": "20%-1",
+            "coin_reward": 20,
+            "item_reward": -1,
+            "to_place": "?",
+            "action": "33;plant",
+            "go_to": 33,
+            "on_success": [
+                {
+                    "ID": 9,
+                    "char": 34,
+                    "from": -1,
+                    "item": -1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": "?",
+                    "action": "33;rob",
+                    "go_to": 33,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ],
+            "on_fail": [
+                {
+                    "ID": 9,
+                    "char": 34,
+                    "from": -1,
+                    "item": -1,
+                    "reward": "15%-1",
+                    "coin_reward": 15,
+                    "item_reward": -1,
+                    "to_place": "?",
+                    "action": "32;rob",
+                    "go_to": 32,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ]
+        }
+    },
+    {
+        "name": "Lov na kočku",
+        "root_quest": {
+            "ID": 0,
+            "char": 22,
+            "from": 20,
+            "item": -1,
+            "reward": "25%-1",
+            "coin_reward": 25,
+            "item_reward": -1,
+            "to_place": 6,
+            "action": "None",
+            "go_to": "None",
+            "on_success": [
+                {
+                    "ID": 666,
+                    "char": 22,
+                    "from": 1,
+                    "item": -1,
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ],
+            "on_fail": []
+        }
+    },
+    {
+        "name": "Lov na kočku",
+        "root_quest": {
+            "ID": 0,
+            "char": 21,
+            "from": 3,
+            "item": -1,
+            "reward": "25%-1",
+            "coin_reward": 25,
+            "item_reward": -1,
+            "to_place": 0,
+            "action": "None",
+            "go_to": "None",
+            "on_success": [
+                {
+                    "ID": 666,
+                    "char": 21,
+                    "from": 0,
+                    "item": -1,
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ],
+            "on_fail": []
+        }
+    },
+    {
+        "name": "Lov na kočku",
+        "root_quest": {
+            "ID": 0,
+            "char": 23,
+            "from": 4,
+            "item": -1,
+            "reward": "25%-1",
+            "coin_reward": 25,
+            "item_reward": -1,
+            "to_place": 12,
+            "action": "None",
+            "go_to": "None",
+            "on_success": [
+                {
+                    "ID": 666,
+                    "char": 23,
+                    "from": 32,
+                    "item": -1,
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0,
+                    "on_success": [],
+                    "on_fail": []
+                }
+            ],
+            "on_fail": []
+        }
+    }
+]

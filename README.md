@@ -132,8 +132,8 @@ Pro načtení a zpracování všech frakcí je zde `read_fractions_from_file`, k
 
 ***
 
-### Úkoly
-Úkoly, ruka boží, která řídí chování všech postav v této hře. Pod pojmem úkol se zde rozumí spíše úkolová linie. Ta se dělí na části, které se nazývají fáze. Linie zde však není definována jako posloupnost fázi, ale jako binární strom. Jeden syn vždy reprezentuje úspěšné splnění fáze a druhý neúspěšné. Takto uložené linie jsou k nalezení v souboru `quest-lines.txt` v následujícím formátu:
+### Úkoly TODO
+Úkoly, ruka boží, která řídí chování všech postav v této hře. Pod pojmem úkol se zde rozumí spíše úkolová linie. Ta se dělí na části, které se nazývají fáze. Linie zde však není definována jako posloupnost fázi, ale jako binární strom. Jeden syn vždy reprezentuje úspěšné splnění fáze a druhý neúspěšné. Takto uložené linie jsou k nalezení v souboru `quest-lines.json` v následujícím formátu:
 1. Na prvním řádku je počet linií zde uložených
 2. Dále jsou data k jedné linii uloženy vždy ve dvou řádcích
    1. `ID linie + "=" + jméno v češtině` 
