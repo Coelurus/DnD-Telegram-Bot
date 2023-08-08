@@ -30,6 +30,7 @@ from character_handler import ModifiedPeople
 import quest
 from quest import ModifiedQuestPhase
 import json
+import re
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -609,12 +610,11 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     context.user_data["char_ID"] = char_ID
 
-    # TODO should add possibility to leave interactions options
     char_relation = char_ID_to_relation[char_ID]
     context.user_data["char_relation"] = char_relation
 
-    talk_options = [["Zeptat se na cestu"], ["Zeptat se na postavu"]]
-    attack_options = [["Zabít postavu", "Omráčit postavu"]]
+    talk_options = [["\U0001F6E3 Zeptat se na cestu \U0001F6E3"], ["\U0001F464 Zeptat se na postavu \U0001F464"]]
+    attack_options = [["\u2694 Zabít postavu \u2694", "\U0001F94A Omráčit postavu \U0001F94A"]]
     
     if character_state == "dead":
         text = "tu bezvládně leží na zemi. Duše již opustila tělo."
@@ -622,7 +622,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif character_state == "stun":
         text = "tady jen tak bezbranně leží.\nJeště žije, ale to se může změnit."
         talk_options = [[]]
-        attack_options = [["Zabít postavu"]]
+        attack_options = [["\u2694 Zabít postavu \u2694"]]
         
     else:
         text = (
@@ -732,18 +732,14 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif len(path) - 2 > len(revealed_path):
         await update.message.reply_text(
             "Jo tak to první bude "
-            + " a pak ".join(
-                [town_map.get_street_by_ID(x).name_cz for x in revealed_path]
-            )
-            + " a pak to už nějak najdeš..."
+            + " a pak ".join(["*" + town_map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
+            + " a pak to už nějak najdeš\.\.\.", parse_mode="MarkdownV2"
         )
     elif len(path) - 2 <= len(revealed_path):
         await update.message.reply_text(
             "Jo tak to první bude "
-            + " a pak ".join(
-                [town_map.get_street_by_ID(x).name_cz for x in revealed_path]
-            )
-            + ". No a jsi tam."
+            + " a pak ".join(["*" + town_map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
+            + ", což je tvůj cíl\.", parse_mode="MarkdownV2"
         )
 
     return await generate_basic_window(update, context)
@@ -761,17 +757,18 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # TODO add fight
         return await generate_basic_window(update, context)
     elif char_relation == 1:
-        await update.message.reply_text("Promiň kámo, ale fakt ti nepomůžu...")
+        await update.message.reply_text("Promiň, ale fakt ti nepomůžu...")
         return await generate_basic_window(update, context)
     elif char_relation == 3:
         text = "'Jasně kámo, za kým pádíš?'"
-        context.user_data["num_of_streets"] = 2
+        context.user_data["num_of_streets"] = 5
     else:
         text = "'Uhh...asi bych věděl...podle toho za kým míříš?'"
-        context.user_data["num_of_streets"] = 1
+        context.user_data["num_of_streets"] = 3
 
     # Choose person to follow
     reply_keyboard = [[x.name_cz] for x in society.people_list]
+    reply_keyboard.sort()
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(text, reply_markup=markup)
     return "look_for_person"
@@ -779,37 +776,21 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to find the person"""
-    # TODO too similar to finding path, maybe should change this to getting the name of street where character is at the moment
     town_map: Map = context.user_data["map"]
     society: Society = context.user_data["people"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
     start_place_ID: int = context.user_data["player"].place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
-    final_place_ID: int = current_chars.get_NPC(
-        society.name_cz_to_ID[update.message.text]
-    ).place_ID
+    final_place_ID: int = current_chars.get_NPC(society.name_cz_to_ID[update.message.text]).place_ID
     path = town_map.shortest_path(start_place_ID, final_place_ID)
-    revealed_path = path[1 : num_of_streets + 1]
 
     # Answer is based on realtionship and length of path
-    if len(revealed_path) == 0:
+    if len(path) <= 1:
         await update.message.reply_text("Rozhlídni se kolem...")
-    elif len(path) - 2 > len(revealed_path):
-        await update.message.reply_text(
-            "Jo tak to první bude "
-            + " a pak".join(
-                [town_map.get_street_by_ID(x).name_cz for x in revealed_path]
-            )
-            + " a pak to už nějak najdeš"
-        )
-    elif len(path) - 2 <= len(revealed_path):
-        await update.message.reply_text(
-            "Jo tak to první bude "
-            + " a pak".join(
-                [town_map.get_street_by_ID(x).name_cz for x in revealed_path]
-            )
-            + ". No a tam snad bude."
-        )
+    elif len(path) <= num_of_streets:
+        await update.message.reply_text(f"Myslím, že *{town_map.get_street_by_ID(path[-1]).name_cz}* je místo, které hledáš\.", parse_mode="MarkdownV2")
+    else:
+        await update.message.reply_text(f"Fakt nemám nejmenší páru, kde momentálně je...")
 
     return await generate_basic_window(update, context)
 
@@ -820,10 +801,9 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Successful attack knocks the NPC out whereas failed knocks out Player for 2 rounds
     """
 
-    # TODO solve through some argument not like this
-    if update.message.text == "Zabít postavu":
+    if re.search("Zabít postavu", update.message.text) is not None:
         action = "kill"
-    elif update.message.text == "Omráčit postavu":
+    elif re.search("Omráčit postavu", update.message.text) is not None:
         action = "stun"
 
     player: Player = context.user_data["player"]
