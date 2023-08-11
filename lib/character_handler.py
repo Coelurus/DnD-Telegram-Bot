@@ -2,7 +2,7 @@ from character import read_people_from_file, read_fractions_from_file, NPC, Soci
 from quest import str_to_mqp, dict_to_mqp
 from map import read_map_from_file, Street
 from items import read_items_from_file, ItemsCollection
-from random import choice
+from random import choice, choices
 
 import json
 
@@ -87,7 +87,7 @@ class ModifiedPeople:
             character_json[-1]["stage"] = NPC.stage
             character_json[-1]["state"] = NPC.state
 
-        return json.dumps(character_json)
+        return character_json
 
     def get_NPC(self, ID: int) -> ModifiedNPC:
         """Get a ModifiedNPC object based on its ID"""
@@ -100,6 +100,12 @@ class ModifiedPeople:
             if char.place_ID == place_ID:
                 found_people.append(char)
         return found_people
+
+    def give_character_item(self, char_ID: int, item_ID: int):
+        self.list[char_ID].items.append(item_ID)
+
+    def remove_item_from_character(self, char_ID: int, item_ID: int):
+        self.list[char_ID].items.remove(item_ID)
 
 
 def get_current_characters(old_character_save: list[dict[str]]) -> ModifiedPeople:
@@ -280,10 +286,11 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
 
             # Character just moves on random
             else:
-                final_point = choice(
-                    map.get_street_by_ID(character.place_ID).connections
-                    + [character.place_ID]
-                )
+                final_point = choices(
+                    map.get_street_by_ID(character.place_ID).connections + [character.place_ID], 
+                    weights=(*[1]*len(map.get_street_by_ID(character.place_ID).connections), len(map.get_street_by_ID(character.place_ID).connections) * 1.2),
+                    k=1
+                )[0]
 
             # TODO add places and characters to avoid
             path = map.find_shortest_path(
@@ -505,24 +512,26 @@ def steal(
     ) + items_defender_mod
 
     # outcomes of an encounter are defined by total speed level comparison
+    """
     if attacker_speed > defender_speed:
         if action == "rob":
             stolen_items = defender.items
             defender.items = []
             attacker.items += stolen_items
 
-            """print(attacker_name, "stole:",
-                  stolen_items, "from", defender_NPC.name_cz)"""
+    
 
         elif action == "plant":
             # TODO plant only the quest item and not all
-            planted_items = attacker.items
-            attacker.items = []
-            defender.items += planted_items
+            pass
+            #planted_items = attacker.items
+            #attacker.items = []
+            #defender.items += planted_items
 
-            """print(attacker_name, "planted:",
+            print(attacker_name, "planted:",
                   planted_items, "into pockets of", defender_NPC.name_cz)"""
-
+    if attacker_speed > defender_speed:
+        pass
     elif attacker_speed == defender_speed:
         # print(attacker_name, "failed", action)
         phase_failed = True

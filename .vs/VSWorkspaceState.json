@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\data",
+    "\\lib"
   ],
+  "SelectedNode": "\\data\\game_saves2.json",
   "PreviewInSolutionExplorer": false
 }

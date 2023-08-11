@@ -44,6 +44,7 @@ class ModifiedQuestPhase:
                 ).spawn_street_ID
                 self.action = action
                 self.go_to = int(go_to_char_ID)
+                """ID of char to whom u should go"""
 
             coins, item = [int(x) for x in rewards_str.split("%")]
             self.reward: dict[str, int] = {"coins": coins, "item": item}
@@ -85,6 +86,7 @@ class ModifiedQuestPhase:
                 ).spawn_street_ID
                 self.action = action
                 self.go_to = int(go_to_char_ID)
+                """ID of char to whom u should go"""
 
             coins, item = [int(x) for x in rewards_str.split("%")]
             self.reward: dict[str, int] = {"coins": coins, "item": item}

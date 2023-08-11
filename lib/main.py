@@ -182,9 +182,12 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
 
     context.user_data["current_quests_list"] = new_quests
 
-    combined_save_json = f'{{ "player": {json_dict_player}, "quests": {json.dumps(new_quests)}, "characters": {current_characters_json} }}'
+    json_dict_save = dict()
+    json_dict_save["player"] = json_dict_player
+    json_dict_save["quests"] = new_quests
+    json_dict_save["characters"] = current_characters_json
 
-    save.rewrite_save_file(chat_ID, combined_save_json)
+    save.rewrite_save_file(chat_ID, json_dict_save)
 
     # When player is not capable of moving proceed to next round and move characters again
     # TODO change from recursion to loop
@@ -201,7 +204,7 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Show menu of possible places to move to
     reply_keyboard = (
         [[current_street.name_cz + " (zůstat a přeskočit kolo)"]]
-        + [[x.name_cz] for x in move_options]
+        + sorted([[x.name_cz] for x in move_options])
         + [["Zpět do menu"]]
     )
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -263,7 +266,7 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_ID, player_information, parse_mode="MarkdownV2")
 
     # Creating menu for other choices
-    reply_keyboard = [["Inventář"], ["Úkoly"], ["Zpět"]]
+    reply_keyboard = [["\U0001F9F3 Inventář \U0001F9F3"], ["\U0001F4DD Úkoly \U0001F4DD"], ["Zpět"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Co víc bys rád?", reply_markup=markup)
     return "inspect_player"
@@ -547,10 +550,10 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = []
     if len(action_dict) > 0:
         context.user_data["action_dict"] = action_dict
-        reply_keyboard.append(["Nakoupit v obchodě"])
+        reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"])
     if len(people_here) > 0:
         context.user_data["people_here"] = people_here
-        reply_keyboard.append(["Interagovat s ostatními"])
+        reply_keyboard.append(["\U0001F5E3 Interagovat s ostatními \U0001F5E3"])
 
     # When there is at least one action, new menu is opened to choose one of these actions
     if len(reply_keyboard) > 0:
@@ -567,19 +570,29 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window with all characters present in the same place as player."""
     people_list:list[ModifiedNPC] = context.user_data["people_here"]
-    society = context.user_data["people"]
+    society: Society = context.user_data["people"]
+    char_to_relation: dict[int, int] = context.user_data["char_ID_to_relation"]
+
     # Possibility to interact with them and window with possible choices
     # gets created only when there is someone in the same place
     if len(people_list) != 0:
         list_of_persons = []
+        emoji = "\U0001F610"
         for person in people_list:
             if person.state == "alive":
-                description = f"\U0001F928 {person.get_name_cz(society)} \U0001F928"
+                if char_to_relation[person.ID] == 0:
+                    emoji = "\U0001F621"
+                elif char_to_relation[person.ID] == 1:
+                    emoji = "\U0001F928"
+                elif char_to_relation[person.ID] == 2:
+                    emoji = "\U0001F642"
+                elif char_to_relation[person.ID] == 3:
+                    emoji = "\U0001F601"
             elif person.state == "stun":
-                description = f"\U0001F915 {person.get_name_cz(society)} \U0001F915"
-            else:
-                description = f"\U0001F480 {person.get_name_cz(society)} \U0001F480"
-            list_of_persons.append([description])
+                emoji = "\U0001F915"
+            elif person.state == "dead":
+                emoji = "\U0001F480"
+            list_of_persons.append([f"{emoji} {person.get_name_cz(society)} {emoji}"])
 
         reply_keyboard = list_of_persons + [["Zpět do menu"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -615,6 +628,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     talk_options = [["\U0001F6E3 Zeptat se na cestu \U0001F6E3"], ["\U0001F464 Zeptat se na postavu \U0001F464"]]
     attack_options = [["\u2694 Zabít postavu \u2694", "\U0001F94A Omráčit postavu \U0001F94A"]]
+    steal_options = [["\U0001F4B0 Okrást postavu \U0001F4B0", "\U0001F4E5 Nastražit předmět \U0001F4E5"]]
     
     if character_state == "dead":
         text = "tu bezvládně leží na zemi. Duše již opustila tělo."
@@ -626,7 +640,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     else:
         text = (
-            "se netváří dvakrát nadšeně."
+            "se na tebe netváří dvakrát nadšeně."
             if char_relation == 1
             else "tě probodává pohledem."
             if char_relation == 0
@@ -647,7 +661,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [
         *talk_options,
         *attack_options,
-        ["Okrást postavu", "Nastražit předmět"],
+        *steal_options
     ] + added_possibility + [["Vlastně nic..."]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
@@ -711,7 +725,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = "'Uhh...asi bych věděl...podle toho kam?'"
         context.user_data["num_of_streets"] = 3
 
-    reply_keyboard = [[x.name_cz] for x in town_map.streets]
+    reply_keyboard = sorted([[x.name_cz] for x in town_map.streets])
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(text, reply_markup=markup)
     return "look_for_path"
@@ -849,25 +863,17 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of player's attempt to steal from a character"""
-    # TODO solve through some argument not like this
-    if update.message.text == "Okrást postavu":
+    if re.search("Okrást postavu", update.message.text) is not None:
         action = "rob"
-    elif update.message.text == "Nastražit předmět":
+    elif re.search("Nastražit předmět", update.message.text) is not None:
         action = "plant"
 
     player: Player = context.user_data["player"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
-    defender_ID = context.user_data["char_ID"]
+    i_c: ItemsCollection = context.user_data["items"]
+    defender_ID:int = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
 
-    # TODO currently the biggest flaw. On planting, player puts ALL of his items into defender's inventory
-    # To solve issue (make choice possibilites) I believe I would neeed to open a new dialogue window to not break the flow of code in steal action.
-    """
-    if action == "plant":
-        print("wut")
-        await choose_item_to_plant(
-            update, context, player.items + player.equiped_weapons)
-    """
 
     current_characters, failed = handler.steal(player, defender, action, current_chars)
 
@@ -884,45 +890,79 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await rotation(update.message.chat.id, context, update)
 
     else:
-        # TODO output which items player stole/planted
+        context.user_data["victim"] = defender
+        add_money = [[f"{defender.coins} penízků"]] if defender.coins > 0 else [[]]
         if action == "rob":
-            await update.message.reply_text(f"Úspěšně jsi okradl svou oběť.")
+            reply_keyboard = [[ i_c.get_item(item).name_cz] for item in defender.items] + add_money + [["Vlastně nic"]]
+            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+            await update.message.reply_text("Tak co čmajzneš?",reply_markup=markup)
+            return "item_to_steal"
+
         elif action == "plant":
-            await update.message.reply_text(f"Úspěšně ses zbavil všech svých předmětů.")
+            reply_keyboard = [[ i_c.get_item(item).name_cz] for item in player.items] + [["Vlastně nic"]]
+            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+            await update.message.reply_text("Tak co tam nastražíš?",reply_markup=markup)
+            return "item_to_plant"
 
     return await generate_basic_window(update, context)
 
 
-# TODO currently the biggest flaw. On planting item, player puts ALL of his items into defender's inventory
-# To solve issue (make choice possibilites) I believe I would neeed to open a new dialogue window to not break the flow of code in steal action.
-
-
-async def choose_item_to_plant(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, items: list[int]
-):
-    """TODO not working not implemented"""
+async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Function takes care of choosing and moving items from player's inventory to inventory of chosen character"""
     i_c: ItemsCollection = context.user_data["items"]
 
-    await update.message.reply_text("Který předmět nastražíš?", reply_markup=markup)
+    item_ID = i_c.name_cz_to_ID[update.message.text]
+    # Remove item from inventory
+    context.user_data["player"].items.remove(item_ID)
+    # Add to enemy's inventory
+    context.user_data["current_people"].give_character_item(context.user_data["defender"].ID, item_ID)
+    
+    player: Player = context.user_data["player"]
 
-    reply_keyboard = [[i_c.get_item(item).name_cz] for item in items]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    return "item_to_plant"
+    if len(player.items) > 0:
+        reply_keyboard = [[ i_c.get_item(item).name_cz] for item in player.items] + [["Už nic dalšího"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Ještě něco?",reply_markup=markup)
 
+        return "item_to_plant"  
+    else:
+        await update.message.reply_text("Už jsi mu dal úplně všechno.")
+        return await generate_basic_window(update, context)
 
-async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """TODO not working not implemented"""
-    items_col: ItemsCollection = context.user_data["items"]
-    return items_col.name_cz_to_ID[update.message.text]
+async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    i_c: ItemsCollection = context.user_data["items"]
+    victim: ModifiedNPC = context.user_data["victim"]
+    player: Player = context.user_data["player"]
+
+    if re.search("penízků", update.message.text):
+        player.coins += victim.coins
+        victim.coins = 0
+    else:
+        item_ID = i_c.name_cz_to_ID[update.message.text]
+        # Add item to inventory
+        player.items.append(item_ID)
+        # Remove from enemy's inventory
+        victim.items.remove(item_ID)
+
+    add_money = [[f"{victim.coins} penízků"]] if victim.coins > 0 else [[]]
+
+    if len(victim.items) > 0 or victim.coins > 0:
+        reply_keyboard = [[ i_c.get_item(item).name_cz] for item in victim.items] + add_money + [["Už nic dalšího"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Ještě něco?",reply_markup=markup)
+
+        return "item_to_steal"
+    else:
+        await update.message.reply_text("Už jsi toho chudáka připravil úplně o všechno.")
+        return await generate_basic_window(update, context)
 
 
 async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of what happens when player has chosen an specific operation"""
     player: Player = context.user_data["player"]
     char_ID: int = context.user_data["char_ID"]
-    character_specific_actions: list[tuple[str, str]] = context.user_data[
-        "character_specific_actions"
-    ][char_ID]
+    character_specific_actions: list[tuple[str, str]] = context.user_data["character_specific_actions"][char_ID]
+
     # Function takes text from message and based on that finds specific action to perform
     for specific_action in character_specific_actions:
         if specific_action[0] == update.message.text:
@@ -941,7 +981,6 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return "starting_new_game"
 
-    # TODO I believe this could be solved better by passing some argument.
     # Goes through all quests player has and if the ID of client is the same as an ID of character
     # with which player interacts player gets a reward for this quest
     # Quest and progress is then removed
@@ -969,7 +1008,7 @@ async def generate_basic_window(update: Update, context: ContextTypes.DEFAULT_TY
     # Therefore quest progress should be refreshed after players every action
     completed_quests = player.check_quest_action_complete(current_people)
     await generate_quest_finishes(context, completed_quests)
-    reply_keyboard = [["Provést akci"], ["Postava"], ["Jít dál"]]
+    reply_keyboard = [["\u25B6 Provést akci \u25B6"], ["\U0001F4CA Postava \U0001F4CA"], ["\U0001F463 Jít dál \U0001F463"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
     return "player_actions"
@@ -1054,7 +1093,14 @@ def main() -> None:
                 MessageHandler(filters.Regex("Vlastně nic..."), generate_basic_window),
                 MessageHandler(filters.TEXT, specific_opration),
             ],
-            "item_to_plant": [MessageHandler(filters.TEXT, item_to_plant)],
+            "item_to_plant": [
+                MessageHandler(filters.Regex("Už nic dalšího|Vlastně nic"), generate_basic_window),
+                MessageHandler(filters.TEXT, item_to_plant)
+                ],
+            "item_to_steal": [
+                MessageHandler(filters.Regex("Už nic dalšího|Vlastně nic"), generate_basic_window),
+                MessageHandler(filters.TEXT, item_to_steal)
+                ],
             "look_for_path": [MessageHandler(filters.TEXT, find_path_to)],
             "look_for_person": [MessageHandler(filters.TEXT, path_to_person)],
             "inspect_player": [

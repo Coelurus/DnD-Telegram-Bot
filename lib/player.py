@@ -99,12 +99,12 @@ class Player:
         """Method takes list of people in same location as player and static data about all characters.
         Returns dictionary where keys are IDs of people in the same location and values are their relationship to player
         """
-        char_ID_to_realtion: dict[int, int] = dict()
+        char_ID_to_relation: dict[int, int] = dict()
         for person in people_here:
-            char_ID_to_realtion[person.ID] = self.relations[
+            char_ID_to_relation[person.ID] = self.relations[
                 society.get_char_by_ID(person.ID).fraction_ID
             ]
-        return char_ID_to_realtion
+        return char_ID_to_relation
 
     def use_item(self, item: Item) -> None:
         """Takes statistics of consumable item and adds them to player's base stats.
@@ -187,7 +187,7 @@ class Player:
             ):
                 self.progress[quest_idx] = "inprogress"
 
-            elif (
+            if (
                 self.progress[quest_idx] == "inprogress"
                 and quest.go_to != -1
                 and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID
@@ -202,7 +202,7 @@ class Player:
                 self.progress[quest_idx] = "infinal"
 
             # if player decides to leave final location without completing the quest
-            elif (
+            if (
                 self.progress[quest_idx] == "infinal"
                 and quest.go_to != -1
                 and self.place_ID != current_characters.get_NPC(quest.go_to).place_ID
@@ -216,10 +216,31 @@ class Player:
             ):
                 self.progress[quest_idx] = "inprogress"
 
+            if self.progress[quest_idx] == "infinal" and self.action_completed(quest, current_characters.get_NPC(quest.go_to)):
+                self.progress[quest_idx] = "ended"
+
             if self.progress[quest_idx] == "infinal":
                 quests_to_finish.append(quest)
 
         return quests_to_finish
+
+    def action_completed(self, quest: ModifiedQuestPhase, character: ModifiedNPC) -> bool:
+        """Checks if required action that should be performed on another character is already finished"""
+
+        #Attack actions
+        if quest.action == character.state:
+            return True
+        elif quest.action == "stun" and character.state == "dead":
+            #TODO soft / hard condition
+            return True
+
+        #Sleight of hand actions - fight me on it - if you have to steal a generic item u can as well already have it in your pockets 
+        if quest.action == "rob" and quest.item_ID in self.items:
+            return True
+        elif quest.action == "plant" and quest.item_ID in character.items:
+            return True
+
+        return False
 
     def check_quest_action_complete(
         self, current_characters: ModifiedPeople
