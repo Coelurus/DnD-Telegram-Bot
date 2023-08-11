@@ -1,3 +1,4 @@
+from tkinter import CURRENT
 from map import read_map_from_file, Map, Street
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
@@ -170,6 +171,18 @@ class Player:
         self.speed -= item.speed_mod
         self.strength -= item.strength_mod
 
+    def start_quest(self, quest_index: int, quest: ModifiedQuestPhase, current_characters: ModifiedPeople) -> None:
+        """Takes care of marking quest as in progress and assigning needed items"""
+        self.progress[quest_index] = "inprogress"
+        if quest.item_ID != -1:
+            #You have to steal it, thats the point of this type of quest.
+            if quest.action != "rob":
+                self.items.append(quest.item_ID)
+            #TODO Resolve if this is bug or function: When you get a quest to steal something from character but he does not have the item
+            else:
+                current_characters.give_character_item(quest.go_to, quest.item_ID)
+
+        
     def update_quest_progresses(
         self, current_characters: ModifiedPeople
     ) -> list[ModifiedQuestPhase]:
@@ -178,48 +191,37 @@ class Player:
         """
         quests_to_finish: list[ModifiedQuestPhase] = []
         for quest_idx in range(len(self.quests)):
-            # quest = str_to_mqp(self.quests[quest_idx])
             quest = dict_to_mqp(self.quests[quest_idx])
 
-            if (
-                self.progress[quest_idx] == "tostart"
-                and self.place_ID == quest.from_place_ID
-            ):
-                self.progress[quest_idx] = "inprogress"
+            # player gets to starting location or it is not defined
+            if (self.progress[quest_idx] == "tostart"):
+                if self.place_ID == quest.from_place_ID:
+                    self.start_quest(quest_idx, quest, current_characters)
+                elif quest.from_place_ID == -1:
+                    self.start_quest(quest_idx, quest, current_characters)
 
-            if (
-                self.progress[quest_idx] == "inprogress"
-                and quest.go_to != -1
-                and self.place_ID == current_characters.get_NPC(quest.go_to).place_ID
-            ):
-                self.progress[quest_idx] = "infinal"
-
-            elif (
-                self.progress[quest_idx] == "inprogress"
-                and quest.go_to == -1
-                and self.place_ID == quest.to_place_ID
-            ):
-                self.progress[quest_idx] = "infinal"
+            # player gets to final location of the quest
+            if (self.progress[quest_idx] == "inprogress"):
+                if quest.go_to != -1:
+                    if self.place_ID == current_characters.get_NPC(quest.go_to).place_ID:
+                            self.progress[quest_idx] = "infinal"
+                else:
+                    if self.place_ID == quest.to_place_ID:
+                        self.progress[quest_idx] = "infinal"        
 
             # if player decides to leave final location without completing the quest
-            if (
-                self.progress[quest_idx] == "infinal"
-                and quest.go_to != -1
-                and self.place_ID != current_characters.get_NPC(quest.go_to).place_ID
-            ):
-                self.progress[quest_idx] = "inprogress"
-
-            elif (
-                self.progress[quest_idx] == "infinal"
-                and quest.go_to == -1
-                and self.place_ID != quest.to_place_ID
-            ):
-                self.progress[quest_idx] = "inprogress"
-
-            if self.progress[quest_idx] == "infinal" and self.action_completed(quest, current_characters.get_NPC(quest.go_to)):
-                self.progress[quest_idx] = "ended"
-
+            if (self.progress[quest_idx] == "infinal"):
+                if quest.go_to != -1:
+                    if self.place_ID != current_characters.get_NPC(quest.go_to).place_ID:
+                        self.progress[quest_idx] = "inprogress"
+                else:
+                    if self.place_ID != quest.to_place_ID:
+                        self.progress[quest_idx] = "inprogress"
+            
+            # check if needed action was completed and append special interactions
             if self.progress[quest_idx] == "infinal":
+                if self.action_completed(quest, current_characters.get_NPC(quest.go_to)):
+                    self.progress[quest_idx] = "ended"
                 quests_to_finish.append(quest)
 
         return quests_to_finish

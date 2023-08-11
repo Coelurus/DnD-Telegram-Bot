@@ -552,6 +552,7 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["action_dict"] = action_dict
         reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"])
     if len(people_here) > 0:
+        await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {'a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
         context.user_data["people_here"] = people_here
         reply_keyboard.append(["\U0001F5E3 Interagovat s ostatními \U0001F5E3"])
 
@@ -915,7 +916,7 @@ async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Remove item from inventory
     context.user_data["player"].items.remove(item_ID)
     # Add to enemy's inventory
-    context.user_data["current_people"].give_character_item(context.user_data["defender"].ID, item_ID)
+    context.user_data["current_people"].give_character_item(context.user_data["victim"].ID, item_ID)
     
     player: Player = context.user_data["player"]
 
