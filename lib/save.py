@@ -1,3 +1,4 @@
+from tkinter import CURRENT
 from player import Player
 from character import read_people_from_file
 from quest import (
@@ -56,13 +57,13 @@ def get_current_player(current_save: dict[str]) -> Player:
         current_save["weapons"],
         current_save["quests"],
         current_save["progress"],
+        current_save["round"]
     )
 
 
 def player_save_generator(player: Player) -> dict[str]:
     """
-    Takes current state of player as Player object and returns his representation as string in needed format.
-    LS: returns JSON representation
+    Takes current state of player as Player object and returns his JSON representation.
     """
     player_dict = dict()
     player.decrease_durations()
@@ -75,12 +76,11 @@ def player_save_generator(player: Player) -> dict[str]:
     player_dict["relations"] = player.relations
     player_dict["fraction"] = player.fraction_ID
     player_dict["state"] = player.state
-    player_dict["duration"] = [
-        key + "/" + str(player.duration[key]) for key in player.duration
-    ]
+    player_dict["duration"] = player.duration
     player_dict["weapons"] = player.equiped_weapons
     player_dict["quests"] = player.quests
     player_dict["progress"] = player.progress
+    player_dict["round"] = player.round
 
     return player_dict
 
@@ -240,8 +240,8 @@ def rewrite_save_file(change_line_ID: int, new_save_json: dict) -> None:
         dict_data: dict[str] = json.loads(json_data)
         dict_data[str(change_line_ID)] = new_save_json
 
-    with open("data\game_saves.json", "w", newline="") as save_file:
-        save_file.write(json.dumps(dict_data, indent=4))
+    with open("data\game_saves.json", "w", encoding="utf8") as save_file:
+        save_file.write(json.dumps(dict_data, indent=4, ensure_ascii=False))
 
 
 

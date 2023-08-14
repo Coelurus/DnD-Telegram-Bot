@@ -33,6 +33,7 @@ import json
 import re
 
 
+#start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """When user send /start it sends welcome message and choices"""
     reply_keyboard = [
@@ -48,6 +49,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     return "starting_new_game"
 
 
+#load_static_data
 def load_static_data(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Function to read data from csv files and saving them in dict user_data that is available from every function called by Conversation Handler.
     Thus game data do not have to be rewritten into the save file after every single action
@@ -62,6 +64,7 @@ def load_static_data(context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+#load_dynamic_data
 def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: dict) -> None:
     """Function to read dynamic data and saving them in dict user_data that is available from every function called by Conversation Handler.
     Thus game data do not have to be rewritten into the save file after every single action.
@@ -87,6 +90,7 @@ def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: dict) ->
     context.user_data["character_specific_actions"] = {0: [["Mňau", "meow"]]}
 
 
+#start_new_game
 async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to start game from round one.\n
     If game have not existed before it will be created.\n
@@ -110,6 +114,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#read_old_game
 async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Function reads a game save based on chat ID. If the save does not exist it will terminate the programme"""
     chat_ID = update.message.chat.id
@@ -127,6 +132,7 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return await generate_basic_window(update, context)
 
 
+#end_game
 async def end_game(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -141,6 +147,7 @@ async def end_game(
     return "starting_new_game"
 
 
+#rotation
 async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Update) -> None:
     """Function take care of handling movement of NPC, making them follow missions etc.
     It also updates questlines progresses and assign phases to NPCs based on it"""
@@ -150,7 +157,8 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
 
     current_quests_list: list[str] = context.user_data["current_quests_list"]
     player: Player = context.user_data["player"]
-    
+    player.round += 1
+
     #TODO move all save. to save and make specific method
 
     # Updating quest lines for characters. If game ending line has finished, the game ends
@@ -191,10 +199,11 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
 
     # When player is not capable of moving proceed to next round and move characters again
     # TODO change from recursion to loop
-    if player.state == "stun" and player.duration["stun"] >= 1:
+    if player.state == "stun": #TODO check if it was necessary and player.duration["stun"] >= 1:
         await rotation(chat_ID, context, update)
 
 
+#move_character
 async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function that offers player choice of places where he can move."""
     player: Player = context.user_data["player"]
@@ -214,6 +223,7 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return "character_move"
 
 
+#change_location
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
     town_map: Map = context.user_data["map"]
@@ -255,6 +265,7 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return "character_move"
 
 
+#inspect_player
 async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function returns data about characters current state and creates menu for a of other choices."""
     town_map = context.user_data["map"]
@@ -272,6 +283,7 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "inspect_player"
 
 
+#open_inventory
 async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function creates menu with items that player has in inventory tagged with consumable/equipable"""
     i_c: ItemsCollection = context.user_data["items"]
@@ -301,6 +313,7 @@ async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await generate_basic_window(update, context)
 
 
+#choose_item
 async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Funciton creates a part of dialogue where is player asked if he wants to use chosen item"""
     player: Player = context.user_data["player"]
@@ -350,6 +363,7 @@ async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "inspect_item"
 
 
+#use_item
 async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function reads item chosen by player and applies its effects on him"""
     player: Player = context.user_data["player"]
@@ -363,6 +377,7 @@ async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#equip_item
 async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of case when player chose and equipable item from his inventory"""
     player: Player = context.user_data["player"]
@@ -385,6 +400,7 @@ async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return "replace_item"
 
 
+#replace_item
 async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of situation where player had already 2 weapons equiped,
     thus have to swap this new one with different one"""
@@ -398,6 +414,7 @@ async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#open_quests
 async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function generates menu with all the quests player has available"""
     player: Player = context.user_data["player"]
@@ -444,6 +461,7 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#get_quest
 async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to output specification of chosen quest and to track the progress player did"""
     map: Map = context.user_data["map"]
@@ -532,6 +550,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await open_quests(update, context)
 
 
+#make_action
 async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Opens menu for player to choose an action he wants to perform. If there is no option available it returns him to main menu"""
     town_map: Map = context.user_data["map"]
@@ -552,7 +571,7 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["action_dict"] = action_dict
         reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"])
     if len(people_here) > 0:
-        await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {'a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
+        await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {' a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
         context.user_data["people_here"] = people_here
         reply_keyboard.append(["\U0001F5E3 Interagovat s ostatními \U0001F5E3"])
 
@@ -568,6 +587,7 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await generate_basic_window(update, context)
 
 
+#choose_person
 async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window with all characters present in the same place as player."""
     people_list:list[ModifiedNPC] = context.user_data["people_here"]
@@ -606,6 +626,7 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await generate_basic_window(update, context)
 
 
+#talk_to_person
 async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start interaction with chosen NPC"""
     player: Player = context.user_data["player"]
@@ -669,6 +690,7 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "NPC_interaction"
 
 
+#open_shop
 async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window with options of buyable items"""
     items_colection: ItemsCollection = context.user_data["items"]
@@ -686,6 +708,7 @@ async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "buy_item"
 
 
+#buy_item
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to check if player can afford the item ho chose and following adding this item into his inventory"""
     player: Player = context.user_data["player"]
@@ -706,15 +729,15 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#ask_for_path
 async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Player asks NPC if he could help him with finding a way to another place. Answer is based on their relationship"""
     town_map: Map = context.user_data["map"]
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
-        await update.message.reply_text(
-            "To si snad děláš srandu? Po tom cos udělal našim lidem. Padej!"
-        )
+        await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem. Padej!")
         # TODO add some reaction from character, probably fight
+
         return await generate_basic_window(update, context)
     elif char_relation == 1:
         await update.message.reply_text("Promiň kámo, ale fakt ti nepomůžu...")
@@ -732,6 +755,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "look_for_path"
 
 
+#find_path_to
 async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to player's desired place and describes part of the path"""
     town_map: Map = context.user_data["map"]
@@ -760,6 +784,7 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#ask_for_person
 async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Player asks NPC if he could help him finding another NPC. Answer is based on their relationship"""
     society: Society = context.user_data["people"]
@@ -769,8 +794,9 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)"
         )
+        return await attack_on_person(update, context)
         # TODO add fight
-        return await generate_basic_window(update, context)
+        # return await generate_basic_window(update, context)
     elif char_relation == 1:
         await update.message.reply_text("Promiň, ale fakt ti nepomůžu...")
         return await generate_basic_window(update, context)
@@ -789,6 +815,7 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "look_for_person"
 
 
+#path_to_person
 async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to find the person"""
     town_map: Map = context.user_data["map"]
@@ -810,6 +837,39 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+async def resolve_attack_results(failed: bool, action: str, update: Update, player: Player, defender_name: str) -> str:
+    """ Resolving consequences of players actions """
+
+    if failed:
+        # An eye for an eye princip: if player tried to kill the character and failed he is gonna die
+        if action == "kill":
+            await update.message.reply_text(
+                "Tak tohle se ti moc nepovedlo a bohužel *je po tobě*\.",
+                parse_mode="MarkdownV2",
+            )
+            return "dead"
+            
+        elif action == "stun":
+            await update.message.reply_text(
+                "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
+                parse_mode="MarkdownV2",
+            )
+            player.state = "stun"
+            player.stun_player(3)
+            return "stun"
+    else:
+        if action == "kill":
+            await update.message.reply_text(
+                f"*Úspěšně se ti podařilo zlikvidovat postavu\.*\n_{defender_name}_ tu teď leží v kaluži krve\.",
+                parse_mode="MarkdownV2",
+            )
+        elif action == "stun":
+            await update.message.reply_text(
+                f"*Úspěšně se ti podařilo omráčit postavu\.*\n_{defender_name}_ tu teď leží v mrákotách\.",
+                parse_mode="MarkdownV2",
+            )
+
+#attack_on_person
 async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Function that takes care of fight between a player and NPC.
@@ -820,48 +880,30 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         action = "kill"
     elif re.search("Omráčit postavu", update.message.text) is not None:
         action = "stun"
+    #If fight is started by talking to an enemy
+    else:
+        action = "stun"
 
     player: Player = context.user_data["player"]
-    society: Society = context.user_data["people"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
     defender_ID = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
+    society: Society = context.user_data["people"]
 
     current_characters, failed = handler.fight(player, defender, action, current_chars)
     context.user_data["current_people"] = current_characters
 
-    # Resolving consequences of players actions
-    if failed:
-        # An eye for an eye princip: if player tried to kill the character and failed he is gonna die
-        if action == "kill":
-            await update.message.reply_text(
-                "Tak tohle se ti moc nepovedlo a bohužel *je po tobě*\.",
-                parse_mode="MarkdownV2",
-            )
-            return await end_game(update, context)
-        elif action == "stun":
-            await update.message.reply_text(
-                "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
-                parse_mode="MarkdownV2",
-            )
-            player.state = "stun"
-            player.duration["stun"] = 2
-            await rotation(update.message.chat.id, context, update)
-    else:
-        if action == "kill":
-            await update.message.reply_text(
-                f"*Úspěšně se ti podařilo zlikvidovat postavu\.*\n_{society.get_char_by_ID(defender_ID).name_cz}_ tu teď leží v kaluži krve\.",
-                parse_mode="MarkdownV2",
-            )
-        elif action == "stun":
-            await update.message.reply_text(
-                f"*Úspěšně se ti podařilo omráčit postavu\.*\n_{society.get_char_by_ID(defender_ID).name_cz}_ tu teď leží v mrákotách\.",
-                parse_mode="MarkdownV2",
-            )
-
+    #Take care of what happened to player
+    result = await resolve_attack_results(failed, action, update, player, society.get_char_by_ID(defender_ID).name_cz)
+    if result == "stun":
+        await rotation(update.message.chat.id, context, update)
+    elif result == "dead":
+        return await end_game(update, context)
+    
     return await generate_basic_window(update, context)
 
 
+#steal_from_person
 async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of player's attempt to steal from a character"""
     if re.search("Okrást postavu", update.message.text) is not None:
@@ -887,7 +929,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
                 parse_mode="MarkdownV2",
             )
-            player.duration["stun"] = 2
+            player.stun_player(2)
             await rotation(update.message.chat.id, context, update)
 
     else:
@@ -908,6 +950,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#item_to_plant
 async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Function takes care of choosing and moving items from player's inventory to inventory of chosen character"""
     i_c: ItemsCollection = context.user_data["items"]
@@ -930,6 +973,7 @@ async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await update.message.reply_text("Už jsi mu dal úplně všechno.")
         return await generate_basic_window(update, context)
 
+#item_to_steal
 async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     i_c: ItemsCollection = context.user_data["items"]
     victim: ModifiedNPC = context.user_data["victim"]
@@ -958,6 +1002,7 @@ async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return await generate_basic_window(update, context)
 
 
+#specific_opration
 async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of what happens when player has chosen an specific operation"""
     player: Player = context.user_data["player"]
@@ -1000,6 +1045,7 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await generate_basic_window(update, context)
 
 
+#generate_basic_window
 async def generate_basic_window(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function creates basic menu with choices for player about what he wants to do next"""
     # Check if any quest has ended
@@ -1011,10 +1057,14 @@ async def generate_basic_window(update: Update, context: ContextTypes.DEFAULT_TY
     await generate_quest_finishes(context, completed_quests)
     reply_keyboard = [["\u25B6 Provést akci \u25B6"], ["\U0001F4CA Postava \U0001F4CA"], ["\U0001F463 Jít dál \U0001F463"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+    # player.round += 1
+    await update.message.reply_text(f"*{player.round}*\. kolo", parse_mode="MarkdownV2")
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
     return "player_actions"
 
 
+#generate_quest_finishes
 async def generate_quest_finishes(
     context: ContextTypes.DEFAULT_TYPE, completed_quests: list[str]
 ) -> None:
@@ -1038,6 +1088,7 @@ async def generate_quest_finishes(
             )
 
 
+#get_token
 def get_token():
     """Read token from file"""
     file = open(r"data\token.txt")
@@ -1045,6 +1096,7 @@ def get_token():
     return token
 
 
+#main
 def main() -> None:
     """Run the bot"""
     # Used to connect to the bot and and start communication with this program

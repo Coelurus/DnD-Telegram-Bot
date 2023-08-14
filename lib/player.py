@@ -19,10 +19,11 @@ class Player:
         relations: list[str],
         fraction_ID: str = "4",
         state: str = "alive",
-        duration: str = "",
+        duration: list[dict[str]] = [],
         weapons: list[str] = [""],
         quests: list[str] = [],
         progress: list[str] = [],
+        round_input: int = 1
     ) -> None:
         self.place_ID = int(place_ID)
         self.coins = int(coins)
@@ -33,16 +34,14 @@ class Player:
         self.fraction_ID = int(fraction_ID)
         self.state = state
 
-        self.duration: dict[str, int] = dict()
-        if duration != []:
-            for effects in duration.split(";"):
-                key, val = effects.split("/")
-                self.duration[key] = int(val)
+        self.duration: list[dict[str]] = duration
 
         self.equiped_weapons = [int(x) for x in weapons if x != ""]
 
         self.quests = quests
         self.progress = progress
+
+        self.round = round_input
 
     def move(self, map=read_map_from_file("data\streets.csv")):
         """Method that is NOT used. Created only for development and console control"""
@@ -110,20 +109,31 @@ class Player:
     def use_item(self, item: Item) -> None:
         """Takes statistics of consumable item and adds them to player's base stats.
         It also saves duration of these effects and removes item from inventory"""
-        str_modifier = f"str{item.strength_mod}"
-        speed_modifier = f"speed{item.speed_mod}"
-        self.duration[str_modifier] = item.duration
-        self.duration[speed_modifier] = item.duration
+
+        self.duration.append({"type": "str", "power": item.strength_mod, "duration": item.duration, "source": item.name_cz})
+        self.duration.append({"type": "speed", "power": item.speed_mod, "duration": item.duration, "source": item.name_cz})
+
         self.strength += item.strength_mod
         self.speed += item.speed_mod
         self.items.remove(item.ID)
+
+    def stun_player(self, duration: int) -> None:
+        """Check if player is not already stunned and then stun him more"""
+        #TODO add character name
+        for idx, effect in enumerate(self.duration):
+            if effect["type"] == "stun":
+                self.duration[idx]["duration"] += duration
+                return
+
+        self.duration.append({"type": "stun", "duration": duration, "source": "some character"})
 
     def decrease_durations(self) -> None:
         """Method goes through all temporary effects and reduced their duration by 1
         If the effect has duration 0 it removes him from effects list (duration) and removes effects from player
         """
         to_pop = []
-        for key in self.duration:
+        
+        """for key in self.duration:
             self.duration[key] -= 1
             if self.duration[key] == 0:
                 if key == "stun":
@@ -134,7 +144,21 @@ class Player:
                     self.speed -= int(key.lstrip("speed"))
                 to_pop.append(key)
         for key in to_pop:
-            self.duration.pop(key)
+            self.duration.pop(key)"""
+
+
+        for effect_idx, effect in enumerate(self.duration):
+            self.duration[effect_idx]["duration"] -= 1
+            if self.duration[effect_idx]["duration"] == 0:
+                if effect["type"] == "stun":
+                    self.state = "alive"
+                elif effect["type"] == "str":
+                    self.strength -= int(effect["power"])
+                elif effect["type"] == "speed":
+                    self.speed -= int(effect["power"])
+                to_pop.append(effect)
+        for effect_to_pop in to_pop:
+            self.duration.remove(effect_to_pop)
 
     def equip_weapon(self, item: Item) -> bool:
         """Method tries to add item ID to weapon list. If it is possible it returns true and removes newly equiped item from items.
@@ -283,8 +307,8 @@ class Player:
         return ended_quests
 
 
-if __name__ == "__main__":
-    map = read_map_from_file("data\streets.csv")
-    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4, "alive")
-    for _ in range(3):
-        spawn_player.move(map)
+#if __name__ == "__main__":
+#    map = read_map_from_file("data\streets.csv")
+#    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4, "alive")
+#    for _ in range(3):
+#        spawn_player.move(map)
