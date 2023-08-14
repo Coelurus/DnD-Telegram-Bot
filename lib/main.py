@@ -111,6 +111,8 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'V tom ti však někdo zaklepe na rameno: "Nezapomeň, o co ses vsadil s těmi kultisty. Že prý kočku najdeš dřív než oni...a teď tu vyspáváš v hospodě. No tak utíkej. DĚLEJ!"'
     )
 
+    await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
+
     return await generate_basic_window(update, context)
 
 
@@ -128,6 +130,8 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # saving Player data with up-to-date data to a user-specific dict
     load_static_data(context)
     load_dynamic_data(context, current_save)
+
+    await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
     return await generate_basic_window(update, context)
 
@@ -154,10 +158,8 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
 
     # Getting current data that are potentially changed by player inputs from last time
     current_characters: ModifiedPeople = context.user_data["current_people"]
-
     current_quests_list: list[str] = context.user_data["current_quests_list"]
     player: Player = context.user_data["player"]
-    player.round += 1
 
     #TODO move all save. to save and make specific method
 
@@ -230,6 +232,9 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     player: Player = context.user_data["player"]
     street_name = update.message.text.split(" (")[0]
     move_options, current_street = player.move_possibilities()
+
+    player.round += 1
+    await update.message.reply_text(f"\u2728 *{player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
     # Check if player chose a place where he can actually move to
     if street_name in [street.name_cz for street in move_options + [current_street]]:
@@ -904,6 +909,7 @@ async def resolve_attack_results(failed: bool, action: str, update: Update, play
                 parse_mode="MarkdownV2",
             )
 
+
 #attack_on_person
 async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -1008,6 +1014,7 @@ async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await update.message.reply_text("Už jsi mu dal úplně všechno.")
         return await generate_basic_window(update, context)
 
+
 #item_to_steal
 async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     i_c: ItemsCollection = context.user_data["items"]
@@ -1093,8 +1100,7 @@ async def generate_basic_window(update: Update, context: ContextTypes.DEFAULT_TY
     reply_keyboard = [["\u25B6 Provést akci \u25B6"], ["\U0001F4CA Postava \U0001F4CA"], ["\U0001F463 Jít dál \U0001F463"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
-    # player.round += 1
-    await update.message.reply_text(f"*{player.round}*\. kolo", parse_mode="MarkdownV2")
+    
     await update.message.reply_text("Co si přeješ udělat?", reply_markup=markup)
     return "player_actions"
 
