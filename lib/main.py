@@ -569,7 +569,7 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = []
     if len(action_dict) > 0:
         context.user_data["action_dict"] = action_dict
-        reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"])
+        reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
     if len(people_here) > 0:
         await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {' a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
         context.user_data["people_here"] = people_here
@@ -690,13 +690,25 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "NPC_interaction"
 
 
+#open_sell_shop
+async def open_sell_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function to choose which item to sell"""
+    i_c: ItemsCollection = context.user_data["items"]
+    player: Player = context.user_data["player"]
+
+     #TODO make prices based on fraction relationships + type of shop
+    reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(int(i_c.get_item(item_idx).price * 0.8)) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Čeho by ses rád zbavil?", reply_markup=markup)
+    return "sell_item"
+
 #open_shop
 async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window with options of buyable items"""
     items_colection: ItemsCollection = context.user_data["items"]
     action_dict: dict[str, str] = context.user_data["action_dict"]
-    type = action_dict["shop"]
-    items_to_sell = items_colection.items_by_type(type)
+    item_type = action_dict["shop"]
+    items_to_sell = items_colection.items_by_type(item_type)
 
     # Creates menu of all items that can be bought with a price tag
     reply_keyboard = [
@@ -707,6 +719,29 @@ async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Co bys sis rád koupil?", reply_markup=markup)
     return "buy_item"
 
+
+#sell_item
+async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function to resolve which item has been chosen to be sold and sell him"""
+    i_c: ItemsCollection = context.user_data["items"]
+    player: Player = context.user_data["player"]
+
+    chosen_item_name = update.message.text.split(" (")[0]
+    item = i_c.get_item_from_name(chosen_item_name)
+
+    #TODO base price on relations
+    player.coins += int(item.price * 0.8)
+    player.remove_item(item.ID)
+
+    #TODO make prices based on fraction relationships
+    if len(player.items) > 0:
+        reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(int(i_c.get_item(item_idx).price * 0.8)) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Dobrý. Máš ještě něco na prodej?", reply_markup=markup)
+        return "sell_item"
+    else:
+        await update.message.reply_text("Už ti nezbývá žádný předmět.")
+        return await generate_basic_window(update, context)
 
 #buy_item
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1130,10 +1165,15 @@ def main() -> None:
             "choose_action": [
                 MessageHandler(filters.Regex("Interagovat"), choose_person),
                 MessageHandler(filters.Regex("Nakoupit"), open_shop),
+                MessageHandler(filters.Regex("Prodat"), open_sell_shop),
             ],
             "buy_item": [
                 MessageHandler(filters.Regex("Zpět"), generate_basic_window),
                 MessageHandler(filters.TEXT, buy_item),
+            ],
+            "sell_item": [
+                MessageHandler(filters.Regex("Zpět"), generate_basic_window),
+                MessageHandler(filters.TEXT, sell_item),
             ],
             "NPC_interaction": [
                 MessageHandler(filters.Regex("na cestu"), ask_for_path),

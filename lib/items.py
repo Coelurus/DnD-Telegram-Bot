@@ -38,6 +38,9 @@ class ItemsCollection:
     def get_item(self, ID: int) -> Item:
         return self.list[ID]
 
+    def get_item_from_name(self, name: str) -> Item:
+        return self.get_item(self.name_cz_to_ID[name])
+
     def items_by_type(self, type: str) -> list[Item]:
         "Returns list of all game items of certain type"
         type_list = []

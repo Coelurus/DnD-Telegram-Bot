@@ -195,6 +195,9 @@ class Player:
         self.speed -= item.speed_mod
         self.strength -= item.strength_mod
 
+    def remove_item(self, item_ID: int):
+        self.items.remove(item_ID)
+
     def start_quest(self, quest_index: int, quest: ModifiedQuestPhase, current_characters: ModifiedPeople) -> None:
         """Takes care of marking quest as in progress and assigning needed items"""
         self.progress[quest_index] = "inprogress"
