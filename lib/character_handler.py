@@ -1,3 +1,4 @@
+from pydoc import resolve
 from character import read_people_from_file, read_fractions_from_file, NPC, Society
 from quest import str_to_mqp, dict_to_mqp
 from map import read_map_from_file, Street
@@ -365,7 +366,7 @@ def fight(
 
     defender_NPC = people.get_char_by_ID(defender.ID)
 
-    phase_failed = False
+    
 
     # attackers speed or moment of surprise inflicts advantage for him
     if (
@@ -422,6 +423,52 @@ def fight(
     stun_list: list[ModifiedNPC] = []
 
     # Goes through all possible outcomes of strength comparisons and based on that and the type it determines final states of characters in combat
+    """if total_attack_power > total_defend_power + 1:
+        if action == "kill":
+            for char in defender_side:
+                char.state = "dead"
+                dead_list.append(char)
+        elif action == "stun":
+            for char in defender_side:
+                char.state = "stun"
+                stun_list.append(char)
+
+    elif total_attack_power > total_defend_power:
+        for char in defender_side:
+            char.state = "stun"
+            stun_list.append(char)
+
+    elif total_attack_power == total_defend_power:
+        for char in defender_side + attacker_side:
+            char.state = "stun"
+            phase_failed = True
+            stun_list.append(char)
+
+    elif total_attack_power < total_defend_power:
+        if action == "kill":
+            for char in attacker_side:
+                char.state = "dead"
+                phase_failed = True
+                dead_list.append(char)
+        else:
+            for char in attacker_side:
+                char.state = "stun"
+                phase_failed = True
+                stun_list.append(char)
+
+    for char in dead_list:
+        char.stage = "ended" """
+
+    phase_failed = resolve_fight(action , total_attack_power , total_defend_power , attacker_side, defender_side)
+
+    return current_characters, phase_failed
+
+def resolve_fight(action: str, total_attack_power: int, total_defend_power: int, attacker_side: list[ModifiedNPC], defender_side: list[ModifiedNPC]):
+    dead_list: list[ModifiedNPC] = []
+    stun_list: list[ModifiedNPC] = []
+    phase_failed = False
+
+    # Goes through all possible outcomes of strength comparisons and based on that and the type it determines final states of characters in combat
     if total_attack_power > total_defend_power + 1:
         if action == "kill":
             for char in defender_side:
@@ -458,15 +505,7 @@ def fight(
     for char in dead_list:
         char.stage = "ended"
 
-    """if len(dead_list) > 0:
-        print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
-              else "hráč" for char in dead_list]), "fought and died")
-    if len(stun_list) > 0:
-        print(", ".join([str(char.ID) if isinstance(char, ModifiedNPC)
-              else "hráč" for char in stun_list]), "fought and got stunned")"""
-
-    return current_characters, phase_failed
-
+    return phase_failed
 
 def steal(
     attacker, defender: ModifiedNPC, action: str, current_characters: ModifiedPeople

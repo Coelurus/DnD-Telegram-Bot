@@ -776,9 +776,9 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
         await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem. Padej!")
-        # TODO add some reaction from character, probably fight
+        return await attack_on_person(update, context)
 
-        return await generate_basic_window(update, context)
+        # return await generate_basic_window(update, context)
     elif char_relation == 1:
         await update.message.reply_text("Promiň kámo, ale fakt ti nepomůžu...")
         return await generate_basic_window(update, context)
@@ -835,8 +835,7 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "To si snad děláš srandu? Po tom cos udělal našim lidem (BOJ ČAS)"
         )
         return await attack_on_person(update, context)
-        # TODO add fight
-        # return await generate_basic_window(update, context)
+
     elif char_relation == 1:
         await update.message.reply_text("Promiň, ale fakt ti nepomůžu...")
         return await generate_basic_window(update, context)

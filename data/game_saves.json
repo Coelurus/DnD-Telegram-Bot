@@ -603,10 +603,11 @@
     },
     "800221482": {
         "player": {
-            "place": 27,
-            "coins": 37,
+            "place": 32,
+            "coins": 25,
             "items": [
                 7,
+                8,
                 9,
                 7
             ],
@@ -681,21 +682,21 @@
                 "inprogress",
                 "inprogress"
             ],
-            "round": 7
+            "round": 10
         },
         "quests": [
-            "",
             "S",
             "S",
             "S",
+            "S",
+            "FF",
+            "S",
             "",
-            "",
-            "",
-            ""
+            "S"
         ],
         "characters": [
             {
-                "place": 23,
+                "place": 32,
                 "coins": 33,
                 "items": [],
                 "str": 1,
@@ -761,7 +762,7 @@
                 "state": "alive"
             },
             {
-                "place": 22,
+                "place": 30,
                 "coins": 25,
                 "items": [],
                 "str": 2,
@@ -783,7 +784,7 @@
                 "state": "alive"
             },
             {
-                "place": 17,
+                "place": 5,
                 "coins": 33,
                 "items": [],
                 "str": 1,
@@ -821,33 +822,33 @@
                 "items": [],
                 "str": 1,
                 "speed": 2,
-                "line": -1,
-                "phase": "-1",
-                "stage": "-1",
+                "line": 0,
+                "phase": {
+                    "ID": 0,
+                    "char": 11,
+                    "from": 37,
+                    "item": 1,
+                    "reward": "25%-1",
+                    "coin_reward": 25,
+                    "item_reward": -1,
+                    "to_place": 0,
+                    "action": "None",
+                    "go_to": "None"
+                },
+                "stage": "tostart",
                 "state": "alive"
             },
             {
-                "place": 2,
+                "place": 37,
                 "coins": 38,
                 "items": [
                     0
                 ],
                 "str": 3,
                 "speed": 1,
-                "line": 0,
-                "phase": {
-                    "ID": 0,
-                    "char": 12,
-                    "from": 36,
-                    "item": 0,
-                    "reward": "40%-1",
-                    "coin_reward": 40,
-                    "item_reward": -1,
-                    "to_place": 37,
-                    "action": "None",
-                    "go_to": "None"
-                },
-                "stage": "inprogress",
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
                 "state": "alive"
             },
             {
@@ -939,7 +940,7 @@
                 "state": "alive"
             },
             {
-                "place": 7,
+                "place": 20,
                 "coins": 15,
                 "items": [],
                 "str": 1,
@@ -961,47 +962,47 @@
                 "state": "alive"
             },
             {
-                "place": 6,
+                "place": 2,
                 "coins": 42,
                 "items": [],
                 "str": 1,
                 "speed": 1,
                 "line": 5,
                 "phase": {
-                    "ID": 0,
+                    "ID": 669,
                     "char": 22,
-                    "from": 20,
+                    "from": 1,
                     "item": -1,
-                    "reward": "25%-1",
-                    "coin_reward": 25,
-                    "item_reward": -1,
-                    "to_place": 6,
-                    "action": "None",
-                    "go_to": "None"
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0
                 },
                 "stage": "inprogress",
                 "state": "alive"
             },
             {
-                "place": 2,
+                "place": 7,
                 "coins": 60,
                 "items": [],
                 "str": 1,
                 "speed": 1,
                 "line": 7,
                 "phase": {
-                    "ID": 0,
+                    "ID": 669,
                     "char": 23,
-                    "from": 4,
+                    "from": 32,
                     "item": -1,
-                    "reward": "25%-1",
-                    "coin_reward": 25,
-                    "item_reward": -1,
-                    "to_place": 12,
-                    "action": "None",
-                    "go_to": "None"
+                    "reward": "6%9",
+                    "coin_reward": 6,
+                    "item_reward": 9,
+                    "to_place": "?",
+                    "action": "0;kill",
+                    "go_to": 0
                 },
-                "stage": "inprogress",
+                "stage": "tostart",
                 "state": "alive"
             },
             {
@@ -1097,7 +1098,7 @@
                 "state": "dead"
             },
             {
-                "place": 2,
+                "place": 3,
                 "coins": 47,
                 "items": [
                     7,
@@ -1105,20 +1106,9 @@
                 ],
                 "str": 1,
                 "speed": 4,
-                "line": 4,
-                "phase": {
-                    "ID": 9,
-                    "char": 32,
-                    "from": -1,
-                    "item": 7,
-                    "reward": "20%-1",
-                    "coin_reward": 20,
-                    "item_reward": -1,
-                    "to_place": "?",
-                    "action": "33;plant",
-                    "go_to": 33
-                },
-                "stage": "inprogress",
+                "line": -1,
+                "phase": "-1",
+                "stage": "-1",
                 "state": "alive"
             },
             {
@@ -1130,7 +1120,7 @@
                 "line": -1,
                 "phase": "-1",
                 "stage": "-1",
-                "state": "alive"
+                "state": "stun"
             },
             {
                 "place": 1,
@@ -1140,7 +1130,7 @@
                 "speed": 1,
                 "line": -1,
                 "phase": "-1",
-                "stage": "ended",
+                "stage": "-1",
                 "state": "dead"
             },
             {
@@ -1151,8 +1141,8 @@
                 "speed": 3,
                 "line": -1,
                 "phase": "-1",
-                "stage": "-1",
-                "state": "alive"
+                "stage": "ended",
+                "state": "dead"
             }
         ]
     }
