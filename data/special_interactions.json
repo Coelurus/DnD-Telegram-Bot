@@ -1,0 +1,63 @@
+{
+  "0": [
+    {
+      "shop": {
+        "type": "food",
+        "cz": "jídlo",
+        "fraction": 5
+      }
+    },
+    {
+      "shop": {
+        "type": "misc",
+        "cz": "všelicos",
+        "fraction": 4
+      }
+    }
+  ],
+  "3": [
+    {
+      "shop": {
+        "type": "food",
+        "cz": "jídlo",
+        "fraction": 1
+      }
+    }
+  ],
+  "13": [
+    {
+      "shop": {
+        "type": "misc",
+        "cz": "všelicos",
+        "fraction": 5
+      }
+    }
+  ],
+  "18": [
+    {
+      "shop": {
+        "type": "drugs",
+        "cz": "drogy",
+        "fraction": 4
+      }
+    }
+  ],
+  "28": [
+    {
+      "shop": {
+        "type": "weapon",
+        "cz": "zbraně",
+        "fraction": 5
+      }
+    }
+  ],
+  "36": [
+    {
+      "shop": {
+        "type": "drugs",
+        "cz": "drogy",
+        "fraction": 2
+      }
+    }
+  ]
+}

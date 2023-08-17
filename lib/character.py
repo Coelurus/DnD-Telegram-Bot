@@ -3,6 +3,7 @@ import csv
 
 class Fraction:
     """Class to store static data about Fractions"""
+    base_relation = 2
 
     def __init__(self, ID: str, name_cz: str, residence_ID: str, relations: str) -> None:
         self.ID = int(ID)

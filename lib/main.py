@@ -1,3 +1,4 @@
+from argparse import Action
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -200,8 +201,13 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     save.rewrite_save_file(chat_ID, json_dict_save)
 
     # When player is not capable of moving proceed to next round and move characters again
-    # TODO change from recursion to loop
-    if player.state == "stun": #TODO check if it was necessary and player.duration["stun"] >= 1:
+    if player.state == "stun":
+        player.round += 1
+
+        # Show round counter last round before ending stun
+        if player.get_stun_duration() == 1:
+            await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
+
         await rotation(chat_ID, context, update)
 
 
@@ -574,7 +580,14 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = []
     if len(action_dict) > 0:
         context.user_data["action_dict"] = action_dict
-        reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
+
+        for possible_actions in action_dict:
+            for action_type in possible_actions:
+                place_name = possible_actions[action_type]["cz"]
+                place_fraction = possible_actions[action_type]["fraction"]
+                reply_keyboard.append([f"\U0001F6D2 Nakoupit {place_name} \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
+
+        # reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
     if len(people_here) > 0:
         await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {' a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
         context.user_data["people_here"] = people_here
@@ -710,14 +723,23 @@ async def open_sell_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #open_shop
 async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function summons window with options of buyable items"""
-    items_colection: ItemsCollection = context.user_data["items"]
-    action_dict: dict[str, str] = context.user_data["action_dict"]
-    item_type = action_dict["shop"]
-    items_to_sell = items_colection.items_by_type(item_type)
+    i_c: ItemsCollection = context.user_data["items"]
+    action_dict: list[dict[str, dict[str, str|int]]] = context.user_data["action_dict"]
+
+    item_type_name = " ".join(update.message.text.split(" ")[2:-1])
+
+    #TODO find some fancier way to choose which type player clicked and not disect and translate czech name
+    for action in action_dict:
+        if action["shop"]["cz"] == item_type_name:
+            item_type = action["shop"]["type"]
+            seller_fraction_ID: int = action["shop"]["fraction"]
+            break
+    
+    items_to_sell = i_c.items_by_type(item_type)
 
     # Creates menu of all items that can be bought with a price tag
     reply_keyboard = [
-        [item.name_cz + " (" + str(item.price) + ")"] for item in items_to_sell
+        [item.name_cz + " (" + str(i_c.get_fraction_price(item.price, seller_fraction_ID)) + ")"] for item in items_to_sell
     ]
     reply_keyboard.append(["Zpět do menu"])
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -752,18 +774,18 @@ async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to check if player can afford the item ho chose and following adding this item into his inventory"""
     player: Player = context.user_data["player"]
-    items_col: ItemsCollection = context.user_data["items"]
     # Get rid of the price tag
     chosen_item_name = update.message.text.split(" (")[0]
-    item_ID = items_col.name_cz_to_ID[chosen_item_name]
-    item = items_col.get_item(item_ID)
-    if item.price > player.coins:
+    item_price = int(update.message.text.split()[-1][1:-1])
+    item_ID = ItemsCollection.name_cz_to_ID[chosen_item_name]
+    if item_price > player.coins:
         await update.message.reply_text("Předmět je na tebe bohužel moc drahý")
     else:
-        player.coins -= item.price
+        player.coins -= item_price
         player.items.append(item_ID)
         await update.message.reply_text(
-            f"Úspěšně sis zakoupil {chosen_item_name}. Kdybys tento předmět náhodou hledal, tak na tebe bude čekat v inventáři."
+            f"Úspěšně sis zakoupil *{chosen_item_name}*\. Kdybys tento předmět náhodou hledal, tak na tebe bude čekat v inventáři\.",
+            parse_mode="MarkdownV2"
         )
 
     return await generate_basic_window(update, context)
@@ -876,6 +898,7 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await generate_basic_window(update, context)
 
 
+#resolve_attack_results
 async def resolve_attack_results(failed: bool, action: str, update: Update, player: Player, defender_name: str) -> str:
     """ Resolving consequences of players actions """
 
@@ -953,7 +976,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     player: Player = context.user_data["player"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
-    i_c: ItemsCollection = context.user_data["items"]
+    # i_c: ItemsCollection = context.user_data["items"]
     defender_ID:int = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
 
@@ -964,25 +987,25 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # On failure, player gets stunned for 2 rounds
     if failed:
-        if player.state == "stun":
-            await update.message.reply_text(
-                "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
-                parse_mode="MarkdownV2",
-            )
-            player.stun_player(2)
-            await rotation(update.message.chat.id, context, update)
+        #if player.state == "stun":
+        await update.message.reply_text(
+            "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
+            parse_mode="MarkdownV2",
+        )
+        player.stun_player(3)
+        await rotation(update.message.chat.id, context, update)
 
     else:
         context.user_data["victim"] = defender
         add_money = [[f"{defender.coins} penízků"]] if defender.coins > 0 else [[]]
         if action == "rob":
-            reply_keyboard = [[ i_c.get_item(item).name_cz] for item in defender.items] + add_money + [["Vlastně nic"]]
+            reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in defender.items] + add_money + [["Vlastně nic"]]
             markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
             await update.message.reply_text("Tak co čmajzneš?",reply_markup=markup)
             return "item_to_steal"
 
         elif action == "plant":
-            reply_keyboard = [[ i_c.get_item(item).name_cz] for item in player.items] + [["Vlastně nic"]]
+            reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in player.items] + [["Vlastně nic"]]
             markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
             await update.message.reply_text("Tak co tam nastražíš?",reply_markup=markup)
             return "item_to_plant"

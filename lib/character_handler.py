@@ -157,10 +157,10 @@ def update_phases(
     for character in modified_characters.list:
         if character.phase != "-1":
             # TODO delete str csv stupid save
-            if isinstance(character.phase, str):
-                current_phase = str_to_mqp(character.phase)
-            else:
-                current_phase = dict_to_mqp(character.phase)
+            # if isinstance(character.phase, str):
+            #    current_phase = str_to_mqp(character.phase)
+            # else:
+            current_phase = dict_to_mqp(character.phase)
 
             # If there is a character who has a quest and is dead it is labeled
             # as ended and afterwards will yield in failure of this phase
@@ -260,10 +260,10 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
             # Character has a quest to follow
             if character.phase != "-1":
                 # TODO delete the string possibility
-                if isinstance(character.phase, str):
-                    current_phase = str_to_mqp(character.phase)
-                else:
-                    current_phase = dict_to_mqp(character.phase)
+                #if isinstance(character.phase, str):
+                #    current_phase = str_to_mqp(character.phase)
+                #else:
+                current_phase = dict_to_mqp(character.phase)
                 # Final place is fixed
                 if current_phase.go_to == -1:
                     if character.stage == "tostart":
@@ -392,23 +392,19 @@ def fight(
             if isinstance(attacker, ModifiedNPC):
                 likes_attacker = how_char1_loves_char2(character_NPC, attacker_NPC)
             else:
-                likes_attacker = attacker.get_relationships([character], people)[
-                    character.ID
-                ]
+                likes_attacker = attacker.get_relationships([character], people)[character.ID]
+
             likes_defender = how_char1_loves_char2(character_NPC, defender_NPC)
             if likes_attacker >= 3 and likes_defender >= 3:
                 likes_defender = likes_attacker = 2
 
-            if character_NPC.fraction_ID == attacker_fraction or likes_attacker >= 3:
+            if (character_NPC.fraction_ID == attacker_fraction or likes_attacker >= 3) and character_NPC.fraction_ID != defender_NPC.fraction_ID:
                 attacker_side.append(character)
 
-            if (
-                character_NPC.fraction_ID == defender_NPC.fraction_ID
-                or likes_defender >= 3
-            ):
+            if (character_NPC.fraction_ID == defender_NPC.fraction_ID or likes_defender >= 3) and character_NPC.fraction_ID != attacker_fraction :
                 defender_side.append(character)
 
-    # When there is more people on either side it gives an advantage to this side
+
     attacker_bonus += (len(attacker_side) - len(defender_side)) * 2
 
     items_attacker_mod = get_items_attributes(attacker_side, "str")
@@ -419,45 +415,6 @@ def fight(
     )
     total_defend_power = sum([x.strength for x in defender_side]) + items_defender_mod
 
-    dead_list: list[ModifiedNPC] = []
-    stun_list: list[ModifiedNPC] = []
-
-    # Goes through all possible outcomes of strength comparisons and based on that and the type it determines final states of characters in combat
-    """if total_attack_power > total_defend_power + 1:
-        if action == "kill":
-            for char in defender_side:
-                char.state = "dead"
-                dead_list.append(char)
-        elif action == "stun":
-            for char in defender_side:
-                char.state = "stun"
-                stun_list.append(char)
-
-    elif total_attack_power > total_defend_power:
-        for char in defender_side:
-            char.state = "stun"
-            stun_list.append(char)
-
-    elif total_attack_power == total_defend_power:
-        for char in defender_side + attacker_side:
-            char.state = "stun"
-            phase_failed = True
-            stun_list.append(char)
-
-    elif total_attack_power < total_defend_power:
-        if action == "kill":
-            for char in attacker_side:
-                char.state = "dead"
-                phase_failed = True
-                dead_list.append(char)
-        else:
-            for char in attacker_side:
-                char.state = "stun"
-                phase_failed = True
-                stun_list.append(char)
-
-    for char in dead_list:
-        char.stage = "ended" """
 
     phase_failed = resolve_fight(action , total_attack_power , total_defend_power , attacker_side, defender_side)
 
@@ -551,49 +508,13 @@ def steal(
     ) + items_defender_mod
 
     # outcomes of an encounter are defined by total speed level comparison
-    """
-    if attacker_speed > defender_speed:
-        if action == "rob":
-            stolen_items = defender.items
-            defender.items = []
-            attacker.items += stolen_items
-
-    
-
-        elif action == "plant":
-            # TODO plant only the quest item and not all
-            pass
-            #planted_items = attacker.items
-            #attacker.items = []
-            #defender.items += planted_items
-
-            print(attacker_name, "planted:",
-                  planted_items, "into pockets of", defender_NPC.name_cz)"""
     if attacker_speed > defender_speed:
         pass
     elif attacker_speed == defender_speed:
-        # print(attacker_name, "failed", action)
-        phase_failed = True
-        current_characters, _ = fight(attacker, defender, "stun", current_characters)
+        current_characters, phase_failed = fight(attacker, defender, "stun", current_characters)
 
     else:
-        # print(attacker_name, "failed", action)
-        phase_failed = True
-        current_characters, _ = fight(
-            attacker, defender, "stun", current_characters, -1
-        )
+        current_characters, phase_failed = fight(attacker, defender, "stun", current_characters, -1)
 
     return current_characters, phase_failed
 
-
-if __name__ == "__main__":
-    character_save = "place:32,coins:20,items:,str:3,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:15,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:16,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:35,coins:9,items:,str:1,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:33,coins:10,items:,str:4,speed:5,line:-1,phase:-1,stage:-1,state:alive+place:34,coins:20,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:17,coins:1,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:4,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:13,coins:9,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:19,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:23,coins:8,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:12,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:13,items:,str:3,speed:2,line:0,phase:0=char12=36=0=37=None=40%-1,stage:tostart,state:alive+place:37,coins:3,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:37,coins:4,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:15,items:,str:3,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:1,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:6,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:17,items:,str:4,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:38,coins:16,items:,str:1,speed:1,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:6,items:,str:1,speed:4,line:5,phase:0=char21=-1=-1=0=None=25%-1,stage:inprogress,state:alive+place:39,coins:6,items:,str:2,speed:3,line:6,phase:0=char22=-1=-1=6=None=25%-1,stage:inprogress,state:alive+place:39,coins:8,items:,str:4,speed:1,line:7,phase:0=char23=-1=-1=12=None=25%-1,stage:inprogress,state:alive+place:39,coins:19,items:,str:2,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:18,items:,str:2,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:39,coins:3,items:,str:1,speed:4,line:-1,phase:-1,stage:-1,state:alive+place:7,coins:20,items:,str:1,speed:4,line:1,phase:7=char27=-1=9=?=30;kill=30%-1,stage:inprogress,state:alive+place:7,coins:12,items:,str:2,speed:2,line:2,phase:7=char28=-1=8=?=31;kill=30%-1,stage:inprogress,state:alive+place:7,coins:7,items:,str:1,speed:4,line:3,phase:7=char29=-1=-1=?=31;kill=30%-1,stage:inprogress,state:alive+place:1,coins:4,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:1,coins:12,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive+place:19,coins:20,items:,str:1,speed:5,line:4,phase:9=char32=-1=7=?=33;plant=20%-1,stage:inprogress,state:alive+place:20,coins:13,items:,str:1,speed:3,line:-1,phase:-1,stage:-1,state:alive+place:3,coins:3,items:,str:3,speed:2,line:-1,phase:-1,stage:-1,state:alive"
-    modified_people = get_current_characters(character_save)
-
-    # checking if someone finished quest or is final location
-    modified_people, lines_to_update, game_ended, game_ending_str = update_phases(
-        modified_people
-    )
-
-    # move characters to quest
-    modified_people = move_characters(modified_people)

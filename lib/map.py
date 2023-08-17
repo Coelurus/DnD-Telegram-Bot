@@ -1,5 +1,6 @@
 from __future__ import annotations
 import csv
+import json
 
 
 class Map:
@@ -89,7 +90,7 @@ class Map:
 class Street:
     """Class to store static data about each place on map"""
 
-    def __init__(self, ID: str, name_cz: str, connections: str, description_cz: str, possibilites: str, access: str) -> None:
+    def __init__(self, ID: str, name_cz: str, connections: str, description_cz: str, possibilites: list[dict[str, dict[str, str|int]]], access: str) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.connections = [int(x) for x in connections.split(";")]
@@ -113,10 +114,18 @@ def read_map_from_file(path: str) -> Map:
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",", quotechar='"')
 
+    with open("data\special_interactions.json", "r", encoding="utf-8") as save_file:
+        json_data = save_file.read()
+        dict_data: dict[str, list[dict[str, dict[str, str|int]]]] = json.loads(json_data)
+    
+
     map = Map()
     for row in reader:
+        #Check if there is a special action
+        special_actions = dict_data[row["ID"]] if row["ID"] in dict_data else dict()
         map.add_street(Street(row["ID"], row["name_cz"],
-                       row["connected_ID"], row["description_cz"], row["possibilities"], row["access"]))
+                       row["connected_ID"], row["description_cz"], special_actions, row["access"]))
+    csv_file.close()
     return map
 
 

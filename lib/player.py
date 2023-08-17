@@ -77,21 +77,20 @@ class Player:
     def get_actions(
         self,
         current_characters: ModifiedPeople,
-        map=read_map_from_file("data\streets.csv"),
-    ) -> tuple[dict[str, str], list[ModifiedNPC]]:
+        map=read_map_from_file("data\streets.csv")) -> tuple[list[dict[str, dict[str, str|int]]], list[ModifiedNPC]]:
         """
         Method takes current state of NPCs and returns 2 values:
-        1. dictionary where key is possible action and value is modifier
+        1. list of dicts of possible actions 
         2. list of all characters that are in the same location as player
         """
         people_here = current_characters.get_people_in_place(self.place_ID)
-        possible_actions_str = map.get_street_by_ID(self.place_ID).possibilites
-        action_dict = {}
-        for action in possible_actions_str.split(";"):
-            if action != "":
-                key, val = action.split(":")
-                action_dict[key] = val
+        action_dict = map.get_street_by_ID(self.place_ID).possibilites
+ 
         return action_dict, people_here
+
+    def get_fraction_relation(self, fraction_ID):
+        return self.relations[fraction_ID]
+        
 
     def get_relationships(
         self, people_here: list[ModifiedNPC], society: Society
@@ -127,26 +126,18 @@ class Player:
 
         self.duration.append({"type": "stun", "duration": duration, "source": "some character"})
 
+    def get_stun_duration(self) -> int:
+        for effect in self.duration:
+            if effect["type"] == "stun":
+                return effect["duration"]
+        return 0
+
     def decrease_durations(self) -> None:
         """Method goes through all temporary effects and reduced their duration by 1
         If the effect has duration 0 it removes him from effects list (duration) and removes effects from player
         """
         to_pop = []
-        
-        """for key in self.duration:
-            self.duration[key] -= 1
-            if self.duration[key] == 0:
-                if key == "stun":
-                    self.state = "alive"
-                elif "str" in key:
-                    self.strength -= int(key.lstrip("str"))
-                elif "speed" in key:
-                    self.speed -= int(key.lstrip("speed"))
-                to_pop.append(key)
-        for key in to_pop:
-            self.duration.pop(key)"""
-
-
+       
         for effect_idx, effect in enumerate(self.duration):
             self.duration[effect_idx]["duration"] -= 1
             if self.duration[effect_idx]["duration"] == 0:
@@ -308,10 +299,3 @@ class Player:
             if self.progress[quest_idx] == "ended":
                 ended_quests.append(self.quests[quest_idx])
         return ended_quests
-
-
-#if __name__ == "__main__":
-#    map = read_map_from_file("data\streets.csv")
-#    spawn_player = Player(0, 25, [], 2, 2, [2, 2, 2, 2, 2, 2, 2], 4, "alive")
-#    for _ in range(3):
-#        spawn_player.move(map)
