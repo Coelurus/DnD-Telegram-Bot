@@ -1,6 +1,5 @@
-from tkinter import CURRENT
 from player import Player
-from character import read_people_from_file
+from character import Society
 from quest import (
     read_quest_lines_from_file,
     str_to_mqp,
@@ -38,11 +37,6 @@ def get_current_player(current_save: dict[str]) -> Player:
     """
     Takes dict where player is saved and returns Player object
     """
-    # player_parts = current_save.split(",")
-    # parts_dict: dict[str, str] = dict()
-    # for part in player_parts:
-    #     key, val = part.split(":")
-    #     parts_dict[key] = val
 
     return Player(
         current_save["place"],
@@ -61,28 +55,93 @@ def get_current_player(current_save: dict[str]) -> Player:
     )
 
 
-def player_save_generator(player: Player) -> dict[str]:
+def player_save_generator() -> dict[str]:
     """
     Takes current state of player as Player object and returns his JSON representation.
     """
     player_dict = dict()
-    player.decrease_durations()
+    Player.decrease_durations()
 
-    player_dict["place"] = player.place_ID
-    player_dict["coins"] = player.coins
-    player_dict["items"] = player.items
-    player_dict["str"] = player.strength
-    player_dict["speed"] = player.speed
-    player_dict["relations"] = player.relations
-    player_dict["fraction"] = player.fraction_ID
-    player_dict["state"] = player.state
-    player_dict["duration"] = player.duration
-    player_dict["weapons"] = player.equiped_weapons
-    player_dict["quests"] = player.quests
-    player_dict["progress"] = player.progress
-    player_dict["round"] = player.round
+    player_dict["place"] = Player.place_ID
+    player_dict["coins"] = Player.coins
+    player_dict["items"] = Player.items
+    player_dict["str"] = Player.strength
+    player_dict["speed"] = Player.speed
+    player_dict["relations"] = Player.relations
+    player_dict["fraction"] = Player.fraction_ID
+    player_dict["state"] = Player.state
+    player_dict["duration"] = Player.duration
+    player_dict["weapons"] = Player.equiped_weapons
+    player_dict["quests"] = Player.quests
+    player_dict["progress"] = Player.progress
+    player_dict["round"] = Player.round
 
     return player_dict
+
+
+def first_player_save():
+    Player.place_ID = 0
+    Player.coins = 25
+    Player.items = [7, 8, 9]
+    Player.strength = 2
+    Player.speed = 2
+    Player.relations = [3, 0, 1, 2, 2, 3, 3]
+    Player.fraction_ID = 4
+    Player.state = "alive"
+    Player.duration = []
+    Player.equiped_weapons = ""
+    Player.quests = [
+            {
+                "ID": 0,
+                "char": 12,
+                "from": 37,
+                "item": 1,
+                "to_place": 32,
+                "action": "None",
+                "go_to": -1,
+                "reward": "40%-1",
+                "coin_reward": 40,
+                "item_reward": -1,
+            },
+            {
+                "ID": 7,
+                "char": 29,
+                "from": -1,
+                "item": -1,
+                "to_place": "?",
+                "action": "31;stun",
+                "go_to": 31,
+                "reward": "14%14",
+                "coin_reward": 14,
+                "item_reward": 14,
+            },
+            {
+                "ID": 45,
+                "char": 15,
+                "from": -1,
+                "item": 3,
+                "to_place": "?",
+                "action": "32;rob",
+                "go_to": 32,
+                "reward": "21%13",
+                "coin_reward": 21,
+                "item_reward": 13,
+            },
+            {
+                "ID": 17,
+                "char": 13,
+                "from": -1,
+                "item": 7,
+                "to_place": "?",
+                "action": "2;plant",
+                "go_to": 2,
+                "reward": "33%5",
+                "coin_reward": 33,
+                "item_reward": 5,
+            }
+        ]
+    Player.progress = ["tostart", "inprogress", "tostart", "tostart"]
+    Player.round = 1
 
 
 def first_quests_save() -> tuple[dict[int, ModifiedQuestPhase], list]:
@@ -199,10 +258,9 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> lis
         character_ID_to_do_quest = quest_ID_to_MQP[quest_line_ID].characterID
         character_ID_to_line_ID[character_ID_to_do_quest] = quest_line_ID
 
-    characters = read_people_from_file(r"data\characters.csv")
     # Goes through all characters in existence and if there is a quest that should be assigned to them
     # needed attributes are set to identify the phase and line and progress
-    for character in characters.people_list:
+    for character in Society.people_list:
         character_json.append(dict())
 
         if character.ID in character_ID_to_line_ID:
@@ -248,70 +306,9 @@ def rewrite_save_file(change_line_ID: int, new_save_json: dict) -> None:
 def generate_new_save(chat_ID) -> None:
     """Generating whole new save"""
     # Player introduce - set his starting position and other stuff
-    spawn_player = Player(
-        0,
-        25,
-        [7, 8, 9],
-        2-2,
-        2-2,
-        [3, 0, 1, 2, 2, 3, 3],
-        4,
-        "alive",
-        [],
-        "",
-        [
-            {
-                "ID": 0,
-                "char": 12,
-                "from": 37,
-                "item": 1,
-                "to_place": 32,
-                "action": "None",
-                "go_to": -1,
-                "reward": "40%-1",
-                "coin_reward": 40,
-                "item_reward": -1,
-            },
-            {
-                "ID": 7,
-                "char": 29,
-                "from": -1,
-                "item": -1,
-                "to_place": "?",
-                "action": "31;stun",
-                "go_to": 31,
-                "reward": "14%14",
-                "coin_reward": 14,
-                "item_reward": 14,
-            },
-            {
-                "ID": 45,
-                "char": 15,
-                "from": -1,
-                "item": 3,
-                "to_place": "?",
-                "action": "32;rob",
-                "go_to": 32,
-                "reward": "21%13",
-                "coin_reward": 21,
-                "item_reward": 13,
-            },
-            {
-                "ID": 17,
-                "char": 13,
-                "from": -1,
-                "item": 7,
-                "to_place": "?",
-                "action": "2;plant",
-                "go_to": 2,
-                "reward": "33%5",
-                "coin_reward": 33,
-                "item_reward": 5,
-            },
-        ],
-        ["tostart", "inprogress", "tostart", "tostart"],
-    )
-    new_player_save = player_save_generator(spawn_player)
+    
+    first_player_save()
+    new_player_save = player_save_generator()
 
     # Start quest lines
     root_quests_dict, new_quests_json = first_quests_save()

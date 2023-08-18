@@ -350,7 +350,7 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     if len(quests_to_finish) > 0:
         await update.message.reply_text("\u2757 Máš zde úkol \u2757")
 
-    new_player_save = save.player_save_generator(player)
+    new_player_save = save.player_save_generator()
 
     context.user_data["current_quests_str"] = new_quests_str
 
