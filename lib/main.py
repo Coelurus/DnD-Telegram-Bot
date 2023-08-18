@@ -792,8 +792,8 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to player's desired place and describes part of the path"""
     start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
-    final_place_ID: int = town_map.name_cz_to_ID[update.message.text]
-    path = town_map.shortest_path(start_place_ID, final_place_ID)
+    final_place_ID: int = Map.name_cz_to_ID[update.message.text]
+    path = Map.shortest_path(start_place_ID, final_place_ID)
     revealed_path = path[1 : num_of_streets + 1]
 
     # Answer is based on realtionship and length of path
@@ -851,7 +851,7 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = current_chars.get_NPC(Society.name_cz_to_ID[update.message.text]).place_ID
-    path = town_map.shortest_path(start_place_ID, final_place_ID)
+    path = Map.shortest_path(start_place_ID, final_place_ID)
 
     # Answer is based on realtionship and length of path
     if len(path) <= 1:
@@ -1021,7 +1021,7 @@ async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     add_money = [[f"{victim.coins} penízků"]] if victim.coins > 0 else [[]]
 
     if len(victim.items) > 0 or victim.coins > 0:
-        reply_keyboard = [[ i_c.get_item(item).name_cz] for item in victim.items] + add_money + [["Už nic dalšího"]]
+        reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in victim.items] + add_money + [["Už nic dalšího"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         await update.message.reply_text("Ještě něco?",reply_markup=markup)
 

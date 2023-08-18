@@ -1,5 +1,5 @@
 import csv
-
+import json
 
 class Fraction:
     """Class to store static data about Fractions"""
@@ -45,7 +45,7 @@ class PoliticalMap:
 class NPC:
     """Class to store static data about characters"""
 
-    def __init__(self, ID: str, name_cz: str, fraction_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[]) -> None:
+    def __init__(self, ID: str, name_cz: str, fraction_ID: str, spawn_street_ID: str, end_street_ID: str, speed: str, strentgh: str, coins: str, items=[], special_action = {}) -> None:
         self.ID = int(ID)
         self.name_cz = name_cz
         self.fraction_ID = int(fraction_ID)
@@ -55,6 +55,7 @@ class NPC:
         self.coins = int(coins)
         self.speed = speed
         self.strength = strentgh
+        self.special_action = special_action
 
     def __repr__(self) -> str:
         return str(self)
@@ -120,11 +121,16 @@ def read_people_from_file(path: str):
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
+    with open("data\special_actions.json", "r", encoding="utf-8") as save_file:
+        json_data = save_file.read()
+        dict_data: dict[str, dict[str, str|int]] = json.loads(json_data)
+
     Society.people_list = []
     Society.name_cz_to_ID = dict()
 
     for row in reader:
-        Society.add_person(NPC(*[row[x] for x in ["ID", "name_cz", "fraction_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
+        special_action = dict_data[row["ID"]] if row["ID"] in dict_data else dict()
+        Society.add_person(NPC(row["ID"], row["name_cz"], row["fraction_ID"], row["spawn_street_ID"], row["end_street_ID"], row["speed"], row["strength"], row["coins"], [], special_action))
 
     csv_file.close()
 

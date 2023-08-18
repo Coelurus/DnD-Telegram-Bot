@@ -1,6 +1,6 @@
 from character import NPC, Society, PoliticalMap
 from quest import dict_to_mqp
-from map import read_map_from_file
+from map import Map
 from items import ItemsCollection
 from random import choice, choices
 
@@ -112,7 +112,6 @@ class Helper:
     stunned_chars: list[ModifiedNPC] = []
     dead_chars: list[ModifiedNPC] = []
 
-
     def __init__():
         pass
 
@@ -183,9 +182,7 @@ def get_current_characters(old_character_save: list[dict[str]]) -> ModifiedPeopl
     return current_characters
 
 
-def update_phases(
-    modified_characters: ModifiedPeople,
-) -> tuple[ModifiedPeople, dict[int, str], bool]:
+def update_phases(modified_characters: ModifiedPeople) -> tuple[ModifiedPeople, dict[int, str], bool]:
     """
     Function takes characters as Modified People object and update stages based on their location and actions and returns this modified object.
     It also returns dictionary where key is ID of a quest line of which phase was just finished and bool if one of characters finished mission that is game ending.
@@ -196,10 +193,6 @@ def update_phases(
     lines_to_update: dict[int, str] = dict()
     for character in modified_characters.list:
         if character.phase != "-1":
-            # TODO delete str csv stupid save
-            # if isinstance(character.phase, str):
-            #    current_phase = str_to_mqp(character.phase)
-            # else:
             current_phase = dict_to_mqp(character.phase)
 
             # If there is a character who has a quest and is dead it is labeled
@@ -293,49 +286,69 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     """
     Function takes characters as Modified People object and move them to their designated place and returns modified ModifiedPeople
     """
-    map = read_map_from_file("data\streets.csv")
     for character in modified_characters.list:
+        base_character: NPC = Society.get_char_by_ID(character.ID)
+
         if character.state == "alive":
+
             # Character has a quest to follow
             if character.phase != "-1":
-                # TODO delete the string possibility
-                #if isinstance(character.phase, str):
-                #    current_phase = str_to_mqp(character.phase)
-                #else:
                 current_phase = dict_to_mqp(character.phase)
+
                 # Final place is fixed
                 if current_phase.go_to == -1:
                     if character.stage == "tostart":
                         final_point = current_phase.from_place_ID
                     else:
                         final_point = current_phase.to_place_ID
+
                 # In case character should go to someone else, place is dynamicaly changed each turn
                 else:
                     if character.stage == "tostart":
                         final_point = current_phase.from_place_ID
                     else:
-                        final_point = modified_characters.get_NPC(
-                            current_phase.go_to
-                        ).place_ID
+                        final_point = modified_characters.get_NPC(current_phase.go_to).place_ID
 
+            elif base_character.special_action == "avoid":
+                all_possible_streets = Map.get_street_by_ID(character.place_ID).get_connected_streets() + [character.place_ID]
+                possible_choices: dict[int, int] = dict()
+                #Get count of enemies in connected streets
+                for street_ID in all_possible_streets:
+                    possible_choices[street_ID] = 0
+                    for person in modified_characters.get_people_in_place(street_ID):
+                        if how_char1_loves_char2(base_character, Society.get_char_by_ID(person.ID)) < 2:
+                            possible_choices[street_ID] += 1
+                minimum_enemies = 100
+                possible_final_points = [character.place_ID]
+                #Find the one with smallest danger
+                print(possible_choices)
+                for possible_street in possible_choices:
+                    if possible_choices[possible_street] < minimum_enemies:
+                        minimum_enemies = possible_choices[possible_street] 
+                        possible_final_points = [possible_street]
+                    elif possible_choices[possible_street] == minimum_enemies:
+                        possible_final_points.append(possible_street)
+                final_point = choice(possible_final_points)
+
+                print(final_point)
+
+            
             # Character has designated end location
-            elif Society.get_char_by_ID(character.ID).end_street_ID != -1:
-                final_point = Society.get_char_by_ID(
-                    character.ID
-                ).end_street_ID
+            elif base_character.end_street_ID != -1:
+                final_point = base_character.end_street_ID
 
             # Character just moves on random
             else:
                 final_point = choices(
-                    map.get_street_by_ID(character.place_ID).connections + [character.place_ID], 
-                    weights=(*[1]*len(map.get_street_by_ID(character.place_ID).connections), len(map.get_street_by_ID(character.place_ID).connections) * 1.2),
+                    Map.get_street_by_ID(character.place_ID).connections + [character.place_ID], 
+                    weights=(*[1]*len(Map.get_street_by_ID(character.place_ID).connections), len(Map.get_street_by_ID(character.place_ID).connections) * 1.2),
                     k=1
                 )[0]
 
             # TODO add places and characters to avoid
-            path = map.find_shortest_path(
-                *map.BFS(map.get_street_by_ID(character.place_ID)),
-                map.get_street_by_ID(final_point),
+            path = Map.find_shortest_path(
+                *Map.BFS(Map.get_street_by_ID(character.place_ID)),
+                Map.get_street_by_ID(final_point),
             )
 
             if len(path) == 1:
@@ -369,14 +382,10 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
             all_items.append(item)
 
     if type == "str":
-        return sum(
-            [ItemsCollection.get_item(item_ID).strength_mod for item_ID in all_items]
-        )
+        return sum([ItemsCollection.get_item(item_ID).strength_mod for item_ID in all_items])
 
     elif type == "speed":
-        return sum(
-            [ItemsCollection.get_item(item_ID).speed_mod for item_ID in all_items]
-        )
+        return sum([ItemsCollection.get_item(item_ID).speed_mod for item_ID in all_items])
 
 
 def fight(
