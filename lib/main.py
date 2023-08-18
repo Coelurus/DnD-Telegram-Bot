@@ -77,13 +77,12 @@ def load_dynamic_data(context: ContextTypes.DEFAULT_TYPE, current_save: dict) ->
 
     context.user_data["current_quests_list"] = current_quests_list
 
-    current_player = save.get_current_player(current_player_dict)
-    context.user_data["player"] = current_player
+    Player = save.get_current_player(current_player_dict)
 
     current_characters = save.get_current_characters(current_chars_list)
     context.user_data["current_people"] = current_characters
 
-    quests_to_finish = current_player.update_quest_progresses(current_characters)
+    quests_to_finish = Player.update_quest_progresses(current_characters)
     context.user_data["additional_actions"] = quests_to_finish
 
     # Dict where key is an ID of character(int) and val is list of tuples of text to output for this choice(str) and code of action(str)
@@ -111,7 +110,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'V tom ti však někdo zaklepe na rameno: "Nezapomeň, o co ses vsadil s těmi kultisty. Že prý kočku najdeš dřív než oni...a teď tu vyspáváš v hospodě. No tak utíkej. DĚLEJ!"'
     )
 
-    await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
+    await update.message.reply_text(f"\u2728 *{Player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
     return await generate_basic_window(update, context)
 
@@ -131,7 +130,7 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     load_static_data(context)
     load_dynamic_data(context, current_save)
 
-    await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
+    await update.message.reply_text(f"\u2728 *{Player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
     return await generate_basic_window(update, context)
 
@@ -159,7 +158,6 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     # Getting current data that are potentially changed by player inputs from last time
     current_characters: ModifiedPeople = context.user_data["current_people"]
     current_quests_list: list[str] = context.user_data["current_quests_list"]
-    player: Player = context.user_data["player"]
 
     #TODO move all save. to save and make specific method
 
@@ -183,12 +181,12 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     current_characters_json = save.move_characters(current_characters).to_json()
 
     # Updates progress and gets list of quests completable in this place.
-    quests_to_finish = player.update_quest_progresses(current_characters)
+    quests_to_finish = Player.update_quest_progresses(current_characters)
     context.user_data["additional_actions"] = quests_to_finish
     if len(quests_to_finish) > 0:
         await update.message.reply_text("\u2757 Máš zde úkol \u2757")
 
-    json_dict_player = save.player_save_generator(player)
+    json_dict_player = save.player_save_generator()
 
     context.user_data["current_quests_list"] = new_quests
 
@@ -200,12 +198,12 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     save.rewrite_save_file(chat_ID, json_dict_save)
 
     # When player is not capable of moving proceed to next round and move characters again
-    if player.state == "stun":
-        player.round += 1
+    if Player.state == "stun":
+        Player.round += 1
 
         # Show round counter last round before ending stun
-        if player.get_stun_duration() == 1:
-            await update.message.reply_text(f"\u2728 *{context.user_data['player'].round}*\. kolo \u2728", parse_mode="MarkdownV2")
+        if Player.get_stun_duration() == 1:
+            await update.message.reply_text(f"\u2728 *{Player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
         await rotation(chat_ID, context, update)
 
@@ -213,9 +211,8 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
 #move_character
 async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function that offers player choice of places where he can move."""
-    player: Player = context.user_data["player"]
 
-    move_options, current_street = player.move_possibilities()
+    move_options, current_street = Player.move_possibilities()
 
     # Show menu of possible places to move to
     reply_keyboard = (
@@ -234,17 +231,16 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
     town_map: Map = context.user_data["map"]
-    player: Player = context.user_data["player"]
     street_name = update.message.text.split(" (")[0]
-    move_options, current_street = player.move_possibilities()
+    move_options, current_street = Player.move_possibilities()
 
-    player.round += 1
-    await update.message.reply_text(f"\u2728 *{player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
+    Player.round += 1
+    await update.message.reply_text(f"\u2728 *{Player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
 
     # Check if player chose a place where he can actually move to
     if street_name in [street.name_cz for street in move_options + [current_street]]:
         new_street_ID = town_map.name_cz_to_ID[street_name]
-        player.place_ID = new_street_ID
+        Player.place_ID = new_street_ID
 
         # Check if street name was tagged with "(stay here)" thus player stayed on the same place and went for another round
         if len(street_name) == len(update.message.text):
@@ -279,11 +275,10 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function returns data about characters current state and creates menu for a of other choices."""
     town_map = context.user_data["map"]
-    player: Player = context.user_data["player"]
     items_collection: ItemsCollection = items.read_items_from_file("data\items.csv")
     chat_ID = update.message.chat.id
     current_save = save.read_current_save(chat_ID)
-    player_information = f"Místo, kde se nacházíš, se jmenuje *{town_map.get_street_by_ID(player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{player.coins}` peněz\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in player.items])}\n\n`Úroveň rychlosti: {player.speed}\nÚroveň síly: {player.strength}`\n\nMomentálně máš vybavené tyto zbraně:\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in player.equiped_weapons])}"
+    player_information = f"Místo, kde se nacházíš, se jmenuje *{town_map.get_street_by_ID(Player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{Player.coins}` peněz\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in Player.items])}\n\n`Úroveň rychlosti: {Player.speed}\nÚroveň síly: {Player.strength}`\n\nMomentálně máš vybavené tyto zbraně:\n{', '.join([f'_{items_collection.get_item(x).name_cz}_' for x in Player.equiped_weapons])}"
     await context.bot.send_message(chat_ID, player_information, parse_mode="MarkdownV2")
 
     # Creating menu for other choices
@@ -297,10 +292,9 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function creates menu with items that player has in inventory tagged with consumable/equipable"""
     i_c: ItemsCollection = context.user_data["items"]
-    player: Player = context.user_data["player"]
 
     # If character owns at least one item it shows them and add tag
-    if len(player.items) != 0:
+    if len(Player.items) != 0:
         reply_keyboard = [
             [
                 i_c.get_item(x).name_cz
@@ -312,7 +306,7 @@ async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     else ""
                 )
             ]
-            for x in player.items
+            for x in Player.items
         ]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         await update.message.reply_text("Který předmět tě zajímá?", reply_markup=markup)
@@ -326,7 +320,6 @@ async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #choose_item
 async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Funciton creates a part of dialogue where is player asked if he wants to use chosen item"""
-    player: Player = context.user_data["player"]
     items_col: ItemsCollection = context.user_data["items"]
     # Get rid of the usage tag
     chosen_item_name = update.message.text.split(" (")[0]
@@ -376,11 +369,10 @@ async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #use_item
 async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function reads item chosen by player and applies its effects on him"""
-    player: Player = context.user_data["player"]
     # Get rid of the usage tag
     item: Item = context.user_data["item"]
 
-    player.use_item(item)
+    Player.use_item(item)
 
     await update.message.reply_text(f"Použil jsi {item.name_cz}.")
 
@@ -390,14 +382,13 @@ async def use_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #equip_item
 async def equip_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of case when player chose and equipable item from his inventory"""
-    player: Player = context.user_data["player"]
-    equip_succes = player.equip_weapon(context.user_data["item"])
+    equip_succes = Player.equip_weapon(context.user_data["item"])
     if equip_succes:
         return await generate_basic_window(update, context)
     # Player already has 2 weapons equiped
     else:
         # Generating menu to choose which weapon to replace
-        equiped = player.get_equiped_weapons(context.user_data["items"])
+        equiped = Player.get_equiped_weapons(context.user_data["items"])
         reply_keyboard = [
             [f"{item.name_cz} ({item.strength_mod} síla) ({item.speed_mod} rychlost)"]
             for item in equiped
@@ -419,28 +410,26 @@ async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     item_ID = items_col.name_cz_to_ID[item_name]
     replace_item = items_col.get_item(item_ID)
 
-    player: Player = context.user_data["player"]
-    player.swap_weapon(replace_item, context.user_data["item"])
+    Player.swap_weapon(replace_item, context.user_data["item"])
     return await generate_basic_window(update, context)
 
 
 #open_quests
 async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function generates menu with all the quests player has available"""
-    player: Player = context.user_data["player"]
     map: Map = context.user_data["map"]
     society: Society = context.user_data["people"]
 
     # Create dictionary to be able to identify quest definition by ID od that quest
     quest_ID_to_str: dict[int, str] = dict()
 
-    if len(player.quests) != 0:
+    if len(Player.quests) != 0:
         # When there is at least one quest
-        # Shows quest in order as they are saved in player.quests and
+        # Shows quest in order as they are saved in Player.quests and
         # assigns them an order number (index of quest + 1) so it can be tracked afterwards
         reply_keyboard = []
-        for quest_str_idx in range(len(player.quests)):
-            quest_str = player.quests[quest_str_idx]
+        for quest_str_idx in range(len(Player.quests)):
+            quest_str = Player.quests[quest_str_idx]
             mqp = quest.dict_to_mqp(quest_str)
             # Final place is static
             if mqp.go_to == -1:
@@ -477,14 +466,13 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     map: Map = context.user_data["map"]
     items: ItemsCollection = context.user_data["items"]
     society: Society = context.user_data["people"]
-    player: Player = context.user_data["player"]
     quest_ID_to_str: dict[int, str] = context.user_data["player_quests"]
     # Get a quest definition string based on ordinal number before quest
     visual_quest_ID = int(update.message.text.split(". ")[0])
     quest_str = quest_ID_to_str[visual_quest_ID]
     quest_mqp = quest.dict_to_mqp(quest_str)
 
-    progress = player.progress[visual_quest_ID - 1]
+    progress = Player.progress[visual_quest_ID - 1]
 
     # Final message is based from multiple parts.
     # Each part starts with emoji which is based on the if player already finished this part
@@ -564,13 +552,12 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Opens menu for player to choose an action he wants to perform. If there is no option available it returns him to main menu"""
     town_map: Map = context.user_data["map"]
-    player: Player = context.user_data["player"]
     society: Society = context.user_data["people"]
     current_characters: ModifiedPeople = context.user_data["current_people"]
 
-    action_dict, people_here = player.get_actions(current_characters, town_map)
+    action_dict, people_here = Player.get_actions(current_characters, town_map)
 
-    char_ID_to_relation = player.get_relationships(people_here, society)
+    char_ID_to_relation = Player.get_relationships(people_here, society)
 
     # Save relations with characters since it is gonna be needed while interacting with them
     context.user_data["char_ID_to_relation"] = char_ID_to_relation
@@ -584,9 +571,9 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for action_type in possible_actions:
                 place_name = possible_actions[action_type]["cz"]
                 place_fraction = possible_actions[action_type]["fraction"]
-                reply_keyboard.append([f"\U0001F6D2 Nakoupit {place_name} \U0001F6D2"] + ([f"\U0001F4B2 Prodat {place_name} \U0001F4B2"] if len(player.items) > 0 else []))
+                reply_keyboard.append([f"\U0001F6D2 Nakoupit {place_name} \U0001F6D2"] + ([f"\U0001F4B2 Prodat {place_name} \U0001F4B2"] if len(Player.items) > 0 else []))
 
-        # reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
+        # reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(Player.items) > 0 else []))
     if len(people_here) > 0:
         await update.message.reply_text(f"Když se rozhlédneš kolem sebe, tak vidíš, že tu je {' a '.join(['*' + x.get_name_cz(society) + '*' for x in people_here])}\.", parse_mode="MarkdownV2")
         context.user_data["people_here"] = people_here
@@ -646,7 +633,6 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #talk_to_person
 async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start interaction with chosen NPC"""
-    player: Player = context.user_data["player"]
     char_ID_to_relation = context.user_data["char_ID_to_relation"]
     society: Society = context.user_data["people"]
 
@@ -711,7 +697,6 @@ async def talk_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def open_sell_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to choose which item to sell"""
     i_c: ItemsCollection = context.user_data["items"]
-    player: Player = context.user_data["player"]
     action_dict: list[dict[str, dict[str, str|int]]] = context.user_data["action_dict"]
 
     item_type_name = " ".join(update.message.text.split(" ")[2:-1])
@@ -724,7 +709,7 @@ async def open_sell_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
             break
 
      #TODO make prices based on fraction relationships + type of shop
-    reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(i_c.get_fraction_price(i_c.get_item(item_idx).price, seller_fraction_ID, "sell")) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
+    reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(i_c.get_fraction_price(i_c.get_item(item_idx).price, seller_fraction_ID, "sell")) + ")"] for item_idx in Player.items] + [["Zpět do menu"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Čeho by ses rád zbavil?", reply_markup=markup)
     return "sell_item"
@@ -760,19 +745,18 @@ async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to resolve which item has been chosen to be sold and sell him"""
     i_c: ItemsCollection = context.user_data["items"]
-    player: Player = context.user_data["player"]
 
     chosen_item_name = update.message.text.split(" (")[0]
     item_price = int(update.message.text.split()[-1][1:-1])
     item = i_c.get_item_from_name(chosen_item_name)
 
     #TODO base price on relations
-    player.coins += item_price
-    player.remove_item(item.ID)
+    Player.coins += item_price
+    Player.remove_item(item.ID)
 
     #TODO make prices based on fraction relationships
-    if len(player.items) > 0:
-        reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(int(i_c.get_item(item_idx).price * 0.8)) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
+    if len(Player.items) > 0:
+        reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(int(i_c.get_item(item_idx).price * 0.8)) + ")"] for item_idx in Player.items] + [["Zpět do menu"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         await update.message.reply_text("Dobrý. Máš ještě něco na prodej?", reply_markup=markup)
         return "sell_item"
@@ -783,16 +767,15 @@ async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #buy_item
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to check if player can afford the item ho chose and following adding this item into his inventory"""
-    player: Player = context.user_data["player"]
     # Get rid of the price tag
     chosen_item_name = update.message.text.split(" (")[0]
     item_price = int(update.message.text.split()[-1][1:-1])
     item_ID = ItemsCollection.name_cz_to_ID[chosen_item_name]
-    if item_price > player.coins:
+    if item_price > Player.coins:
         await update.message.reply_text("Předmět je na tebe bohužel moc drahý")
     else:
-        player.coins -= item_price
-        player.items.append(item_ID)
+        Player.coins -= item_price
+        Player.items.append(item_ID)
         await update.message.reply_text(
             f"Úspěšně sis zakoupil *{chosen_item_name}*\. Kdybys tento předmět náhodou hledal, tak na tebe bude čekat v inventáři\.",
             parse_mode="MarkdownV2"
@@ -831,7 +814,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to player's desired place and describes part of the path"""
     town_map: Map = context.user_data["map"]
-    start_place_ID: int = context.user_data["player"].place_ID
+    start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = town_map.name_cz_to_ID[update.message.text]
     path = town_map.shortest_path(start_place_ID, final_place_ID)
@@ -892,7 +875,7 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     town_map: Map = context.user_data["map"]
     society: Society = context.user_data["people"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
-    start_place_ID: int = context.user_data["player"].place_ID
+    start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = current_chars.get_NPC(society.name_cz_to_ID[update.message.text]).place_ID
     path = town_map.shortest_path(start_place_ID, final_place_ID)
@@ -926,8 +909,8 @@ async def resolve_attack_results(failed: bool, action: str, update: Update, play
                 "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
                 parse_mode="MarkdownV2",
             )
-            player.state = "stun"
-            player.stun_player(3)
+            Player.state = "stun"
+            Player.stun_player(3)
             return "stun"
     else:
         if action == "kill":
@@ -957,19 +940,18 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         action = "stun"
 
-    player: Player = context.user_data["player"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
     defender_ID = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
     society: Society = context.user_data["people"]
 
-    current_characters, failed = handler.fight(player, defender, action, current_chars)
+    current_characters, failed = handler.fight(Player, defender, action, current_chars)
     context.user_data["current_people"] = current_characters
 
     await update.message.reply_text(Helper.get_fight_results(society), parse_mode="MarkdownV2")
 
     #Take care of what happened to player
-    result = await resolve_attack_results(failed, action, update, player, society.get_char_by_ID(defender_ID).name_cz)
+    result = await resolve_attack_results(failed, action, update, Player, society.get_char_by_ID(defender_ID).name_cz)
     if result == "stun":
 
         await rotation(update.message.chat.id, context, update)
@@ -987,7 +969,6 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif re.search("Nastražit předmět", update.message.text) is not None:
         action = "plant"
 
-    player: Player = context.user_data["player"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
     society: Society = context.user_data["people"]
     # i_c: ItemsCollection = context.user_data["items"]
@@ -995,21 +976,21 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     defender = current_chars.get_NPC(defender_ID)
 
 
-    current_characters, failed = handler.steal(player, defender, action, current_chars)
+    current_characters, failed = handler.steal(Player, defender, action, current_chars)
 
     context.user_data["current_people"] = current_characters
 
     if Helper.fight_happened():
         await update.message.reply_text(Helper.get_fight_results(society), parse_mode="MarkdownV2")
 
-    # On failure, player gets stunned
+    # On failure, Player gets stunned
     if failed:
 
         await update.message.reply_text(
             "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
             parse_mode="MarkdownV2",
         )
-        player.stun_player(3)
+        Player.stun_player(3)
         await rotation(update.message.chat.id, context, update)
 
     else:
@@ -1023,7 +1004,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return "item_to_steal"
 
         elif action == "plant":
-            reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in player.items] + [["Vlastně nic"]]
+            reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in Player.items] + [["Vlastně nic"]]
             markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
             await update.message.reply_text("Tak co tam nastražíš?",reply_markup=markup)
             return "item_to_plant"
@@ -1038,14 +1019,13 @@ async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     item_ID = i_c.name_cz_to_ID[update.message.text]
     # Remove item from inventory
-    context.user_data["player"].items.remove(item_ID)
+    Player.items.remove(item_ID)
     # Add to enemy's inventory
     context.user_data["current_people"].give_character_item(context.user_data["victim"].ID, item_ID)
     
-    player: Player = context.user_data["player"]
 
-    if len(player.items) > 0:
-        reply_keyboard = [[ i_c.get_item(item).name_cz] for item in player.items] + [["Už nic dalšího"]]
+    if len(Player.items) > 0:
+        reply_keyboard = [[ i_c.get_item(item).name_cz] for item in Player.items] + [["Už nic dalšího"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         await update.message.reply_text("Ještě něco?",reply_markup=markup)
 
@@ -1059,15 +1039,14 @@ async def item_to_plant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     i_c: ItemsCollection = context.user_data["items"]
     victim: ModifiedNPC = context.user_data["victim"]
-    player: Player = context.user_data["player"]
 
     if re.search("penízků", update.message.text):
-        player.coins += victim.coins
+        Player.coins += victim.coins
         victim.coins = 0
     else:
         item_ID = i_c.name_cz_to_ID[update.message.text]
         # Add item to inventory
-        player.items.append(item_ID)
+        Player.items.append(item_ID)
         # Remove from enemy's inventory
         victim.items.remove(item_ID)
 
@@ -1087,7 +1066,6 @@ async def item_to_steal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 #specific_opration
 async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function takes care of what happens when player has chosen an specific operation"""
-    player: Player = context.user_data["player"]
     char_ID: int = context.user_data["char_ID"]
     character_specific_actions: list[tuple[str, str]] = context.user_data["character_specific_actions"][char_ID]
 
@@ -1113,15 +1091,15 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # with which player interacts player gets a reward for this quest
     # Quest and progress is then removed
     elif action == "quest_reward":
-        for quest_idx in range(len(player.quests)):
-            quest_mqp = quest.dict_to_mqp(player.quests[quest_idx])
+        for quest_idx in range(len(Player.quests)):
+            quest_mqp = quest.dict_to_mqp(Player.quests[quest_idx])
             if quest_mqp.characterID == char_ID:
                 await update.message.reply_text(f"Úspěšně sis vyzvedl odměnu.")
-                player.coins += quest_mqp.reward["coins"]
+                Player.coins += quest_mqp.reward["coins"]
                 if quest_mqp.reward["item"] != -1:
-                    player.items.append(quest_mqp.reward["item"])
-                player.quests.pop(quest_idx)
-                player.progress.pop(quest_idx)
+                    Player.items.append(quest_mqp.reward["item"])
+                Player.quests.pop(quest_idx)
+                Player.progress.pop(quest_idx)
                 character_specific_actions.remove([update.message.text, action])
                 break
         return await generate_basic_window(update, context)
@@ -1131,11 +1109,10 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def generate_basic_window(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     """Function creates basic menu with choices for player about what he wants to do next"""
     # Check if any quest has ended
-    player: Player = context.user_data["player"]
     current_people: ModifiedPeople = context.user_data["current_people"]
     # Player can finish quest in place and it might happen next phase is also here
     # Therefore quest progress should be refreshed after players every action
-    completed_quests = player.check_quest_action_complete(current_people)
+    completed_quests = Player.check_quest_action_complete(current_people)
     await generate_quest_finishes(context, completed_quests)
     reply_keyboard = [["\u25B6 Provést akci \u25B6"], ["\U0001F4CA Postava \U0001F4CA"], ["\U0001F463 Jít dál \U0001F463"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
