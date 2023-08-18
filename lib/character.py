@@ -24,17 +24,22 @@ class Fraction:
 class PoliticalMap:
     """Class to store all Fractions objects"""
 
+    fractions = []
+
     def __init__(self) -> None:
-        self.fractions = []
+        pass
 
-    def add_fraction(self, fraction: Fraction) -> None:
-        self.fractions.append(fraction)
+    @staticmethod
+    def add_fraction(fraction: Fraction) -> None:
+        PoliticalMap.fractions.append(fraction)
 
-    def __repr__(self):
-        return "\n".join([str(x) for x in self.fractions])
+    @staticmethod
+    def __repr__():
+        return "\n".join([str(x) for x in PoliticalMap.fractions])
 
-    def get_fraction(self, ID: int) -> Fraction:
-        return self.fractions[ID]
+    @staticmethod
+    def get_fraction(ID: int) -> Fraction:
+        return PoliticalMap.fractions[ID]
 
 
 class NPC:
@@ -124,19 +129,19 @@ def read_people_from_file(path: str):
     csv_file.close()
 
 
-def read_fractions_from_file(path: str) -> PoliticalMap:
+def read_fractions_from_file(path: str):
     """Function to read data about fractions from csv file.
     Function returns PoliticalMap object where all fractions are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
-    political_map = PoliticalMap()
+    PoliticalMap.fractions = []
+
     for row in reader:
-        political_map.add_fraction(
+        PoliticalMap.add_fraction(
             Fraction(row["ID"], row["name_cz"], row["residence_ID"], row["relations"]))
 
     csv_file.close()
-    return political_map
 
 
 if __name__ == "__main__":

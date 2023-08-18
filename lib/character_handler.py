@@ -1,4 +1,4 @@
-from character import read_fractions_from_file, NPC, Society
+from character import NPC, Society, PoliticalMap
 from quest import dict_to_mqp
 from map import read_map_from_file
 from items import ItemsCollection
@@ -349,11 +349,9 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     return modified_characters
 
 
-def how_char1_loves_char2(
-    char1: NPC, char2: NPC, fractions=read_fractions_from_file(r"data\fractions.csv")
-) -> int:
+def how_char1_loves_char2(char1: NPC, char2: NPC) -> int:
     """get on which level is relationship of char 1 with char 2"""
-    return fractions.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
+    return PoliticalMap.get_fraction(char1.fraction_ID).relations[char2.fraction_ID]
 
 
 def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
@@ -393,7 +391,6 @@ def fight(
     otherwise attacker: ModifiedNPC
     Function returns 2 values, first is list of newly modified people and second is falure/success of an attack
     """
-    fractions = read_fractions_from_file(r"data\fractions.csv")
 
     # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
@@ -410,7 +407,7 @@ def fight(
     if (
         attacker.speed > defender.speed + 1
         or attacker_fraction == defender_NPC.fraction_ID
-        or fractions.get_fraction(defender_NPC.fraction_ID).relations[attacker_fraction]
+        or PoliticalMap.get_fraction(defender_NPC.fraction_ID).relations[attacker_fraction]
         >= 2
     ):
         attacker_bonus = 1
@@ -517,7 +514,6 @@ def steal(
     """Function takes care of an action where attacker tries to steal (or plant) items from defender
     Function returns updated ModifiedPeople and information about success/failure
     Similarly to fight, attacker might be a Player object"""
-    fractions = read_fractions_from_file(r"data\fractions.csv")
 
     # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
@@ -535,7 +531,7 @@ def steal(
 
     # Get relations based on attacker type
     if isinstance(attacker, ModifiedNPC):
-        if how_char1_loves_char2(defender_NPC, attacker_NPC, fractions) >= 3:
+        if how_char1_loves_char2(defender_NPC, attacker_NPC) >= 3:
             attacker_bonus += 1
     else:
         if (

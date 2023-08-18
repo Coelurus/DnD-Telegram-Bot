@@ -50,16 +50,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 
 
 #load_static_data
-def load_static_data(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Function to read data from csv files and saving them in dict user_data that is available from every function called by Conversation Handler.
+def load_static_data() -> None:
+    """Function to read data from csv files and saving them as values in static classes.
     Thus game data do not have to be rewritten into the save file after every single action
     """
 
     character.read_people_from_file(r"data\characters.csv")
     items.read_items_from_file(r"data\items.csv")
-
-    context.user_data["map"] = map.read_map_from_file(r"data\streets.csv")
-    context.user_data["fractions"] = character.read_fractions_from_file(r"data\fractions.csv")
+    map.read_map_from_file(r"data\streets.csv")
+    character.read_fractions_from_file(r"data\fractions.csv")
 
 
 #load_dynamic_data
@@ -93,7 +92,7 @@ async def start_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     If game have not existed before it will be created.\n
     If it did the progress will be lost"""
 
-    load_static_data(context)
+    load_static_data()
     chat_ID = update.message.chat.id
     save.generate_new_save(chat_ID)
 
@@ -125,7 +124,7 @@ async def read_old_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return ConversationHandler.END
 
     # saving Player data with up-to-date data to a user-specific dict
-    load_static_data(context)
+    load_static_data()
     load_dynamic_data(context, current_save)
 
     await update.message.reply_text(f"\u2728 *{Player.round}*\. kolo \u2728", parse_mode="MarkdownV2")
@@ -228,7 +227,6 @@ async def move_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 #change_location
 async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function that determines which place player chose to move to and moves him there."""
-    town_map: Map = context.user_data["map"]
     street_name = update.message.text.split(" (")[0]
     move_options, current_street = Player.move_possibilities()
 
@@ -237,13 +235,13 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check if player chose a place where he can actually move to
     if street_name in [street.name_cz for street in move_options + [current_street]]:
-        new_street_ID = town_map.name_cz_to_ID[street_name]
+        new_street_ID = Map.name_cz_to_ID[street_name]
         Player.place_ID = new_street_ID
 
         # Check if street name was tagged with "(stay here)" thus player stayed on the same place and went for another round
         if len(street_name) == len(update.message.text):
             await update.message.reply_text(
-                town_map.get_street_by_ID(new_street_ID).description_cz
+                Map.get_street_by_ID(new_street_ID).description_cz
             )
         else:
             await update.message.reply_text("Svět se hnul, ale tys zůstal na místě.")
@@ -272,10 +270,9 @@ async def change_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #inspect_player
 async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function returns data about characters current state and creates menu for a of other choices."""
-    town_map = context.user_data["map"]
     chat_ID = update.message.chat.id
     
-    player_information = f"Místo, kde se nacházíš, se jmenuje *{town_map.get_street_by_ID(Player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{Player.coins}` peněz\n{', '.join([f'_{ItemsCollection.get_item(x).name_cz}_' for x in Player.items])}\n\n`Úroveň rychlosti: {Player.speed}\nÚroveň síly: {Player.strength}`\n\nMomentálně máš vybavené tyto zbraně:\n{', '.join([f'_{ItemsCollection.get_item(x).name_cz}_' for x in Player.equiped_weapons])}"
+    player_information = f"Místo, kde se nacházíš, se jmenuje *{Map.get_street_by_ID(Player.place_ID).name_cz}*\.\n\nMomentálně u sebe máš:\n`{Player.coins}` peněz\n{', '.join([f'_{ItemsCollection.get_item(x).name_cz}_' for x in Player.items])}\n\n`Úroveň rychlosti: {Player.speed}\nÚroveň síly: {Player.strength}`\n\nMomentálně máš vybavené tyto zbraně:\n{', '.join([f'_{ItemsCollection.get_item(x).name_cz}_' for x in Player.equiped_weapons])}"
     await context.bot.send_message(chat_ID, player_information, parse_mode="MarkdownV2")
 
     # Creating menu for other choices
@@ -411,7 +408,6 @@ async def replace_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #open_quests
 async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function generates menu with all the quests player has available"""
-    map: Map = context.user_data["map"]
 
     # Create dictionary to be able to identify quest definition by ID od that quest
     quest_ID_to_str: dict[int, str] = dict()
@@ -428,7 +424,7 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if mqp.go_to == -1:
                 reply_keyboard += [
                     [
-                        f"{quest_str_idx+1}. Dostav se na místo {map.get_street_by_ID(mqp.to_place_ID).name_cz}"
+                        f"{quest_str_idx+1}. Dostav se na místo {Map.get_street_by_ID(mqp.to_place_ID).name_cz}"
                     ]
                 ]
             # Final place is based on character
@@ -456,7 +452,6 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #get_quest
 async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to output specification of chosen quest and to track the progress player did"""
-    map: Map = context.user_data["map"]
     quest_ID_to_str: dict[int, str] = context.user_data["player_quests"]
     # Get a quest definition string based on ordinal number before quest
     visual_quest_ID = int(update.message.text.split(". ")[0])
@@ -479,7 +474,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from_txt += (
         ""
         if quest_mqp.from_place_ID == -1
-        else f"Dostav se sem: _{map.get_street_by_ID(quest_mqp.from_place_ID).name_cz}_\n"
+        else f"Dostav se sem: _{Map.get_street_by_ID(quest_mqp.from_place_ID).name_cz}_\n"
     )
 
     item_txt = (
@@ -499,7 +494,7 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     to_txt = "\u2705 " if progress == "ended" or progress == "infinal" else "\u2716 "
 
     to_txt += (
-        f"Dojdi do: _{map.get_street_by_ID(quest_mqp.to_place_ID).name_cz}_"
+        f"Dojdi do: _{Map.get_street_by_ID(quest_mqp.to_place_ID).name_cz}_"
         if quest_mqp.go_to == -1
         else f"Cílem je: _{Society.get_char_by_ID(quest_mqp.go_to).name_cz}_"
     )
@@ -542,10 +537,9 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #make_action
 async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Opens menu for player to choose an action he wants to perform. If there is no option available it returns him to main menu"""
-    town_map: Map = context.user_data["map"]
     current_characters: ModifiedPeople = context.user_data["current_people"]
 
-    action_dict, people_here = Player.get_actions(current_characters, town_map)
+    action_dict, people_here = Player.get_actions(current_characters)
 
     char_ID_to_relation = Player.get_relationships(people_here)
 
@@ -771,7 +765,6 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #ask_for_path
 async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Player asks NPC if he could help him with finding a way to another place. Answer is based on their relationship"""
-    town_map: Map = context.user_data["map"]
     char_relation = context.user_data["char_relation"]
     if char_relation == 0:
         await update.message.reply_text("To si snad děláš srandu? Po tom cos udělal našim lidem. Padej!")
@@ -788,7 +781,7 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = "'Uhh...asi bych věděl...podle toho kam?'"
         context.user_data["num_of_streets"] = 3
 
-    reply_keyboard = sorted([[x.name_cz] for x in town_map.streets])
+    reply_keyboard = sorted([[x.name_cz] for x in Map.streets])
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(text, reply_markup=markup)
     return "look_for_path"
@@ -797,7 +790,6 @@ async def ask_for_path(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #find_path_to
 async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to player's desired place and describes part of the path"""
-    town_map: Map = context.user_data["map"]
     start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
     final_place_ID: int = town_map.name_cz_to_ID[update.message.text]
@@ -810,13 +802,13 @@ async def find_path_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif len(path) - 2 > len(revealed_path):
         await update.message.reply_text(
             "Jo tak to první bude "
-            + " a pak ".join(["*" + town_map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
+            + " a pak ".join(["*" + Map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
             + " a pak to už nějak najdeš\.\.\.", parse_mode="MarkdownV2"
         )
     elif len(path) - 2 <= len(revealed_path):
         await update.message.reply_text(
             "Jo tak to první bude "
-            + " a pak ".join(["*" + town_map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
+            + " a pak ".join(["*" + Map.get_street_by_ID(x).name_cz + "*" for x in revealed_path])
             + ", což je tvůj cíl\.", parse_mode="MarkdownV2"
         )
 
@@ -855,7 +847,6 @@ async def ask_for_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #path_to_person
 async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Based on how much does NPC like player he hints him how to get to find the person"""
-    town_map: Map = context.user_data["map"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
     start_place_ID: int = Player.place_ID
     num_of_streets: int = context.user_data["num_of_streets"]
@@ -866,7 +857,7 @@ async def path_to_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(path) <= 1:
         await update.message.reply_text("Rozhlídni se kolem...")
     elif len(path) <= num_of_streets:
-        await update.message.reply_text(f"Myslím, že *{town_map.get_street_by_ID(path[-1]).name_cz}* je místo, které hledáš\.", parse_mode="MarkdownV2")
+        await update.message.reply_text(f"Myslím, že *{Map.get_street_by_ID(path[-1]).name_cz}* je místo, které hledáš\.", parse_mode="MarkdownV2")
     else:
         await update.message.reply_text(f"Fakt nemám nejmenší páru, kde momentálně je...")
 

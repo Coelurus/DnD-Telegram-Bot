@@ -60,17 +60,18 @@ class ItemsCollection:
         return int(modifier * base_price)
 
 
-def read_items_from_file(path: str) -> ItemsCollection:
+def read_items_from_file(path: str):
     """Function to read data about items from csv file.
     Function returns ItemsCollection object where all Items are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
-    items = ItemsCollection()
+    ItemsCollection.list_of_items = []
+    ItemsCollection.name_cz_to_ID = dict()
+
     for row in reader:
-        items.add_item(
+        ItemsCollection.add_item(
             Item(row["ID"], row["name_cz"], row["legal"], row["speed_mod"], row["strength_mod"], row["price"], row["description_cz"], row["type"], row["usage"], row["duration"]))
 
     csv_file.close()
-    return items
 

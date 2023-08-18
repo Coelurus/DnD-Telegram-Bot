@@ -1,9 +1,10 @@
 from tkinter import CURRENT
-from map import read_map_from_file, Street
+from map import read_map_from_file, Street, Map
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
 from items import Item, ItemsCollection
 from quest import ModifiedQuestPhase, dict_to_mqp
+
 
 
 class Player:
@@ -140,14 +141,14 @@ class Player:
         return options, current_street
 
     @staticmethod
-    def get_actions(current_characters: ModifiedPeople, map=read_map_from_file("data\streets.csv")) -> tuple[list[dict[str, dict[str, str|int]]], list[ModifiedNPC]]:
+    def get_actions(current_characters: ModifiedPeople) -> tuple[list[dict[str, dict[str, str|int]]], list[ModifiedNPC]]:
         """
         Method takes current state of NPCs and returns 2 values:
         1. list of dicts of possible actions 
         2. list of all characters that are in the same location as player
         """
         people_here = current_characters.get_people_in_place(Player.place_ID)
-        action_dict = map.get_street_by_ID(Player.place_ID).possibilites
+        action_dict = Map.get_street_by_ID(Player.place_ID).possibilites
  
         return action_dict, people_here
 
