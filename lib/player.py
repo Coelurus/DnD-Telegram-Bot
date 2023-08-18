@@ -181,12 +181,12 @@ class Player:
         Player.items.remove(item.ID)
 
     @staticmethod
-    def stun_player(duration: int) -> None:
+    def stun_me(duration=3) -> None:
         """Check if player is not already stunned and then stun him more"""
-        #TODO add character name
+        
         for idx, effect in enumerate(Player.duration):
-            if effect["type"] == "stun":
-                Player.duration[idx]["duration"] += duration
+            if effect["type"] == "stun" and Player.duration[idx]["duration"] < duration:
+                Player.duration[idx]["duration"] = duration
                 return
 
         Player.duration.append({"type": "stun", "duration": duration, "source": "some character"})

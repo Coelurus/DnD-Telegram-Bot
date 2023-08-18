@@ -33,9 +33,9 @@ class ModifiedNPC:
         self.line = int(line)
         self.phase = phase
         self.stage = stage
-        # self.items = [int(x) for x in items.split(";") if x != ""]
         self.items = [int(x) for x in items if x != ""]
         self.state = state
+        self.duration = 0
 
     def __repr__(self):
         line_part = ""
@@ -48,6 +48,10 @@ class ModifiedNPC:
 
     def get_name_cz(self, society: Society):
         return society.get_char_by_ID(self.ID).name_cz
+
+    def stun_me(self, duration=4):
+        self.state = "stun"
+        self.duration = duration
 
 
 class ModifiedPeople:
@@ -85,6 +89,7 @@ class ModifiedPeople:
             character_json[-1]["phase"] = NPC.phase
             character_json[-1]["stage"] = NPC.stage
             character_json[-1]["state"] = NPC.state
+            character_json[-1]["duration"] = NPC.duration
 
         return character_json
 
@@ -321,7 +326,6 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                 minimum_enemies = 100
                 possible_final_points = [character.place_ID]
                 #Find the one with smallest danger
-                print(possible_choices)
                 for possible_street in possible_choices:
                     if possible_choices[possible_street] < minimum_enemies:
                         minimum_enemies = possible_choices[possible_street] 
@@ -329,8 +333,6 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                     elif possible_choices[possible_street] == minimum_enemies:
                         possible_final_points.append(possible_street)
                 final_point = choice(possible_final_points)
-
-                print(final_point)
 
             
             # Character has designated end location
@@ -359,6 +361,10 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
 
             character.place_ID = next_place
 
+        elif character.state == "stun":
+            character.duration -= 1
+            if character.duration == 0:
+                character.state = "alive"
     return modified_characters
 
 
@@ -478,19 +484,19 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
                 Helper.add_dead_char(char)
         elif action == "stun":
             for char in defender_side:
-                char.state = "stun"
+                char.stun_me()
                 stun_list.append(char)
                 Helper.add_stunned_char(char)
 
     elif total_attack_power > total_defend_power:
         for char in defender_side:
-            char.state = "stun"
+            char.stun_me()
             stun_list.append(char)
             Helper.add_stunned_char(char)
 
     elif total_attack_power == total_defend_power:
         for char in defender_side + attacker_side:
-            char.state = "stun"
+            char.stun_me()
             phase_failed = True
             stun_list.append(char)
             Helper.add_stunned_char(char)
@@ -504,7 +510,7 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
                 Helper.add_dead_char(char)
         else:
             for char in attacker_side:
-                char.state = "stun"
+                char.stun_me()
                 phase_failed = True
                 stun_list.append(char)
                 Helper.add_stunned_char(char)

@@ -883,7 +883,7 @@ async def resolve_attack_results(failed: bool, action: str, update: Update, defe
                 parse_mode="MarkdownV2",
             )
             Player.state = "stun"
-            Player.stun_player(3)
+            Player.stun_me(3)
             return "stun"
     else:
         if action == "kill":
@@ -960,7 +960,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
             parse_mode="MarkdownV2",
         )
-        Player.stun_player(3)
+        Player.stun_me(3)
         await rotation(update.message.chat.id, context, update)
 
     else:
