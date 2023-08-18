@@ -51,9 +51,10 @@ class ItemsCollection:
                 type_list.append(item)
         return type_list
 
-    def get_fraction_price(self, base_price: int, fraction_relation: int):
+    def get_fraction_price(self, base_price: int, fraction_relation: int, deal_type: str):
         """Method to determinate final price based on your relation with fraction to whom said store belongs"""
-        modifier = 1 - (fraction_relation - Fraction.base_relation)/10
+        proportion = 1 if deal_type == "buy" else -1
+        modifier = 1 - proportion *(fraction_relation - Fraction.base_relation)/10
         return int(modifier * base_price)
 
 

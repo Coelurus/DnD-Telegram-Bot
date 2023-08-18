@@ -109,6 +109,48 @@ class ModifiedPeople:
         self.list[char_ID].items.remove(item_ID)
 
 
+class Helper:
+    """Class to help printing messages about ongoing information from other classes than main.py"""
+    stunned_chars: list[ModifiedNPC] = []
+    dead_chars: list[ModifiedNPC] = []
+
+
+    def __init__():
+        pass
+
+    @staticmethod
+    def add_stunned_char(char: ModifiedNPC) -> None:
+        Helper.stunned_chars.append(char)
+
+    @staticmethod
+    def get_stunned() -> list[ModifiedNPC]:
+        return Helper.stunned_chars
+
+    @staticmethod
+    def add_dead_char(char: ModifiedNPC) -> None:
+        Helper.dead_chars.append(char)
+
+    @staticmethod
+    def get_dead() -> list[ModifiedNPC]:
+        return Helper.dead_chars
+
+    @staticmethod
+    def clean() -> None:
+        Helper.dead_chars = []
+        Helper.stunned_chars = []
+
+    @staticmethod
+    def get_fight_results(society: Society) -> str:
+        results_str = "*Výsledky souboje:* " + "\n"
+        results_str += "_Omráčeni jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_stunned()]) + "\n"
+        results_str += "_Zabiti jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_dead()])
+        Helper.clean()
+        return results_str
+
+    @staticmethod
+    def fight_happened() -> bool:
+        return len(Helper.stunned_chars) > 0 or len(Helper.dead_chars) > 0
+
 def get_current_characters(old_character_save: list[dict[str]]) -> ModifiedPeople:
     """
     Function takes the part of save string which has data about characters and returns ModifiedPeople object that store ModifiedNPC object for every single character
@@ -343,7 +385,7 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
 
 
 def fight(
-    attacker,
+    attacker: ModifiedNPC,
     defender: ModifiedNPC,
     action: str,
     current_characters: ModifiedPeople,
@@ -416,11 +458,11 @@ def fight(
     total_defend_power = sum([x.strength for x in defender_side]) + items_defender_mod
 
 
-    phase_failed = resolve_fight(action , total_attack_power , total_defend_power , attacker_side, defender_side)
+    phase_failed = resolve_fight(action , total_attack_power , total_defend_power , attacker_side, defender_side, isinstance(attacker, ModifiedNPC))
 
     return current_characters, phase_failed
 
-def resolve_fight(action: str, total_attack_power: int, total_defend_power: int, attacker_side: list[ModifiedNPC], defender_side: list[ModifiedNPC]):
+def resolve_fight(action: str, total_attack_power: int, total_defend_power: int, attacker_side: list[ModifiedNPC], defender_side: list[ModifiedNPC], attacker_is_NPC: bool):
     dead_list: list[ModifiedNPC] = []
     stun_list: list[ModifiedNPC] = []
     phase_failed = False
@@ -431,21 +473,25 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
             for char in defender_side:
                 char.state = "dead"
                 dead_list.append(char)
+                Helper.add_dead_char(char)
         elif action == "stun":
             for char in defender_side:
                 char.state = "stun"
                 stun_list.append(char)
+                Helper.add_stunned_char(char)
 
     elif total_attack_power > total_defend_power:
         for char in defender_side:
             char.state = "stun"
             stun_list.append(char)
+            Helper.add_stunned_char(char)
 
     elif total_attack_power == total_defend_power:
         for char in defender_side + attacker_side:
             char.state = "stun"
             phase_failed = True
             stun_list.append(char)
+            Helper.add_stunned_char(char)
 
     elif total_attack_power < total_defend_power:
         if action == "kill":
@@ -453,11 +499,16 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
                 char.state = "dead"
                 phase_failed = True
                 dead_list.append(char)
+                Helper.add_dead_char(char)
         else:
             for char in attacker_side:
                 char.state = "stun"
                 phase_failed = True
                 stun_list.append(char)
+                Helper.add_stunned_char(char)
+
+    if attacker_is_NPC:
+        Helper.clean()
 
     for char in dead_list:
         char.stage = "ended"

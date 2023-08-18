@@ -299,3 +299,6 @@ class Player:
             if self.progress[quest_idx] == "ended":
                 ended_quests.append(self.quests[quest_idx])
         return ended_quests
+
+    def get_name_cz(self, _):
+        return "*TY*"

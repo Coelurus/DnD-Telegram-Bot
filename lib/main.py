@@ -1,4 +1,3 @@
-from argparse import Action
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -16,7 +15,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from character_handler import ModifiedNPC
+from character_handler import ModifiedNPC, Helper
 import save
 import map
 from map import Map
@@ -585,7 +584,7 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for action_type in possible_actions:
                 place_name = possible_actions[action_type]["cz"]
                 place_fraction = possible_actions[action_type]["fraction"]
-                reply_keyboard.append([f"\U0001F6D2 Nakoupit {place_name} \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
+                reply_keyboard.append([f"\U0001F6D2 Nakoupit {place_name} \U0001F6D2"] + ([f"\U0001F4B2 Prodat {place_name} \U0001F4B2"] if len(player.items) > 0 else []))
 
         # reply_keyboard.append(["\U0001F6D2 Nakoupit v obchodě \U0001F6D2"] + (["Prodat předměty"] if len(player.items) > 0 else []))
     if len(people_here) > 0:
@@ -713,9 +712,19 @@ async def open_sell_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Function to choose which item to sell"""
     i_c: ItemsCollection = context.user_data["items"]
     player: Player = context.user_data["player"]
+    action_dict: list[dict[str, dict[str, str|int]]] = context.user_data["action_dict"]
+
+    item_type_name = " ".join(update.message.text.split(" ")[2:-1])
+
+    #TODO find some fancier way to choose which type player clicked and not disect and translate czech name
+    for action in action_dict:
+        if action["shop"]["cz"] == item_type_name:
+            item_type = action["shop"]["type"]
+            seller_fraction_ID: int = action["shop"]["fraction"]
+            break
 
      #TODO make prices based on fraction relationships + type of shop
-    reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(int(i_c.get_item(item_idx).price * 0.8)) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
+    reply_keyboard = [[i_c.get_item(item_idx).name_cz + " (" + str(i_c.get_fraction_price(i_c.get_item(item_idx).price, seller_fraction_ID, "sell")) + ")"] for item_idx in player.items] + [["Zpět do menu"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text("Čeho by ses rád zbavil?", reply_markup=markup)
     return "sell_item"
@@ -739,7 +748,7 @@ async def open_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Creates menu of all items that can be bought with a price tag
     reply_keyboard = [
-        [item.name_cz + " (" + str(i_c.get_fraction_price(item.price, seller_fraction_ID)) + ")"] for item in items_to_sell
+        [item.name_cz + " (" + str(i_c.get_fraction_price(item.price, seller_fraction_ID, "buy")) + ")"] for item in items_to_sell
     ]
     reply_keyboard.append(["Zpět do menu"])
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -754,10 +763,11 @@ async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     player: Player = context.user_data["player"]
 
     chosen_item_name = update.message.text.split(" (")[0]
+    item_price = int(update.message.text.split()[-1][1:-1])
     item = i_c.get_item_from_name(chosen_item_name)
 
     #TODO base price on relations
-    player.coins += int(item.price * 0.8)
+    player.coins += item_price
     player.remove_item(item.ID)
 
     #TODO make prices based on fraction relationships
@@ -956,9 +966,12 @@ async def attack_on_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     current_characters, failed = handler.fight(player, defender, action, current_chars)
     context.user_data["current_people"] = current_characters
 
+    await update.message.reply_text(Helper.get_fight_results(society), parse_mode="MarkdownV2")
+
     #Take care of what happened to player
     result = await resolve_attack_results(failed, action, update, player, society.get_char_by_ID(defender_ID).name_cz)
     if result == "stun":
+
         await rotation(update.message.chat.id, context, update)
     elif result == "dead":
         return await end_game(update, context)
@@ -976,6 +989,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     player: Player = context.user_data["player"]
     current_chars: ModifiedPeople = context.user_data["current_people"]
+    society: Society = context.user_data["people"]
     # i_c: ItemsCollection = context.user_data["items"]
     defender_ID:int = context.user_data["char_ID"]
     defender = current_chars.get_NPC(defender_ID)
@@ -985,9 +999,12 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["current_people"] = current_characters
 
-    # On failure, player gets stunned for 2 rounds
+    if Helper.fight_happened():
+        await update.message.reply_text(Helper.get_fight_results(society), parse_mode="MarkdownV2")
+
+    # On failure, player gets stunned
     if failed:
-        #if player.state == "stun":
+
         await update.message.reply_text(
             "Tak tohle se ti moc nepovedlo a bohužel na chvíli *ztrácíš vědomí*\.",
             parse_mode="MarkdownV2",
@@ -998,6 +1015,7 @@ async def steal_from_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         context.user_data["victim"] = defender
         add_money = [[f"{defender.coins} penízků"]] if defender.coins > 0 else [[]]
+
         if action == "rob":
             reply_keyboard = [[ ItemsCollection.get_item(item).name_cz] for item in defender.items] + add_money + [["Vlastně nic"]]
             markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
