@@ -3,11 +3,10 @@ import random
 from character import (
     Society,
     PoliticalMap,
-    read_people_from_file,
     read_fractions_from_file,
 )
 from map import Map, read_map_from_file
-from items import Item, read_items_from_file
+from items import ItemsCollection
 import json
 
 
@@ -25,7 +24,6 @@ class ModifiedQuestPhase:
         rewards_str: str,
     ) -> None:
         # More on all the modifiers in docs
-        characters = read_people_from_file(r"data\characters.csv")
 
         if isinstance(mod_who, int):
             self.quest_phase_ID = qp_ID
@@ -39,9 +37,7 @@ class ModifiedQuestPhase:
                 self.go_to = -1
             else:
                 go_to_char_ID, action = mod_go_to.split(";")
-                self.to_place_ID = characters.get_char_by_ID(
-                    int(go_to_char_ID)
-                ).spawn_street_ID
+                self.to_place_ID = Society.get_char_by_ID(int(go_to_char_ID)).spawn_street_ID
                 self.action = action
                 self.go_to = int(go_to_char_ID)
                 """ID of char to whom u should go"""
@@ -57,7 +53,7 @@ class ModifiedQuestPhase:
                 # TODO add condition that only one character can do one phase
             else:
                 fraction_ID = int(mod_who.lstrip("frac"))
-                character_list = characters.get_characters_by_fraction(fraction_ID)
+                character_list = Society.get_characters_by_fraction(fraction_ID)
             characterID = random.choice(character_list)
 
             self.characterID = int(characterID)
@@ -81,7 +77,7 @@ class ModifiedQuestPhase:
             else:
                 go_to_char_ID, action = mod_go_to.split(";")
 
-                self.to_place_ID = characters.get_char_by_ID(
+                self.to_place_ID = Society.get_char_by_ID(
                     int(go_to_char_ID)
                 ).spawn_street_ID
                 self.action = action
@@ -92,10 +88,8 @@ class ModifiedQuestPhase:
             self.reward: dict[str, int] = {"coins": coins, "item": item}
 
     def __repr__(self):
-        characters = read_people_from_file(r"data\characters.csv")
         map = read_map_from_file(r"data\streets.csv")
-        items = read_items_from_file(r"data\items.csv")
-        return f"{self.quest_phase_ID} is being done by {characters.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {items.get_item(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
+        return f"{self.quest_phase_ID} is being done by {Society.get_char_by_ID(self.characterID).name_cz}. Starts at {map.get_street_by_ID(self.from_place_ID).name_cz} with {ItemsCollection.get_item(self.item_ID).name_cz}. Goes to {map.get_street_by_ID(self.to_place_ID).name_cz} where he {self.action}(action)"
 
     def __str__(self):
         if self.go_to == -1:

@@ -6,30 +6,36 @@ import json
 class Map:
     """Class to store all Streets objects"""
 
+    streets: list[Street] = []
+    # Since player defines place where he wanna move,
+    # there is need to find ID quickly
+    name_cz_to_ID: list[str, int] = dict()
+
     def __init__(self) -> None:
-        self.streets: list[Street] = []
-        # Since player defines place where he wanna move,
-        # there is need to find ID quickly
-        self.name_cz_to_ID: list[str, int] = dict()
+        pass
 
-    def add_street(self, street: Street) -> None:
-        self.streets.append(street)
-        self.name_cz_to_ID[street.name_cz] = street.ID
+    @staticmethod
+    def add_street(street: Street) -> None:
+        Map.streets.append(street)
+        Map.name_cz_to_ID[street.name_cz] = street.ID
         """Dict to easily get Street's ID based on its name"""
-
-    def print_streets_and_connections(self) -> None:
+    
+    @staticmethod
+    def print_streets_and_connections() -> None:
         """
         Prints out all streets and possibilities where to get from them.
         Only dev function to check if everything fits acording to map.
         """
-        for street in self.streets:
+        for street in Map.streets:
             print(street.get_name_cz(), " -> ", ", ".join([
-                  self.streets[x].get_name_cz() for x in street.get_connected_streets()]))
-
-    def shortest_path(self, from_ID: int, to_ID: int) -> list[int]:
-        return [x.ID for x in self.find_shortest_path(*self.BFS(self.get_street_by_ID(from_ID)), self.get_street_by_ID(to_ID))]
-
-    def find_shortest_path(self, BFS_streets: list[Street], BFS_depths: list[int], to_street: Street) -> list[Street]:
+                  Map.streets[x].get_name_cz() for x in street.get_connected_streets()]))
+    
+    @staticmethod
+    def shortest_path(from_ID: int, to_ID: int) -> list[int]:
+        return [x.ID for x in Map.find_shortest_path(*Map.BFS(Map.get_street_by_ID(from_ID)), Map.get_street_by_ID(to_ID))]
+    
+    @staticmethod
+    def find_shortest_path(BFS_streets: list[Street], BFS_depths: list[int], to_street: Street) -> list[Street]:
         """Method takes list of Streets in order of distane from the first street in list 
         and list of depths = distances of other streets from the first 
         and final street and returns list of Streets on path to the to_street"""
@@ -50,41 +56,44 @@ class Map:
 
         path = list(reversed(reversed_path))
         return path
-
-    def BFS(self, from_street: Street) -> tuple[list[Street], list[int]]:
+    
+    @staticmethod
+    def BFS(from_street: Street) -> tuple[list[Street], list[int]]:
         """
         Method takes 1 argument and that is Street type from where the search starts. 
         Method returns tuple of two list where first list are Streets in BFS and second list are 
         distances from the starting street on the exact same indexes as streets.
         """
-        queue = [from_street] + self.convert_IDs_to_streets(
+        queue = [from_street] + Map.convert_IDs_to_streets(
             from_street.get_connected_streets())
         depth = [0] + [1] * (len(queue)-1)
 
         place_idx = 0
         while place_idx < len(queue):
             for neighbourID in queue[place_idx].get_connected_streets():
-                neighbour_street = self.get_street_by_ID(neighbourID)
+                neighbour_street = Map.get_street_by_ID(neighbourID)
                 if neighbour_street not in queue:
                     queue.append(neighbour_street)
                     depth.append(depth[place_idx] + 1)
             place_idx += 1
 
         return queue, depth
-
-    def get_street_by_ID(self, ID: int) -> Street:
+    
+    @staticmethod
+    def get_street_by_ID(ID: int) -> Street:
         """
         The method return Street object identified by ID. If it were to fail method returns False
         """
-        if ID < len(self.streets):
-            return self.streets[ID]
+        if ID < len(Map.streets):
+            return Map.streets[ID]
         return False
-
-    def convert_IDs_to_streets(self, ID_list: list[int]) -> list[Street]:
+    
+    @staticmethod
+    def convert_IDs_to_streets(ID_list: list[int]) -> list[Street]:
         """
         The method takes list of IDs and returns list of Streets based on these IDs. If the ID is invalid, method acts like it do not exist.
         """
-        return [self.get_street_by_ID(ID) for ID in ID_list if self.get_street_by_ID(ID) is not False]
+        return [Map.get_street_by_ID(ID) for ID in ID_list if Map.get_street_by_ID(ID) is not False]
 
 
 class Street:
@@ -98,6 +107,7 @@ class Street:
         self.possibilites = possibilites
         self.access = access
 
+    
     def to_str(self):
         return f"ID[{self.ID}] - {self.name_cz} is connected to: {self.connections}. There is: {self.possibilites}. And access here is: {self.access}. Description be like: {self.description_cz}"
 

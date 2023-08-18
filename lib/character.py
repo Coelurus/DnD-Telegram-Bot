@@ -24,17 +24,22 @@ class Fraction:
 class PoliticalMap:
     """Class to store all Fractions objects"""
 
+    fractions = []
+
     def __init__(self) -> None:
-        self.fractions = []
+        pass
 
-    def add_fraction(self, fraction: Fraction) -> None:
-        self.fractions.append(fraction)
+    @staticmethod
+    def add_fraction(fraction: Fraction) -> None:
+        PoliticalMap.fractions.append(fraction)
 
-    def __repr__(self):
-        return "\n".join([str(x) for x in self.fractions])
+    @staticmethod
+    def __repr__():
+        return "\n".join([str(x) for x in PoliticalMap.fractions])
 
-    def get_fraction(self, ID: int) -> Fraction:
-        return self.fractions[ID]
+    @staticmethod
+    def get_fraction(ID: int) -> Fraction:
+        return PoliticalMap.fractions[ID]
 
 
 class NPC:
@@ -64,71 +69,79 @@ class NPC:
 class Society:
     """Class to store all NPC objects"""
 
+    people_list: list[NPC] = []
+    name_cz_to_ID: dict[str, int] = dict()
+    """Dict to easily get NPC's ID based on his name"""
+
     def __init__(self) -> None:
-        self.people_list: list[NPC] = []
-        self.name_cz_to_ID: dict[str, int] = dict()
-        """Dict to easily get NPC's ID based on his name"""
+        pass
+    
+    @staticmethod
+    def add_person(person: NPC) -> None:
+        Society.people_list.append(person)
+        Society.name_cz_to_ID[person.name_cz] = person.ID
 
-    def add_person(self, person: NPC) -> None:
-        self.people_list.append(person)
-        self.name_cz_to_ID[person.name_cz] = person.ID
-
-    def __repr__(self) -> str:
-        return "\n".join([str(x) for x in self.people_list])
-
-    def get_char_by_ID(self, ID: int) -> NPC:
+    @staticmethod
+    def __repr__() -> str:
+        return "\n".join([str(x) for x in Society.people_list])
+    
+    @staticmethod
+    def get_char_by_ID(ID: int) -> NPC:
         """
         The method return Street object identified by ID. If it were to fail method returns False
         """
-        if ID < len(self.people_list):
-            return self.people_list[ID]
-        return False
 
-    def convert_IDs_to_NPCs(self, ID_list: list[int]) -> list[NPC]:
+        if ID < len(Society.people_list):
+            return Society.people_list[ID]
+        return False
+    
+    @staticmethod
+    def convert_IDs_to_NPCs(ID_list: list[int]) -> list[NPC]:
         """
         The method takes list of IDs and returns list of NPCs based on these IDs. If the ID is invalid, method acts like it do not exist.
         """
-        return [self.get_char_by_ID(ID) for ID in ID_list if self.get_char_by_ID(ID) is not False]
-
-    def get_characters_by_fraction(self, fraction_ID: int) -> list[int]:
+        return [Society.get_char_by_ID(ID) for ID in ID_list if Society.get_char_by_ID(ID) is not False]
+    
+    @staticmethod
+    def get_characters_by_fraction(fraction_ID: int) -> list[int]:
         """
         The method takes ID of fraction and returns list of IDs of characters that belong in the fraction.
         """
         character_IDs_by_fraction = []
-        for character in self.people_list:
+        for character in Society.people_list:
             if character.fraction_ID == fraction_ID:
                 character_IDs_by_fraction.append(character.ID)
         return character_IDs_by_fraction
 
 
-def read_people_from_file(path: str) -> Society:
+def read_people_from_file(path: str):
     """Function to read data about characters from csv file.
     Function returns Society object where all NPCs are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
-    society = Society()
+    Society.people_list = []
+    Society.name_cz_to_ID = dict()
+
     for row in reader:
-        society.add_person(NPC(
-            *[row[x] for x in ["ID", "name_cz", "fraction_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
+        Society.add_person(NPC(*[row[x] for x in ["ID", "name_cz", "fraction_ID", "spawn_street_ID", "end_street_ID", "speed", "strength", "coins"]]))
 
     csv_file.close()
-    return society
 
 
-def read_fractions_from_file(path: str) -> PoliticalMap:
+def read_fractions_from_file(path: str):
     """Function to read data about fractions from csv file.
     Function returns PoliticalMap object where all fractions are saved"""
     csv_file = open(path, newline="", encoding="utf-8")
     reader = csv.DictReader(csv_file, delimiter=",")
 
-    political_map = PoliticalMap()
+    PoliticalMap.fractions = []
+
     for row in reader:
-        political_map.add_fraction(
+        PoliticalMap.add_fraction(
             Fraction(row["ID"], row["name_cz"], row["residence_ID"], row["relations"]))
 
     csv_file.close()
-    return political_map
 
 
 if __name__ == "__main__":
