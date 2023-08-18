@@ -1,6 +1,5 @@
-from tkinter import CURRENT
 from player import Player
-from character import read_people_from_file
+from character import Society
 from quest import (
     read_quest_lines_from_file,
     str_to_mqp,
@@ -84,8 +83,8 @@ def first_player_save():
     Player.place_ID = 0
     Player.coins = 25
     Player.items = [7, 8, 9]
-    Player.strength = 2-2
-    Player.speed = 2-2
+    Player.strength = 2
+    Player.speed = 2
     Player.relations = [3, 0, 1, 2, 2, 3, 3]
     Player.fraction_ID = 4
     Player.state = "alive"
@@ -139,8 +138,8 @@ def first_player_save():
                 "reward": "33%5",
                 "coin_reward": 33,
                 "item_reward": 5,
-            },
-        ],
+            }
+        ]
     Player.progress = ["tostart", "inprogress", "tostart", "tostart"]
     Player.round = 1
 
@@ -259,10 +258,9 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> lis
         character_ID_to_do_quest = quest_ID_to_MQP[quest_line_ID].characterID
         character_ID_to_line_ID[character_ID_to_do_quest] = quest_line_ID
 
-    characters = read_people_from_file(r"data\characters.csv")
     # Goes through all characters in existence and if there is a quest that should be assigned to them
     # needed attributes are set to identify the phase and line and progress
-    for character in characters.people_list:
+    for character in Society.people_list:
         character_json.append(dict())
 
         if character.ID in character_ID_to_line_ID:

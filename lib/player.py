@@ -1,9 +1,9 @@
 from tkinter import CURRENT
-from map import read_map_from_file, Map, Street
+from map import read_map_from_file, Street
 from character_handler import ModifiedPeople, ModifiedNPC
 from character import Society
 from items import Item, ItemsCollection
-from quest import ModifiedQuestPhase, str_to_mqp, dict_to_mqp
+from quest import ModifiedQuestPhase, dict_to_mqp
 
 
 class Player:
@@ -13,8 +13,8 @@ class Player:
     place_ID = 0
     coins = 25
     items = [7, 8, 9]
-    strength = 2-2
-    speed = 2-2
+    strength = 2
+    speed = 2
     relations = [3, 0, 1, 2, 2, 3, 3]
     fraction_ID = 4
     state = "alive"
@@ -156,14 +156,14 @@ class Player:
         return Player.relations[fraction_ID]
         
     @staticmethod
-    def get_relationships(people_here: list[ModifiedNPC], society: Society) -> dict[int, int]:
+    def get_relationships(people_here: list[ModifiedNPC]) -> dict[int, int]:
         """Method takes list of people in same location as player and static data about all characters.
         Returns dictionary where keys are IDs of people in the same location and values are their relationship to player
         """
         char_ID_to_relation: dict[int, int] = dict()
         for person in people_here:
             char_ID_to_relation[person.ID] = Player.relations[
-                society.get_char_by_ID(person.ID).fraction_ID
+                Society.get_char_by_ID(person.ID).fraction_ID
             ]
         return char_ID_to_relation
 
@@ -229,9 +229,9 @@ class Player:
         return False
 
     @staticmethod
-    def get_equiped_weapons(items: ItemsCollection) -> list[Item]:
+    def get_equiped_weapons() -> list[Item]:
         """Returns list of currently equiped weapons as Item objects"""
-        return [items.get_item(item_ID) for item_ID in Player.equiped_weapons]
+        return [ItemsCollection.get_item(item_ID) for item_ID in Player.equiped_weapons]
 
     @staticmethod
     def swap_weapon(remove_item: Item, new_item: Item) -> None:

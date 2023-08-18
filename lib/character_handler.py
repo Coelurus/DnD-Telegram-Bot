@@ -1,8 +1,7 @@
-from pydoc import resolve
-from character import read_people_from_file, read_fractions_from_file, NPC, Society
-from quest import str_to_mqp, dict_to_mqp
-from map import read_map_from_file, Street
-from items import read_items_from_file, ItemsCollection
+from character import read_fractions_from_file, NPC, Society
+from quest import dict_to_mqp
+from map import read_map_from_file
+from items import ItemsCollection
 from random import choice, choices
 
 import json
@@ -39,12 +38,11 @@ class ModifiedNPC:
         self.state = state
 
     def __repr__(self):
-        characters_definition = read_people_from_file("data\characters.csv")
         line_part = ""
         if self.phase != "-1":
             line_part = f"Does quest line {self.line} is at phase {self.phase}. Currently at: {self.stage}"
         return (
-            f"NPC {characters_definition.people_list[self.ID]} currently at place {self.place_ID} has {self.coins} coins. Str = {self.strength}, speed = {self.speed}. Has items: {self.items}. "
+            f"NPC {Society.people_list[self.ID]} currently at place {self.place_ID} has {self.coins} coins. Str = {self.strength}, speed = {self.speed}. Has items: {self.items}. "
             + line_part
         )
 
@@ -295,7 +293,6 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
     """
     Function takes characters as Modified People object and move them to their designated place and returns modified ModifiedPeople
     """
-    characters_definition = read_people_from_file("data\characters.csv")
     map = read_map_from_file("data\streets.csv")
     for character in modified_characters.list:
         if character.state == "alive":
@@ -322,8 +319,8 @@ def move_characters(modified_characters: ModifiedPeople) -> ModifiedPeople:
                         ).place_ID
 
             # Character has designated end location
-            elif characters_definition.get_char_by_ID(character.ID).end_street_ID != -1:
-                final_point = characters_definition.get_char_by_ID(
+            elif Society.get_char_by_ID(character.ID).end_street_ID != -1:
+                final_point = Society.get_char_by_ID(
                     character.ID
                 ).end_street_ID
 
@@ -361,7 +358,7 @@ def how_char1_loves_char2(
 
 def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
     """Return modifier defined by argument type. Function looks through items of all Modified NPCs and returns sum of their modifiers"""
-    items_collection = read_items_from_file("data\items.csv")
+
     # TODO Does not look really nice. Should be added more obvious way to take care of player Items
     # In list can be an object of type Player. In this case we have to get modifiers from his equiped weapons
     lists_of_items_IDs = [
@@ -375,12 +372,12 @@ def get_items_attributes(list_of_people: list[ModifiedNPC], type: str) -> int:
 
     if type == "str":
         return sum(
-            [items_collection.get_item(item_ID).strength_mod for item_ID in all_items]
+            [ItemsCollection.get_item(item_ID).strength_mod for item_ID in all_items]
         )
 
     elif type == "speed":
         return sum(
-            [items_collection.get_item(item_ID).speed_mod for item_ID in all_items]
+            [ItemsCollection.get_item(item_ID).speed_mod for item_ID in all_items]
         )
 
 
@@ -396,17 +393,16 @@ def fight(
     otherwise attacker: ModifiedNPC
     Function returns 2 values, first is list of newly modified people and second is falure/success of an attack
     """
-    people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
 
     # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
-        attacker_NPC = people.get_char_by_ID(attacker.ID)
+        attacker_NPC = Society.get_char_by_ID(attacker.ID)
         attacker_fraction = attacker_NPC.fraction_ID
     else:
         attacker_fraction = attacker.fraction_ID
 
-    defender_NPC = people.get_char_by_ID(defender.ID)
+    defender_NPC = Society.get_char_by_ID(defender.ID)
 
     
 
@@ -430,11 +426,11 @@ def fight(
     # They must be in the same place and their relationship to one of the fighting sides must be on the highest level
     for character in current_characters.list:
         if character.place_ID == attacker.place_ID:
-            character_NPC = people.get_char_by_ID(character.ID)
+            character_NPC = Society.get_char_by_ID(character.ID)
             if isinstance(attacker, ModifiedNPC):
                 likes_attacker = how_char1_loves_char2(character_NPC, attacker_NPC)
             else:
-                likes_attacker = attacker.get_relationships([character], people)[character.ID]
+                likes_attacker = attacker.get_relationships([character])[character.ID]
 
             likes_defender = how_char1_loves_char2(character_NPC, defender_NPC)
             if likes_attacker >= 3 and likes_defender >= 3:
@@ -521,19 +517,18 @@ def steal(
     """Function takes care of an action where attacker tries to steal (or plant) items from defender
     Function returns updated ModifiedPeople and information about success/failure
     Similarly to fight, attacker might be a Player object"""
-    people = read_people_from_file(r"data\characters.csv")
     fractions = read_fractions_from_file(r"data\fractions.csv")
 
     # Get the fraction based on attacker type
     if isinstance(attacker, ModifiedNPC):
-        attacker_NPC = people.get_char_by_ID(attacker.ID)
+        attacker_NPC = Society.get_char_by_ID(attacker.ID)
         attacker_fraction = attacker_NPC.fraction_ID
         attacker_name = attacker_NPC.name_cz
     else:
         attacker_fraction = attacker.fraction_ID
         attacker_name = "Player"
 
-    defender_NPC = people.get_char_by_ID(defender.ID)
+    defender_NPC = Society.get_char_by_ID(defender.ID)
 
     phase_failed = False
     attacker_bonus = 0
@@ -545,7 +540,7 @@ def steal(
     else:
         if (
             attacker_fraction == defender_NPC.fraction_ID
-            or attacker.get_relationships([defender], people)[defender.ID] >= 3
+            or attacker.get_relationships([defender])[defender.ID] >= 3
         ):
             attacker_bonus += 1
 
