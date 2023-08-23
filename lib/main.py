@@ -4,6 +4,7 @@ from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     Update,
+    KeyboardButton
 )
 
 from telegram.ext import (
@@ -281,6 +282,19 @@ async def inspect_player(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Co víc bys rád?", reply_markup=markup)
     return "inspect_player"
 
+#async def show_equiped
+async def show_equiped(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function gives player an opportunity to unequip one of his weapons"""
+    if len(Player.equiped_weapons) == 0:
+        await update.message.reply_text("Nemáš vybavenou žádnou zbraň")
+        return await generate_basic_window(update, context)
+    else:
+        weapons_str = " a ".join([f"*{weapon}*" for weapon in Player.equiped_weapons])
+        await update.message.reply_text(f"Momentálně v rukách třímáš: {weapons_str}", parse_mode="MarkdownV2")
+        reply_keyboard = [[ItemsCollection.get_item(weapon).name_cz for weapon in Player.equiped_weapons] , ["Zpět"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text("Jakou chceš sundat?", reply_markup=markup)
+        return "unequip weapon"
 
 #open_inventory
 async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -301,8 +315,12 @@ async def open_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             for x in Player.items
         ]
+
+
+        reply_keyboard += [["Vybavené zbraně"]]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-        await update.message.reply_text("Který předmět tě zajímá?", reply_markup=markup)
+      
+        await update.message.reply_text("Který předmět tě zajímá?", reply_markup=markup, parse_mode="MarkdownV2")
         return "choose_item"
 
     else:
@@ -356,6 +374,14 @@ async def choose_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(question_text, reply_markup=markup)
 
     return "inspect_item"
+
+
+#unequip_weapon
+async def unequip_weapon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function to unequip weapon"""
+    item: Item = ItemsCollection.get_item_from_name(update.message.text)
+    Player.unequip_weapon(item)
+    return await generate_basic_window(update, context)
 
 
 #use_item
@@ -1192,7 +1218,10 @@ def main() -> None:
                 MessageHandler(filters.Regex("Úkoly"), open_quests),
                 MessageHandler(filters.Regex("Zpět"), generate_basic_window),
             ],
-            "choose_item": [MessageHandler(filters.TEXT, choose_item)],
+            "choose_item": [
+                MessageHandler(filters.Regex("Vybavené zbraně"), show_equiped),
+                MessageHandler(filters.TEXT, choose_item)
+            ],
             "inspect_item": [
                 MessageHandler(filters.Regex("Použít"), use_item),
                 MessageHandler(filters.Regex("Nasadit"), equip_item),
@@ -1201,6 +1230,10 @@ def main() -> None:
             "replace_item": [
                 MessageHandler(filters.Regex("Zpět"), open_inventory),
                 MessageHandler(filters.TEXT, replace_item),
+            ],
+            "unequip weapon": [
+                MessageHandler(filters.Regex("Zpět"), open_inventory),
+                MessageHandler(filters.TEXT, unequip_weapon),
             ],
             "get_quest": [
                 MessageHandler(filters.Regex("Zpět"), inspect_player),

@@ -2,8 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\data",
-    "\\lib"
+    "\\lib",
+    "\\zzz_other",
+    "\\zzz_other\\map"
   ],
-  "SelectedNode": "\\data\\fractions.csv",
+  "SelectedNode": "\\data\\items.csv",
   "PreviewInSolutionExplorer": false
 }

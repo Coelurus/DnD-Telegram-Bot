@@ -230,6 +230,12 @@ class Player:
         return False
 
     @staticmethod
+    def unequip_weapon(item: Item) -> None:
+        """Method to put players equiped weapon back to the inventory"""
+        Player.equiped_weapons.remove(item.ID)
+        Player.items.append(item.ID)
+
+    @staticmethod
     def get_equiped_weapons() -> list[Item]:
         """Returns list of currently equiped weapons as Item objects"""
         return [ItemsCollection.get_item(item_ID) for item_ID in Player.equiped_weapons]
