@@ -319,6 +319,9 @@ class Player:
                 if Player.action_completed(quest, current_characters.get_NPC(quest.go_to)):
                     Player.progress[quest_idx] = "ended"
                 quests_to_finish.append(quest)
+                if quest.action != "plant" or quest.action != "rob":
+                    if quest.item_ID in Player.items:
+                        Player.remove_item(quest.item_ID)
 
         return quests_to_finish
 

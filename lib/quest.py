@@ -149,6 +149,11 @@ def mqp_to_json(mqp_object: ModifiedQuestPhase) -> dict[str]:
     return mqp_object.to_json()
 
 
+#def action_to_cz(action: str) -> str:
+#    a = "" if action=="None" else "Zab cíl" if action == "kill" else "Omraè cíl" if action == "stun" else "Okraï cíl" if action == "rob" else "Nastraž pøedmìt" if action == "plant" else action
+#    return a
+
+
 class Node:
     """Class to save each phase of quest line"""
 

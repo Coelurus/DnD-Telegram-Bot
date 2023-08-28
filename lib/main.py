@@ -446,20 +446,37 @@ async def open_quests(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for quest_str_idx in range(len(Player.quests)):
             quest_str = Player.quests[quest_str_idx]
             mqp = quest.dict_to_mqp(quest_str)
-            # Final place is static
-            if mqp.go_to == -1:
+            # Print out current phase description
+
+            if Player.progress[quest_str_idx] == "tostart" and mqp.from_place_ID != -1:
                 reply_keyboard += [
-                    [
-                        f"{quest_str_idx+1}. Dostav se na místo {Map.get_street_by_ID(mqp.to_place_ID).name_cz}"
+                        [
+                            f"{quest_str_idx+1}. Dostav se na místo {Map.get_street_by_ID(mqp.from_place_ID).name_cz}"
+                        ]
                     ]
-                ]
-            # Final place is based on character
-            else:
+
+            elif Player.progress[quest_str_idx] == "inprogress" or Player.progress[quest_str_idx] == "infinal":
+                # Final place is static
+                if mqp.go_to == -1:
+                    reply_keyboard += [
+                        [
+                            f"{quest_str_idx+1}. Dostav se na místo {Map.get_street_by_ID(mqp.to_place_ID).name_cz}"
+                        ]
+                    ]
+                # Final place is based on character
+                else:
+                    reply_keyboard += [
+                        [
+                            f"{quest_str_idx+1}. {'' if mqp.action=='None' else 'Zab cíl' if mqp.action == 'kill' else 'Omrač cíl' if mqp.action == 'stun' else 'Okraď cíl' if mqp.action == 'rob' else 'Podstrč' if mqp.action == 'plant' else mqp.action} {Society.get_char_by_ID(mqp.go_to).name_cz}"
+                        ]
+                    ]
+
+            elif Player.progress[quest_str_idx] == "ended":
                 reply_keyboard += [
-                    [
-                        f"{quest_str_idx+1}. Najdi postavu {Society.get_char_by_ID(mqp.go_to).name_cz}"
+                        [
+                            f"{quest_str_idx+1}. Jdi si vybrat odměnu!"
+                        ]
                     ]
-                ]
 
             quest_ID_to_str[quest_str_idx + 1] = quest_str
 
@@ -533,17 +550,8 @@ async def get_quest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else "\u2716 "
     )
 
-    action_txt += (
-        ""
-        if quest_mqp.action == "None"
-        else "Zab cíl"
-        if quest_mqp.action == "kill"
-        else "Omrač cíl"
-        if quest_mqp.action == "stun"
-        else "Okraď cíl"
-        if quest_mqp.action == "rob"
-        else f"{quest_mqp.action}"
-    )
+    # action_txt += action_to_cz(quest_mqp.action)
+    action_txt += "" if quest_mqp.action=="None" else "Zab cíl" if quest_mqp.action == "kill" else "Omrač cíl" if quest_mqp.action == "stun" else "Okraď cíl" if quest_mqp.action == "rob" else "Nastraž předmět" if quest_mqp.action == "plant" else quest_mqp.action
 
     reward_txt = (
         "" if progress != "ended" else "\n\U0001F4B2 Jdi si vybrat odměnu k zadavateli"
@@ -1094,6 +1102,9 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     Player.items.append(quest_mqp.reward["item"])
                 Player.quests.pop(quest_idx)
                 Player.progress.pop(quest_idx)
+                #Give quest submitter stolen item
+                if quest_mqp.action == "rob":
+                    Player.remove_item(quest_mqp.item_ID)
                 character_specific_actions.remove([update.message.text, action])
                 break
         return await generate_basic_window(update, context)
