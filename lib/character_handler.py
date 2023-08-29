@@ -46,8 +46,8 @@ class ModifiedNPC:
             + line_part
         )
 
-    def get_name_cz(self, society: Society):
-        return society.get_char_by_ID(self.ID).name_cz
+    def get_name_cz(self):
+        return Society.get_char_by_ID(self.ID).name_cz
 
     def stun_me(self, duration=4):
         self.state = "stun"
@@ -142,10 +142,10 @@ class Helper:
         Helper.stunned_chars = []
 
     @staticmethod
-    def get_fight_results(society: Society) -> str:
+    def get_fight_results() -> str:
         results_str = "*Výsledky souboje:* " + "\n"
-        results_str += "_Omráčeni jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_stunned()]) + "\n"
-        results_str += "_Zabiti jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_dead()])
+        results_str += "_Omráčeni jsou:_ " + " a ".join([char.get_name_cz() for char in Helper.get_stunned()]) + "\n"
+        results_str += "_Zabiti jsou:_ " + " a ".join([char.get_name_cz() for char in Helper.get_dead()])
         Helper.clean()
         return results_str
 
