@@ -597,6 +597,8 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["people_here"] = people_here
         reply_keyboard.append(["\U0001F5E3 Interagovat s ostatními \U0001F5E3"])
 
+    reply_keyboard.append(["Rozhlédnout se do ulic"])
+
     # When there is at least one action, new menu is opened to choose one of these actions
     if len(reply_keyboard) > 0:
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -608,6 +610,21 @@ async def make_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return await generate_basic_window(update, context)
 
+
+#look_around #TODO
+async def look_around(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Function to write out people in connected streets"""
+    player: Player = context.user_data['player']
+    people: ModifiedPeople = context.user_data['current_people']
+    connected = Map.get_street_by_ID(player.place_ID).get_connected_streets()
+    text = ""
+    for street_ID in connected:
+        text += f"*{Map.get_street_by_ID(street_ID).name_cz}*:\n"
+        text += ", ".join([person.get_name_cz() for person in people.get_people_in_place(street_ID)])
+    text.replace(".", "\.")
+    
+    await update.message.reply_text(text, parse_mode="MarkdownV2")
+    return await generate_basic_window(update, context)
 
 #choose_person
 async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -622,7 +639,7 @@ async def choose_person(update: Update, context: ContextTypes.DEFAULT_TYPE):
         emoji = "\U0001F610"
         for person in people_list:
             if person.state == "alive":
-                if char_to_relation[person.ID] == 0:
+                if char_to_relation[person.ID] <= 0:
                     emoji = "\U0001F621"
                 elif char_to_relation[person.ID] == 1:
                     emoji = "\U0001F928"
@@ -1102,6 +1119,9 @@ async def specific_opration(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     context.user_data['player'].items.append(quest_mqp.reward["item"])
                 context.user_data['player'].quests.pop(quest_idx)
                 context.user_data['player'].progress.pop(quest_idx)
+                context.user_data["current_people"].get_NPC(quest_mqp.characterID).player_relation += 2
+                
+                quest_mqp.characterID
                 #Give quest submitter stolen item
                 if quest_mqp.action == "rob":
                     context.user_data['player'].remove_item(quest_mqp.item_ID)
@@ -1194,6 +1214,7 @@ def main() -> None:
                 MessageHandler(filters.Regex("Interagovat"), choose_person),
                 MessageHandler(filters.Regex("Nakoupit"), open_shop),
                 MessageHandler(filters.Regex("Prodat"), open_sell_shop),
+                MessageHandler(filters.Regex("Rozhlédnout"), look_around),
             ],
             "buy_item": [
                 MessageHandler(filters.Regex("Zpět"), generate_basic_window),

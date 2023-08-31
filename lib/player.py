@@ -98,9 +98,7 @@ class Player:
         """
         char_ID_to_relation: dict[int, int] = dict()
         for person in people_here:
-            char_ID_to_relation[person.ID] = self.relations[
-                Society.get_char_by_ID(person.ID).fraction_ID
-            ]
+            char_ID_to_relation[person.ID] = self.relations[Society.get_char_by_ID(person.ID).fraction_ID] + person.player_relation
         return char_ID_to_relation
 
     

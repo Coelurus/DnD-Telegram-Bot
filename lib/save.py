@@ -289,6 +289,7 @@ def first_characters_save(quest_ID_to_MQP: dict[int, ModifiedQuestPhase]) -> lis
         character_json[-1]["stage"] = stage
         character_json[-1]["state"] = "alive"
         character_json[-1]["duration"] = 0
+        character_json[-1]["player_relation"] = 0
 
     return character_json
 

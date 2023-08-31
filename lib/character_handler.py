@@ -24,6 +24,7 @@ class ModifiedNPC:
         phase: str,
         stage: str,
         state: str,
+        player_relation: str
     ) -> None:
         self.ID = int(ID)
         self.place_ID = int(place)
@@ -36,6 +37,7 @@ class ModifiedNPC:
         self.items = [int(x) for x in items if x != ""]
         self.state = state
         self.duration = 0
+        self.player_relation = int(player_relation)
 
     def __repr__(self):
         line_part = ""
@@ -90,6 +92,7 @@ class ModifiedPeople:
             character_json[-1]["stage"] = NPC.stage
             character_json[-1]["state"] = NPC.state
             character_json[-1]["duration"] = NPC.duration
+            character_json[-1]["player_relation"] = NPC.player_relation
 
         return character_json
 
@@ -181,6 +184,7 @@ def get_current_characters(old_character_save: list[dict[str]]) -> ModifiedPeopl
                 char_parts["phase"],
                 char_parts["stage"],
                 char_parts["state"],
+                char_parts["player_relation"]
             )
         )
 
@@ -520,6 +524,9 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
 
     for char in dead_list:
         char.stage = "ended"
+
+    for char in defender_side:
+        char.player_relation -= 1
 
     return phase_failed
 
