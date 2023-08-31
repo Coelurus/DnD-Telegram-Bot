@@ -24,6 +24,7 @@ class ModifiedNPC:
         phase: str,
         stage: str,
         state: str,
+        player_relation: str
     ) -> None:
         self.ID = int(ID)
         self.place_ID = int(place)
@@ -36,6 +37,7 @@ class ModifiedNPC:
         self.items = [int(x) for x in items if x != ""]
         self.state = state
         self.duration = 0
+        self.player_relation = int(player_relation)
 
     def __repr__(self):
         line_part = ""
@@ -46,8 +48,8 @@ class ModifiedNPC:
             + line_part
         )
 
-    def get_name_cz(self, society: Society):
-        return society.get_char_by_ID(self.ID).name_cz
+    def get_name_cz(self):
+        return Society.get_char_by_ID(self.ID).name_cz
 
     def stun_me(self, duration=4):
         self.state = "stun"
@@ -90,6 +92,7 @@ class ModifiedPeople:
             character_json[-1]["stage"] = NPC.stage
             character_json[-1]["state"] = NPC.state
             character_json[-1]["duration"] = NPC.duration
+            character_json[-1]["player_relation"] = NPC.player_relation
 
         return character_json
 
@@ -142,10 +145,10 @@ class Helper:
         Helper.stunned_chars = []
 
     @staticmethod
-    def get_fight_results(society: Society) -> str:
+    def get_fight_results() -> str:
         results_str = "*Výsledky souboje:* " + "\n"
-        results_str += "_Omráčeni jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_stunned()]) + "\n"
-        results_str += "_Zabiti jsou:_ " + " a ".join([char.get_name_cz(society) for char in Helper.get_dead()])
+        results_str += "_Omráčeni jsou:_ " + " a ".join([char.get_name_cz() for char in Helper.get_stunned()]) + "\n"
+        results_str += "_Zabiti jsou:_ " + " a ".join([char.get_name_cz() for char in Helper.get_dead()])
         Helper.clean()
         return results_str
 
@@ -181,6 +184,7 @@ def get_current_characters(old_character_save: list[dict[str]]) -> ModifiedPeopl
                 char_parts["phase"],
                 char_parts["stage"],
                 char_parts["state"],
+                char_parts["player_relation"]
             )
         )
 
@@ -520,6 +524,9 @@ def resolve_fight(action: str, total_attack_power: int, total_defend_power: int,
 
     for char in dead_list:
         char.stage = "ended"
+
+    for char in defender_side:
+        char.player_relation -= 1
 
     return phase_failed
 
