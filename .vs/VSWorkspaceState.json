@@ -2,10 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\data",
-    "\\lib",
-    "\\zzz_other",
-    "\\zzz_other\\map"
+    "\\lib"
   ],
-  "SelectedNode": "\\data\\game_saves.json",
+  "SelectedNode": "\\data\\quest-lines.json",
   "PreviewInSolutionExplorer": false
 }

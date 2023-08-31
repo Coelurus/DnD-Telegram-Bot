@@ -157,8 +157,6 @@ async def rotation(chat_ID: int, context: ContextTypes.DEFAULT_TYPE, update: Upd
     current_characters: ModifiedPeople = context.user_data["current_people"]
     current_quests_list: list[str] = context.user_data["current_quests_list"]
 
-    #TODO move all save. to save and make specific method
-
     # Updating quest lines for characters. If game ending line has finished, the game ends
     (
         current_characters,
