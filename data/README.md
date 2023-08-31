@@ -5,7 +5,7 @@
 Mapa Kritravenu, viz obrázek, sestává ze 40 navštívitelných míst. Jedná se tedy o graf, jehož vrcholy jsou ulice a hrana mezi ulicemi (èi ulicí a místem) existuje právì tehdy, když se obì ulice protínají èi sbíhají.
 Seznam tìchto míst se naèítá ze souboru streets.csv. Pro každé jedineèné ID ulice je urèeno jméno místa a též seznam indexù, jež jsou spojené s hranou s daným místem.
 
-!["obrázek mapy"](zzz_other/map/kritraven-with-streets-n-places.png)
+!["obrázek mapy"](../zzz_other/map/kritraven-with-streets-n-places.png)
 
 Veškerá data o mapì a všech místech na ní jsou uloženy v souboru `streets.csv`.
 Každé místo v souboru má momentálnì své jedineèné ID, jméno v èeštinì, popis v èeštinì, seznam ID míst spojených s tímto místem, možnost speciálních akcí pro toto místo a omezení pøístupu 

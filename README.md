@@ -37,6 +37,7 @@ Problémem, který řeší můj program, je nuda. Jedná se totiž o hru, a to k
 
 ### Přesné zadání
 Zimní semestr: Cílem programu je vytvořit hru, kterou bude zprostředkovávat bot na Telegramu. Hra je inspirovaná jak Dračím doupětem, tak textovými adventurami. Hlavní myšlenkou je, že je zde minimum naskriptovaných věcí. Hráč sám se ocitne ve městě, kde je několik dalších postav, kterým sice někdo zadal, co mají dělat. Ale co když jim v tom někdo zabrání? V tom případě budou muset podniknout něco jiného? Co když postava uvidí, jak někdo útočí na jeho kamaráda. No pomůžeme, ale co když při tom náhodou zemře, její vlastní povinnosti pak už nikdo nesplní.
+
 Letní semestr: Cílem mé práce je refaktorovat a zlepšit kvalitu stávajícího programu. Jednak se jedná o zlepšení způsobů ukládání, používání funkcí a tříd a jednak o přčehlednější výstup pro hráče.
 
 ## Průběh hry a herní rozhraní
@@ -170,6 +171,7 @@ conversation_handler = ConversationHandler(
 ## Závěrem
 Zimní semestr: Určitě je toho spousta, co jsem nestihl dokončit. Moje plány byly velké. Už jen z komentářů a všemožných TODO je vidět, kde všude by to ještě chtělo vylepšit. Na druhou stranu si myslím, že aktuální stav pěkně ilustruje, že herní svět nefunguje zas tak špatně. Momentální největší slabinu vidím v tom, že hráč nemůže dostat úkoly od postav ve městě a také to, že když hráč někomu nastražuje předmět, tak mu odevzdá všechno co má u sebe. Interakce s postavami by také mohly být trošku lepší, aby nebyly tak holé a stejné.
 Na druhou stranu si říkám, že tvoření této malé hříčky mě velmi bavilo a pokusím se ji dále vylepšovat.
+
 Letní semestr: Budu se opakovat, když začnu tím, že jsem toho opět nestihl. Nejvíc mě asi mrzí ty věci, které jsem neměl už napoprvé a ani teď jsem je nedokázal naimplementovat.
 Na druhou stranu jsem strávil spoustu času na refactoringu, a to hlavně způsobu ukládání dat, které bylo v první verzi příšerné, ale teď je již mnnohem přehlednější. Navíc bylo opravdu obtížné vrátit se po tak dlouhé době k mému kódu a navíc vidět všechny ty věci, co jsem tehdy udělal špatně. A to všechno korunoval fakt, že Python sice je jazyk jednoduchý, avšak zjišťovat chyby až při běhu je pro stavovou hru nepříjemné, neboť se tam člověk musí vždy proklikat, aby si ověřil, že vše funguje.
 Na druhou stranu jsem rád, že jsem se mohl kje hře takkto vrátit, i když mě stále mrzí, že je velmi holá a nezábavná.
